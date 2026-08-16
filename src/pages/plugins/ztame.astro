@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import LicenseForm from '../../components/LicenseForm';
+import { Download } from 'lucide-react';
 ---
 
 <BaseLayout
@@ -18,9 +20,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     "description": "High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.",
     "offers": {
       "@type": "Offer",
-      "price": "109.00",
+      "price": "0.00",
       "priceCurrency": "USD",
-      "availability": "https://schema.org/PreOrder",
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": "2026-08-21",
+      "description": "Free perpetual license available until August 21, 2026. Regular price $109.",
       "url": "https://zarlinoaudio.com/plugins/ztame"
     },
     "author": {
@@ -92,7 +96,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         "name": "Is there a free trial for ZTame?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. ZTame supports a 14-day trial period. A license key is required for continued use after the trial expires."
+          "text": "Yes. ZTame supports a 14-day trial period. Even better: ZTame licensing is free until August 21, 2026 — request a free perpetual license key from the ZTame page and never pay."
         }
       }
     ]
@@ -124,18 +128,83 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         A high-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, built for mixing and mastering engineers who need surgical control over harsh frequencies.
       </p>
 
-      <!-- Price + CTA -->
-      <div class="mt-8 flex items-center gap-4">
-        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$109</span>
-        <a href="/#cta" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
-          Buy Now
+      <!-- Free License + CTA -->
+      <div class="mt-8 flex items-center gap-4 flex-wrap">
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">FREE</span>
+        <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
+          <s class="text-[#64748B]">$109</s>&nbsp;&nbsp;Free until
+          <strong class="text-white">August 21, 2026</strong>
+        </span>
+        <a href="#license" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
+          Get Free License
         </a>
       </div>
 
       <!-- Product Image -->
       <div class="mt-12 rounded-xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
-        <img src="/images/plugin-card-4.jpg" alt="ZTame resonance suppressor plugin user interface showing spectral analysis and dynamic notch filtering controls" class="w-full h-auto object-cover" />
+        <img src="/images/ztame-ui.png" alt="ZTame resonance suppressor plugin user interface showing spectral analysis and dynamic notch filtering controls" class="w-full h-auto object-cover" />
       </div>
+
+      <!-- Download -->
+      <section class="mt-14" id="download">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Download ZTame 1.0.0</h2>
+        <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
+          Grab the installer for the full standalone app, or the VST3 for your DAW. All builds are Windows 10 22H2+ (64-bit).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a
+            href="/downloads/ZTame-v1.0.0-Windows-Installer.exe"
+            download
+            class="group flex flex-col justify-between rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 hover:bg-[rgba(0,212,255,0.08)] transition-colors duration-300"
+          >
+            <div>
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">Standalone Installer</h3>
+              <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Windows installer (.exe) — includes the app and VST3 plugin.</p>
+            </div>
+            <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
+              <Download size={15} /> Download .exe &middot; 4 MB
+            </span>
+          </a>
+
+          <a
+            href="/downloads/ZTame-v1.0.0-Windows-VST3.zip"
+            download
+            class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
+          >
+            <div>
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">VST3 Plugin</h3>
+              <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">VST3 bundle (.zip) for FL Studio, Ableton Live, Cubase, Reaper, and more.</p>
+            </div>
+            <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
+              <Download size={15} /> Download VST3 &middot; 2 MB
+            </span>
+          </a>
+
+          <a
+            href="/downloads/ZTame-v1.0.0-Windows-Standalone.zip"
+            download
+            class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
+          >
+            <div>
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">Standalone App</h3>
+              <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Portable standalone build (.zip) — no installer required.</p>
+            </div>
+            <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
+              <Download size={15} /> Download .zip &middot; 2 MB
+            </span>
+          </a>
+        </div>
+      </section>
+
+      <!-- License -->
+      <section class="mt-14" id="license">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Activate ZTame</h2>
+        <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
+          ZTame runs fully functional for 14 days. After that, a license key is required. ZTame licensing is
+          <strong class="text-white"> free until August 21, 2026</strong> — get your perpetual key now.
+        </p>
+        <LicenseForm client:load />
+      </section>
 
       <!-- What It Does -->
       <section class="mt-16">
@@ -246,7 +315,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame includes a 14-day fully functional trial. A license key is required for continued use after the trial period.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame includes a 14-day fully functional trial. Even better, ZTame licensing is <strong class="text-[#CBD5E1]">free until August 21, 2026</strong> — request a free perpetual license key from the license section above and keep ZTame forever.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">What if ZTame uses too much CPU?</h3>

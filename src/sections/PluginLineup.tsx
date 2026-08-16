@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useCartStore } from '../store/cartStore';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,13 +12,12 @@ const plugins = [
     description:
       'High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.',
     price: 109,
-    image: '/images/plugin-card-4.jpg',
+    image: '/images/ztame-ui.png',
   },
 ];
 
 const PluginLineup = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -58,13 +56,7 @@ const PluginLineup = () => {
   }, []);
 
   const handleAddToCart = (plugin: (typeof plugins)[0]) => {
-    addItem({
-      id: plugin.id,
-      name: plugin.name,
-      price: plugin.price,
-      image: plugin.image,
-      category: plugin.category,
-    });
+    window.location.href = `/plugins/${plugin.id}#license`;
   };
 
   return (
@@ -122,7 +114,7 @@ const PluginLineup = () => {
 
                 <div className="mt-5 flex items-center justify-between">
                   <span className="font-['Space_Grotesk'] font-semibold text-[18px] text-white">
-                    ${plugin.price}
+                    FREE
                   </span>
                   <div className="flex items-center gap-4">
                     <a
@@ -135,7 +127,7 @@ const PluginLineup = () => {
                       onClick={() => handleAddToCart(plugin)}
                       className="font-['Inter'] font-medium text-[14px] text-[#00D4FF] hover:underline transition-all"
                     >
-                      Add to Cart
+                      Get Free License
                     </button>
                   </div>
                 </div>

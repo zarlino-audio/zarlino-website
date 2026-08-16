@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useCartStore } from '../store/cartStore';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -10,7 +9,6 @@ const ProductShowcase = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -50,14 +48,7 @@ const ProductShowcase = () => {
   }, []);
 
   const handleBuy = () => {
-    addItem({
-      id: 'ztame',
-      name: 'ZTame',
-      price: 109,
-      originalPrice: 129,
-      image: '/images/plugin-card-4.jpg',
-      category: 'Resonance Suppressor',
-    });
+    window.location.href = '/plugins/ztame#license';
   };
 
   const features = [
@@ -83,7 +74,7 @@ const ProductShowcase = () => {
           }}
         >
           <img
-            src="/images/plugin-card-4.jpg"
+            src="/images/ztame-ui.png"
             alt="ZTame Resonance Suppressor Plugin"
             className="w-full h-auto object-cover"
             loading="lazy"
@@ -129,10 +120,13 @@ const ProductShowcase = () => {
 
           <div className="animate-in mt-8 flex items-center gap-4">
             <span className="font-['Space_Grotesk'] font-semibold text-[32px] text-white">
-              $109
+              FREE
             </span>
             <span className="font-['Space_Grotesk'] text-[18px] text-[#64748B] line-through">
-              $129
+              $109
+            </span>
+            <span className="font-['Inter'] text-[13px] text-[#94A3B8]">
+              free until August 21, 2026
             </span>
           </div>
 
@@ -140,7 +134,7 @@ const ProductShowcase = () => {
             onClick={handleBuy}
             className="animate-in mt-6 self-start bg-[#00D4FF] text-[#050505] rounded-lg px-7 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300"
           >
-            Buy Now
+            Get Free License
           </button>
         </div>
       </div>
