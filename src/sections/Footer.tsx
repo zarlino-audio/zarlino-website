@@ -8,7 +8,11 @@ const footerLinks = {
   Products: [
     { label: 'ZTame', href: '/plugins/ztame' },
   ],
-  Resources: ['Documentation', 'Support', 'FAQ'],
+  Resources: [
+    { label: 'Documentation', href: '/plugins/ztame' },
+    { label: 'FAQ', href: '/plugins/ztame' },
+    { label: 'Report a Bug or Suggestion', href: '/report' },
+  ],
   Company: ['About', 'Contact'],
   Legal: ['Privacy Policy', 'Terms of Service', 'License Agreement'],
 } as Record<string, { label: string; href: string }[] | string[]>;

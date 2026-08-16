@@ -24,7 +24,7 @@ import { Download } from 'lucide-react';
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
       "priceValidUntil": "2026-08-21",
-      "description": "Free perpetual license available until August 21, 2026. Regular price $109.",
+      "description": "Free perpetual license during public beta (until August 21, 2026). Official launch August 23, 2026. Regular price $109.",
       "url": "https://zarlinoaudio.com/plugins/ztame"
     },
     "author": {
@@ -96,7 +96,7 @@ import { Download } from 'lucide-react';
         "name": "Is there a free trial for ZTame?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. ZTame supports a 14-day trial period. Even better: ZTame licensing is free until August 21, 2026 — request a free perpetual license key from the ZTame page and never pay."
+          "text": "Yes. ZTame supports a 14-day trial period. Even better: ZTame is currently in public beta (official launch August 23, 2026) and licensing is free until August 21, 2026 — request a free perpetual license key from the ZTame page and never pay."
         }
       }
     ]
@@ -113,10 +113,14 @@ import { Download } from 'lucide-react';
         <span class="text-[#94A3B8]">ZTame</span>
       </nav>
 
-      <!-- Badge -->
-      <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-3 py-1 mb-4">
-        Resonance Suppressor
-      </span>
+      <div class="flex items-center gap-2 mb-4">
+        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-3 py-1">
+          Resonance Suppressor
+        </span>
+        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-3 py-1">
+          Public Beta
+        </span>
+      </div>
 
       <!-- H1 -->
       <h1 class="font-['Space_Grotesk'] font-semibold text-white" style="font-size: clamp(40px, 5vw, 64px); line-height: 1.1; letter-spacing: -0.03em;">
@@ -126,6 +130,13 @@ import { Download } from 'lucide-react';
       <!-- Tagline -->
       <p class="mt-4 font-['Inter'] text-[18px] text-[#94A3B8] leading-[1.7] max-w-[650px]">
         A high-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, built for mixing and mastering engineers who need surgical control over harsh frequencies.
+      </p>
+
+      <!-- BETA notice -->
+      <p class="mt-4 font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[650px] border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.05)] rounded-lg px-4 py-3">
+        <strong class="text-[#FBBF24]">Public beta.</strong> ZTame 1.0.0 is in beta ahead of its official launch on
+        <strong class="text-white">August 23, 2026</strong>. Free licensing applies throughout the beta. Found an issue?{' '}
+        <a href="/report" class="text-[#00D4FF] hover:underline">Report it here</a>.
       </p>
 
       <!-- Free License + CTA -->
@@ -149,7 +160,8 @@ import { Download } from 'lucide-react';
       <section class="mt-14" id="download">
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Download ZTame 1.0.0</h2>
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
-          Grab the installer for the full standalone app, or the VST3 for your DAW. All builds are Windows 10 22H2+ (64-bit).
+          Grab the installer for the full standalone app, or the VST3 for your DAW. This is a public beta build of
+          ZTame 1.0.0. All builds are Windows 10 22H2+ (64-bit).
         </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
@@ -202,6 +214,8 @@ import { Download } from 'lucide-react';
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
           ZTame runs fully functional for 14 days. After that, a license key is required. ZTame licensing is
           <strong class="text-white"> free until August 21, 2026</strong> — get your perpetual key now.
+          Running the beta and something feels off?{' '}
+          <a href="/report" class="text-[#00D4FF] hover:underline">Report a bug or suggestion</a>.
         </p>
         <LicenseForm client:load />
       </section>

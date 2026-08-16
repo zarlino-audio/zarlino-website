@@ -95,7 +95,12 @@ const ProductShowcase = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            ZTame
+            <span className="inline-flex items-center gap-3">
+              ZTame
+              <span className="align-middle font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-2.5 py-1">
+                Beta
+              </span>
+            </span>
           </h2>
 
           <p className="animate-in mt-4 font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.7]">

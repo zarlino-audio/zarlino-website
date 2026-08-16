@@ -18,6 +18,7 @@ const Navigation = () => {
     { label: 'Plugins', href: '/#plugins' },
     { label: 'Features', href: '/#features' },
     { label: 'Showcase', href: '/#showcase' },
+    { label: 'Feedback', href: '/report' },
   ];
 
   return (
@@ -27,9 +28,26 @@ const Navigation = () => {
           ? 'bg-[rgba(5,5,5,0.9)] backdrop-blur-[16px] border-b border-[rgba(255,255,255,0.06)]'
           : 'bg-transparent'
       }`}
-      style={{ height: 64 }}
     >
-      <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center justify-between">
+      {/* Public BETA banner */}
+      <div className="h-9 flex items-center justify-center gap-2 px-4 bg-[#0A0A0A] border-b border-[rgba(251,191,36,0.18)]">
+        <span className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#FBBF24]">
+          Beta
+        </span>
+        <span className="font-['Inter'] text-[12px] text-[#94A3B8] truncate">
+          ZTame is in public beta — official launch{' '}
+          <span className="text-white">August 23, 2026</span>.
+        </span>
+        <a
+          href="/report"
+          className="shrink-0 font-['Inter'] text-[12px] font-medium text-[#00D4FF] hover:underline"
+        >
+          Report a bug or suggestion →
+        </a>
+      </div>
+
+      {/* Main bar */}
+      <div className="h-16 flex items-center justify-between max-w-[1200px] mx-auto px-6">
         {/* Brand */}
         <a href="/" className="flex items-center gap-2">
           <img src="/images/zarlino-logo.svg" alt="Zarlino Audio" className="h-7 w-auto" />

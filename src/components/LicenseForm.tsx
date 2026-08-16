@@ -88,11 +88,11 @@ const LicenseForm = () => {
           </div>
 
           <p className="mt-3 font-['Inter'] text-[13px] text-[#64748B]">
-            Also sent to <span className="text-[#94A3B8]">{email}</span> — check your inbox. Need it again? Email{' '}
+            Save this key somewhere safe — you will not be emailed a copy. Lost it? Email{' '}
             <a href="mailto:support@zarlinoaudio.com" className="text-[#00D4FF] hover:underline">
               support@zarlinoaudio.com
-            </a>
-            .
+            </a>{' '}
+            and we will look it up.
           </p>
         </div>
       ) : (

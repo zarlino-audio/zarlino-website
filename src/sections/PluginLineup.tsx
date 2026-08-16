@@ -102,9 +102,14 @@ const PluginLineup = () => {
 
               {/* Content */}
               <div className="p-7">
+              <div className="flex items-center gap-2">
                 <h3 className="font-['Space_Grotesk'] font-semibold text-[20px] text-white">
                   {plugin.name}
                 </h3>
+                <span className="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-2 py-0.5">
+                  Beta
+                </span>
+              </div>
                 <p className="font-['IBM_Plex_Mono'] text-[11px] uppercase text-[#64748B] mt-1">
                   {plugin.category}
                 </p>
