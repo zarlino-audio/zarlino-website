@@ -17,6 +17,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build Astro site
+        run: npm run build
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:

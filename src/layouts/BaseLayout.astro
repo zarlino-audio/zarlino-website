@@ -1,0 +1,62 @@
+---
+import '../index.css';
+import AppShell from '../components/AppShell';
+import Footer from '../sections/Footer';
+
+export interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonicalURL?: string;
+  schemaType?: string;
+}
+const {
+  title,
+  description,
+  ogImage = '/images/zarlino-logo.svg',
+  canonicalURL,
+  schemaType
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Canonical -->
+    {canonicalURL && <link rel="canonical" href={canonicalURL} />}
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={schemaType || 'website'} />
+    <meta property="og:url" content={canonicalURL || 'https://zarlinoaudio.com'} />
+    <meta property="og:image" content={`https://zarlinoaudio.com${ogImage}`} />
+    <meta property="og:site_name" content="Zarlino Audio" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`https://zarlinoaudio.com${ogImage}`} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <AppShell client:load />
+    <slot />
+    <Footer client:load />
+  </body>
+</html>

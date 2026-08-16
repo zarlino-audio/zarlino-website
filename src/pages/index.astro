@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HomePage from '../components/HomePage';
+---
+
+<BaseLayout
+  title="Zarlino Audio — Professional VST/AU Plugins for Mixing and Mastering"
+  description="Zarlino Audio makes VST/AU plugins for mixing and mastering engineers. Shop ZTame — a precision high-resolution FFT-based automatic resonance suppressor built for professionals."
+  canonicalURL="https://zarlinoaudio.com/"
+  schemaType="website"
+>
+  <!-- Organization Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Zarlino Audio",
+    "url": "https://zarlinoaudio.com",
+    "logo": "https://zarlinoaudio.com/images/zarlino-logo.svg",
+    "description": "Zarlino Audio makes professional-grade VST/AU audio processing plugins for mixing, mastering, and sound design.",
+    "sameAs": [
+      "https://twitter.com/zarlinoaudio",
+      "https://instagram.com/zarlinoaudio",
+      "https://youtube.com/@zarlinoaudio"
+    ]
+  })} />
+
+  <HomePage client:load />
+</BaseLayout>

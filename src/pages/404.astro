@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page Not Found — Zarlino Audio"
+  description="The page you're looking for doesn't exist. Browse Zarlino Audio's professional VST/AU plugins for mixing and mastering."
+  canonicalURL="https://zarlinoaudio.com/404"
+>
+  <main class="relative z-[1] bg-[#050505] min-h-screen flex items-center justify-center px-6">
+    <div class="text-center max-w-[500px]">
+      <span class="font-['IBM_Plex_Mono'] text-[80px] font-bold text-[rgba(255,255,255,0.06)] leading-none">404</span>
+      <h1 class="mt-4 font-['Space_Grotesk'] font-semibold text-[28px] text-white">Page Not Found</h1>
+      <p class="mt-3 font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.7]">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/" class="inline-flex items-center justify-center bg-white text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#00D4FF] transition-all duration-300">
+          Back to Home
+        </a>
+        <a href="/#plugins" class="inline-flex items-center justify-center border border-[rgba(255,255,255,0.15)] text-white rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:border-white transition-all duration-300">
+          Browse Plugins
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

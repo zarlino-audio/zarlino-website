@@ -1,0 +1,282 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="ZTame — Dynamic Resonance Suppressor by Zarlino Audio"
+  description="ZTame is Zarlino Audio's high-resolution FFT-based automatic resonance suppressor. Per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring for mixing and mastering engineers. Windows VST3."
+  canonicalURL="https://zarlinoaudio.com/plugins/ztame"
+  schemaType="product"
+>
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ZTame",
+    "applicationCategory": "MusicApplication",
+    "operatingSystem": "Windows 10 22H2 or later",
+    "description": "High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.",
+    "offers": {
+      "@type": "Offer",
+      "price": "109.00",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/PreOrder",
+      "url": "https://zarlinoaudio.com/plugins/ztame"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Zarlino Audio"
+    },
+    "version": "1.0.0",
+    "sku": "ZA-ZTAME-100"
+  })} />
+
+  <!-- BreadcrumbList Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://zarlinoaudio.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Plugins", "item": "https://zarlinoaudio.com/#plugins" },
+      { "@type": "ListItem", "position": 3, "name": "ZTame", "item": "https://zarlinoaudio.com/plugins/ztame" }
+    ]
+  })} />
+
+  <!-- FAQPage Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does ZTame support AU or AAX formats?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. ZTame version 1.0.0 is Windows VST3 only. AU and AAX support may be considered for future releases."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can ZTame process mono audio?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. ZTame preserves the host channel layout and has automated mono-safety coverage, so it works correctly on mono tracks, stereo tracks, and buses."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does ZTame accept MIDI input?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. ZTame is an audio-only processor with no MIDI input, MIDI output, or MIDI learn feature."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does ZTame compare to Soothe2?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ZTame is a dynamic resonance suppressor in the same category as Soothe2 and similar spectral dynamics processors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with selectivity gating, split-band crossover detection, latency-aligned Dry/Wet control, and Mid/Side processing mode at a competitive price point of $109."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are the system requirements for ZTame?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ZTame requires a 64-bit VST3-capable host running on Windows 10 22H2 or later, with 4 GB RAM and a 44.1–192 kHz audio interface or session."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a free trial for ZTame?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. ZTame supports a 14-day trial period. A license key is required for continued use after the trial expires."
+        }
+      }
+    ]
+  })} />
+
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[900px] mx-auto">
+      <!-- Breadcrumb -->
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/" class="hover:text-white transition-colors">Zarlino Audio</a>
+        <span class="mx-2">/</span>
+        <a href="/#plugins" class="hover:text-white transition-colors">Plugins</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">ZTame</span>
+      </nav>
+
+      <!-- Badge -->
+      <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-3 py-1 mb-4">
+        Resonance Suppressor
+      </span>
+
+      <!-- H1 -->
+      <h1 class="font-['Space_Grotesk'] font-semibold text-white" style="font-size: clamp(40px, 5vw, 64px); line-height: 1.1; letter-spacing: -0.03em;">
+        ZTame
+      </h1>
+
+      <!-- Tagline -->
+      <p class="mt-4 font-['Inter'] text-[18px] text-[#94A3B8] leading-[1.7] max-w-[650px]">
+        A high-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, built for mixing and mastering engineers who need surgical control over harsh frequencies.
+      </p>
+
+      <!-- Price + CTA -->
+      <div class="mt-8 flex items-center gap-4">
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$109</span>
+        <a href="/#cta" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
+          Buy Now
+        </a>
+      </div>
+
+      <!-- Product Image -->
+      <div class="mt-12 rounded-xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
+        <img src="/images/plugin-card-4.jpg" alt="ZTame resonance suppressor plugin user interface showing spectral analysis and dynamic notch filtering controls" class="w-full h-auto object-cover" />
+      </div>
+
+      <!-- What It Does -->
+      <section class="mt-16">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">What ZTame Does</h2>
+        <div class="font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.8] space-y-4">
+          <p>
+            ZTame detects narrow, persistent spectral peaks in your audio and applies dynamic notch filtering to reduce them — but only while they are present. Unlike broad EQ cuts that dull the entire signal, ZTame's FFT-based analysis identifies and targets specific resonances in real time, leaving the surrounding frequencies untouched.
+          </p>
+          <p>
+            Insert ZTame on vocals to tame harsh sibilance without over-compressing. Place it on a drum bus to knock down ringing cymbal frequencies. Use it on a master bus to clean up room resonances before they reach your limiter. The per-peak detection engine works continuously, adapting to the material as it plays.
+          </p>
+          <p>
+            <strong>ZTame vs. dynamic resonance suppressors like Soothe2:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with selectivity gating (how narrowly a peak must be defined before reduction engages), a configurable split-band crossover for independent low/high detection behavior, latency-aligned Dry/Wet blending, and built-in Mid/Side processing — all without requiring a separate subscription or iLok dongle.
+          </p>
+        </div>
+      </section>
+
+      <!-- Key Features -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Key Features</h2>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            FFT-based automatic spectral peak detection and dynamic reduction
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Per-peak dynamic notch filtering — only active frequencies are reduced
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Selectivity gating for precise control over peak definition
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Configurable split-band crossover for independent low/high detection
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Stereo and Mid/Side processing modes
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            1x, 2x, and 4x oversampling for alias-free processing
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Listen mode — audition only the removed signal for precision tuning
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Latency-aligned Dry/Wet control for parallel processing
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Real-time spectrum display and gain reduction metering
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Factory presets including Gentle Mix Bus, Vocal Harshness, and Drum Resonance
+          </li>
+        </ul>
+      </section>
+
+      <!-- Controls Overview -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Controls</h2>
+        <div class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8] space-y-2">
+          <p><strong class="text-[#CBD5E1]">Sensitivity</strong> — Threshold for spectral peak detection. Raise until the gain reduction meter moves on harsh resonances.</p>
+          <p><strong class="text-[#CBD5E1]">Range</strong> — Maximum dynamic reduction applied to detected peaks (in dB).</p>
+          <p><strong class="text-[#CBD5E1]">Selectivity</strong> — How narrowly a spectral peak must be defined before reduction engages. Higher values require sharper, more isolated peaks.</p>
+          <p><strong class="text-[#CBD5E1]">Crossover</strong> — Splits the frequency spectrum into low and high bands with independent detection behavior.</p>
+          <p><strong class="text-[#CBD5E1]">Attack / Release</strong> — How quickly reduction engages and recovers after a peak subsides.</p>
+          <p><strong class="text-[#CBD5E1]">Listen</strong> — Outputs only the suppressed difference signal for precise auditioning.</p>
+          <p><strong class="text-[#CBD5E1]">Dry/Wet</strong> — Parallel blend of latency-aligned dry and processed signals.</p>
+          <p><strong class="text-[#CBD5E1]">Oversampling</strong> — Off, 2x, or 4x. Higher modes reduce aliasing at the cost of additional CPU.</p>
+          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo or Mid/Side processing.</p>
+        </div>
+      </section>
+
+      <!-- System Requirements -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">System Requirements</h2>
+        <ul class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8] space-y-1 list-disc list-inside">
+          <li>Windows 10 22H2 or later (64-bit)</li>
+          <li>VST3-compatible 64-bit host (FL Studio, Ableton Live, Cubase, Reaper, Studio One, Bitwig)</li>
+          <li>4 GB RAM minimum</li>
+          <li>44.1 kHz – 192 kHz audio interface or session</li>
+          <li>Format: VST3 only (AU and AAX not available in v1.0.0)</li>
+        </ul>
+      </section>
+
+      <!-- FAQ -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Frequently Asked Questions</h2>
+        <div class="space-y-6 font-['Inter']">
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">Does ZTame support AU or AAX formats?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is Windows VST3 only. AU (macOS) and AAX (Pro Tools) support may be considered for future releases based on customer demand.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">How does ZTame compare to Soothe2?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe2, DSEQ3, and similar spectral dynamics processors. ZTame offers selectivity gating, split-band crossover detection, latency-aligned Dry/Wet, and Mid/Side processing at a competitive $109 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">Can I use ZTame on mono tracks?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame preserves the host channel layout and has automated mono-safety test coverage. It works correctly on mono tracks, stereo tracks, and buses.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame includes a 14-day fully functional trial. A license key is required for continued use after the trial period.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">What if ZTame uses too much CPU?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Select Off or 2x oversampling (instead of 4x) and increase your audio buffer size. The FFT analysis engine scales with oversampling level and buffer size.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Changelog -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Changelog</h2>
+        <div class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8]">
+          <h3 class="text-[16px] font-semibold text-white mb-2">1.0.0 — Initial Release</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Dynamic spectral resonance suppression with FFT-based peak detection</li>
+            <li>Stereo and Mid/Side processing modes</li>
+            <li>1x, 2x, and 4x oversampling</li>
+            <li>Latency-aligned Dry/Wet control and Listen mode</li>
+            <li>Factory presets for common mixing scenarios</li>
+            <li>Real-time spectrum display and gain reduction metering</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Back to Plugins -->
+      <div class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
+        <a href="/#plugins" class="font-['Inter'] text-[15px] text-[#00D4FF] hover:underline">
+          &larr; Back to All Plugins
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
