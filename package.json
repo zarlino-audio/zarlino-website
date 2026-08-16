@@ -1,0 +1,14 @@
+{
+  "name": "zarlino-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zarlino Audio website served from Cloudflare Workers",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir=dist"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0"
+  }
+}
