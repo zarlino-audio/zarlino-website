@@ -4,7 +4,6 @@ import TrustedBy from '../sections/TrustedBy';
 import ProductShowcase from '../sections/ProductShowcase';
 import FeatureGrid from '../sections/FeatureGrid';
 import PluginLineup from '../sections/PluginLineup';
-import Testimonials from '../sections/Testimonials';
 import CTABanner from '../sections/CTABanner';
 
 const HomePage = () => {
@@ -35,7 +34,6 @@ const HomePage = () => {
       <ProductShowcase />
       <FeatureGrid />
       <PluginLineup />
-      <Testimonials />
       <CTABanner />
     </main>
   );

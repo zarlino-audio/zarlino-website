@@ -18,7 +18,6 @@ const Navigation = () => {
     { label: 'Plugins', href: '/#plugins' },
     { label: 'Features', href: '/#features' },
     { label: 'Showcase', href: '/#showcase' },
-    { label: 'Community', href: '/#testimonials' },
   ];
 
   return (

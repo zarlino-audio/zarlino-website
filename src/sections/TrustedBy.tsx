@@ -45,7 +45,7 @@ const TrustedBy = () => {
     >
       <div className="max-w-[1000px] mx-auto px-6">
         <p className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#64748B] text-center mb-5">
-          Trusted by engineers at
+          Compatible with
         </p>
         <div className="flex items-center justify-center gap-8 md:gap-12 flex-wrap">
           {logos.map((logo) => (
