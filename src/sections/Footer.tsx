@@ -9,6 +9,7 @@ const footerLinks = {
     { label: 'ZTame', href: '/plugins/ztame' },
     { label: 'ZScorch', href: '/plugins/zscorch' },
     { label: 'ZVocals', href: '/plugins/zvocals' },
+    { label: 'Zarlino Essentials', href: '/plugins/essentials' },
   ],
   Resources: [
     { label: 'ZTame Documentation', href: '/plugins/ztame' },

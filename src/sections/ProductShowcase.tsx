@@ -128,10 +128,10 @@ const ProductShowcase = () => {
               FREE
             </span>
             <span className="font-['Space_Grotesk'] text-[18px] text-[#64748B] line-through">
-              $109
+              $49
             </span>
             <span className="font-['Inter'] text-[13px] text-[#94A3B8]">
-              free until August 21, 2026
+              free until August 25, 2026
             </span>
           </div>
 

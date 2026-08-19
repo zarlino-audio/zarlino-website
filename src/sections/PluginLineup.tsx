@@ -11,7 +11,7 @@ const plugins = [
     category: 'Resonance Suppressor',
     description:
       'High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.',
-    price: 109,
+    price: 49,
     image: '/images/ztame-ui.png',
     badge: 'Public Beta',
     priceLabel: 'FREE',
@@ -22,10 +22,10 @@ const plugins = [
     category: 'Harmonic Processor',
     description:
       'Adaptive harmonic processor with multiband saturation across six topologies — Tube, Tape, Germanium, Transistor, Diode, and Wavefold — driven by Lift, Character, and Mix macros.',
-    price: 129,
+    price: 79,
     image: '/images/zscorch-ui.jpg',
-    badge: 'Preorder',
-    priceLabel: '$129',
+    badge: 'Public Beta',
+    priceLabel: 'FREE',
   },
   {
     id: 'zvocals',
@@ -33,10 +33,21 @@ const plugins = [
     category: 'Vocal Channel Strip',
     description:
       'Three-macro vocal processor: TONE, PUNCH, and BODY drive a five-stage chain — SSL EQ, FET compression, 4-band multiband, opto compression, and an always-adaptive de-esser.',
-    price: 149,
+    price: 49,
     image: '/images/zvocals-ui.jpg',
-    badge: 'Preorder',
-    priceLabel: '$149',
+    badge: 'Public Beta',
+    priceLabel: 'FREE',
+  },
+  {
+    id: 'essentials',
+    name: 'Zarlino Essentials',
+    category: 'Complete Toolkit Bundle',
+    description:
+      'All three Zarlino Audio plugins in one bundle — ZTame, ZScorch, and ZVocals — for $120 after the beta, a $57 saving on the separate total of $177.',
+    price: 120,
+    image: '/images/zarlino-logo.svg',
+    badge: 'Bundle',
+    priceLabel: 'FREE',
   },
 ];
 
@@ -149,10 +160,10 @@ const PluginLineup = () => {
                       Learn More
                     </a>
                     <a
-                      href={`/plugins/${plugin.id}#download`}
+                      href={plugin.id === 'essentials' ? '/plugins/essentials#pricing' : `/plugins/${plugin.id}#download`}
                       className="font-['Inter'] font-medium text-[14px] text-[#00D4FF] hover:underline transition-all"
                     >
-                      {plugin.id === 'ztame' ? 'Get Free License' : 'Download Trial'}
+                      {plugin.id === 'ztame' ? 'Get Free License' : plugin.id === 'essentials' ? 'View Bundle' : 'Download Trial'}
                     </a>
                   </div>
                 </div>

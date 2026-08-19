@@ -20,7 +20,7 @@ export interface Env {
 const FEEDBACK_REPO = 'zarlino-audio/zarlino-feedback';
 const FEEDBACK_CATEGORIES = ['bug', 'suggestion', 'other'] as const;
 
-const PROMO_END = new Date('2026-08-21T23:59:59Z');
+const PROMO_END = new Date('2026-08-25T23:59:59Z');
 const PLUGIN_ID = 'ZTAME';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -103,7 +103,7 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
     return json(
       {
         error:
-          'The free ZTame licensing period ended on August 21, 2026. Contact support@zarlinoaudio.com for licensing options.',
+          'The free ZTame licensing period ended on August 25, 2026. Contact support@zarlinoaudio.com for licensing options.',
       },
       403,
     );

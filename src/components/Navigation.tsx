@@ -36,8 +36,8 @@ const Navigation = () => {
           Beta
         </span>
         <span className="font-['Inter'] text-[12px] text-[#94A3B8] truncate">
-          ZTame is in public beta — official launch{' '}
-          <span className="text-white">August 23, 2026</span>. ZScorch and ZVocals preorders are open.
+          All plugins are in public beta — free until{' '}
+          <span className="text-white">August 25, 2026</span>.
         </span>
         <a
           href="/report"

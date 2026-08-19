@@ -61,7 +61,7 @@ const LicenseForm = () => {
             Get Your Free License
           </h3>
           <p className="font-['Inter'] text-[13px] text-[#94A3B8]">
-            Free until August 21, 2026 — your key is perpetual.
+            Free until August 25, 2026 — your key is perpetual.
           </p>
         </div>
       </div>
