@@ -13,6 +13,30 @@ const plugins = [
       'High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.',
     price: 109,
     image: '/images/ztame-ui.png',
+    badge: 'Public Beta',
+    priceLabel: 'FREE',
+  },
+  {
+    id: 'zscorch',
+    name: 'ZScorch',
+    category: 'Harmonic Processor',
+    description:
+      'Adaptive harmonic processor with multiband saturation across six topologies — Tube, Tape, Germanium, Transistor, Diode, and Wavefold — driven by Lift, Character, and Mix macros.',
+    price: 129,
+    image: '/images/zscorch-ui.jpg',
+    badge: 'Preorder',
+    priceLabel: '$129',
+  },
+  {
+    id: 'zvocals',
+    name: 'ZVocals',
+    category: 'Vocal Channel Strip',
+    description:
+      'Three-macro vocal processor: TONE, PUNCH, and BODY drive a five-stage chain — SSL EQ, FET compression, 4-band multiband, opto compression, and an always-adaptive de-esser.',
+    price: 149,
+    image: '/images/zvocals-ui.jpg',
+    badge: 'Preorder',
+    priceLabel: '$149',
   },
 ];
 
@@ -54,10 +78,6 @@ const PluginLineup = () => {
 
     return () => ctx.revert();
   }, []);
-
-  const handleAddToCart = (plugin: (typeof plugins)[0]) => {
-    window.location.href = `/plugins/${plugin.id}#license`;
-  };
 
   return (
     <section
@@ -107,7 +127,7 @@ const PluginLineup = () => {
                   {plugin.name}
                 </h3>
                 <span className="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-2 py-0.5">
-                  Beta
+                  {plugin.badge}
                 </span>
               </div>
                 <p className="font-['IBM_Plex_Mono'] text-[11px] uppercase text-[#64748B] mt-1">
@@ -119,7 +139,7 @@ const PluginLineup = () => {
 
                 <div className="mt-5 flex items-center justify-between">
                   <span className="font-['Space_Grotesk'] font-semibold text-[18px] text-white">
-                    FREE
+                    {plugin.priceLabel}
                   </span>
                   <div className="flex items-center gap-4">
                     <a
@@ -128,12 +148,12 @@ const PluginLineup = () => {
                     >
                       Learn More
                     </a>
-                    <button
-                      onClick={() => handleAddToCart(plugin)}
+                    <a
+                      href={`/plugins/${plugin.id}#download`}
                       className="font-['Inter'] font-medium text-[14px] text-[#00D4FF] hover:underline transition-all"
                     >
-                      Get Free License
-                    </button>
+                      {plugin.id === 'ztame' ? 'Get Free License' : 'Download Trial'}
+                    </a>
                   </div>
                 </div>
               </div>

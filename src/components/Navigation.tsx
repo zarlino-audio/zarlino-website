@@ -16,8 +16,9 @@ const Navigation = () => {
 
   const navLinks = [
     { label: 'Plugins', href: '/#plugins' },
-    { label: 'Features', href: '/#features' },
-    { label: 'Showcase', href: '/#showcase' },
+    { label: 'ZTame', href: '/plugins/ztame' },
+    { label: 'ZScorch', href: '/plugins/zscorch' },
+    { label: 'ZVocals', href: '/plugins/zvocals' },
     { label: 'Feedback', href: '/report' },
   ];
 
@@ -36,7 +37,7 @@ const Navigation = () => {
         </span>
         <span className="font-['Inter'] text-[12px] text-[#94A3B8] truncate">
           ZTame is in public beta — official launch{' '}
-          <span className="text-white">August 23, 2026</span>.
+          <span className="text-white">August 23, 2026</span>. ZScorch and ZVocals preorders are open.
         </span>
         <a
           href="/report"

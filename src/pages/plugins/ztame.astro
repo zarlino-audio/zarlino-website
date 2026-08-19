@@ -64,7 +64,7 @@ import { Download } from 'lucide-react';
         "name": "Can ZTame process mono audio?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. ZTame preserves the host channel layout and has automated mono-safety coverage, so it works correctly on mono tracks, stereo tracks, and buses."
+          "text": "No. ZTame version 1.0.0 is a stereo-only processor. Its FFT engine, spectral detection, and Mid/Side modes require a stereo (2-channel) bus. Use it on stereo tracks and buses; insert a stereo-capable upmixer or process at the stereo bus level for mono sources."
         }
       },
       {
@@ -77,10 +77,10 @@ import { Download } from 'lucide-react';
       },
       {
         "@type": "Question",
-        "name": "How does ZTame compare to Soothe2?",
+        "name": "How does ZTame compare to Soothe 3?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "ZTame is a dynamic resonance suppressor in the same category as Soothe2 and similar spectral dynamics processors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with selectivity gating, split-band crossover detection, latency-aligned Dry/Wet control, and Mid/Side processing mode at a competitive price point of $109."
+          "text": "ZTame is a Soothe 3 alternative in the same category of dynamic resonance suppressors and spectral dynamics processors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with selectivity gating, split-band crossover detection, latency-aligned Dry/Wet control, and Mid/Side processing mode at a competitive price point of $109."
         }
       },
       {
@@ -231,7 +231,7 @@ import { Download } from 'lucide-react';
             Insert ZTame on vocals to tame harsh sibilance without over-compressing. Place it on a drum bus to knock down ringing cymbal frequencies. Use it on a master bus to clean up room resonances before they reach your limiter. The per-peak detection engine works continuously, adapting to the material as it plays.
           </p>
           <p>
-            <strong>ZTame vs. dynamic resonance suppressors like Soothe2:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with selectivity gating (how narrowly a peak must be defined before reduction engages), a configurable split-band crossover for independent low/high detection behavior, latency-aligned Dry/Wet blending, and built-in Mid/Side processing — all without requiring a separate subscription or iLok dongle.
+            <strong>ZTame vs. dynamic resonance suppressors like Soothe 3:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with selectivity gating (how narrowly a peak must be defined before reduction engages), a configurable split-band crossover for independent low/high detection behavior, latency-aligned Dry/Wet blending, and built-in Mid/Side processing — all without requiring a separate subscription or iLok dongle.
           </p>
         </div>
       </section>
@@ -278,7 +278,7 @@ import { Download } from 'lucide-react';
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Factory presets including Gentle Mix Bus, Vocal Harshness, and Drum Resonance
+            Six factory presets: Vocal Harshness Tamer, De-Boom, Guitar Resonance Smooth, Cymbal Ring Killer, Master Polish, and Podcast Clarity
           </li>
         </ul>
       </section>
@@ -295,7 +295,7 @@ import { Download } from 'lucide-react';
           <p><strong class="text-[#CBD5E1]">Listen</strong> — Outputs only the suppressed difference signal for precise auditioning.</p>
           <p><strong class="text-[#CBD5E1]">Dry/Wet</strong> — Parallel blend of latency-aligned dry and processed signals.</p>
           <p><strong class="text-[#CBD5E1]">Oversampling</strong> — Off, 2x, or 4x. Higher modes reduce aliasing at the cost of additional CPU.</p>
-          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo or Mid/Side processing.</p>
+          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo, M/S Blend, Mid Only, or Side Only. Mid/Side modes encode L/R into Mid/Side, process, then decode back to L/R; isolation modes process only the Mid or only the Side channel.</p>
         </div>
       </section>
 
@@ -308,6 +308,8 @@ import { Download } from 'lucide-react';
           <li>4 GB RAM minimum</li>
           <li>44.1 kHz – 192 kHz audio interface or session</li>
           <li>Format: VST3 only (AU and AAX not available in v1.0.0)</li>
+          <li>Channels: Stereo only (no mono or multi-channel support in v1.0.0)</li>
+          <li>Latency: FFT analysis latency scales with oversampling — 2048 samples at 1×, 1024 + 2×24 at 2×, 512 + 3×24 at 4× (≈22 ms in 2× mode at 44.1 kHz). Dry/Wet is latency-aligned so parallel processing stays sample-accurate.</li>
         </ul>
       </section>
 
@@ -320,12 +322,12 @@ import { Download } from 'lucide-react';
             <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is Windows VST3 only. AU (macOS) and AAX (Pro Tools) support may be considered for future releases based on customer demand.</p>
           </div>
           <div>
-            <h3 class="text-[16px] font-semibold text-white mb-1">How does ZTame compare to Soothe2?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe2, DSEQ3, and similar spectral dynamics processors. ZTame offers selectivity gating, split-band crossover detection, latency-aligned Dry/Wet, and Mid/Side processing at a competitive $109 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
+            <h3 class="text-[16px] font-semibold text-white mb-1">How does ZTame compare to Soothe 3?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe 3, DSEQ3, and similar spectral dynamics processors. ZTame offers selectivity gating, split-band crossover detection, latency-aligned Dry/Wet, and Mid/Side processing at a competitive $109 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Can I use ZTame on mono tracks?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame preserves the host channel layout and has automated mono-safety test coverage. It works correctly on mono tracks, stereo tracks, and buses.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is a stereo-only processor. Its FFT engine, spectral detection, and Mid/Side modes require a stereo bus, so it is intended for stereo tracks and buses. If you need mono processing, use it on a stereo bus, or look at <a href="/plugins/zvocals" class="text-[#00D4FF] hover:underline">ZVocals</a> for a channel strip that handles mono and stereo sources natively.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
@@ -345,12 +347,35 @@ import { Download } from 'lucide-react';
           <h3 class="text-[16px] font-semibold text-white mb-2">1.0.0 — Initial Release</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>Dynamic spectral resonance suppression with FFT-based peak detection</li>
-            <li>Stereo and Mid/Side processing modes</li>
+            <li>Stereo and Mid/Side processing modes (Stereo, M/S Blend, Mid Only, Side Only)</li>
             <li>1x, 2x, and 4x oversampling</li>
             <li>Latency-aligned Dry/Wet control and Listen mode</li>
-            <li>Factory presets for common mixing scenarios</li>
+            <li>Six factory presets: Vocal Harshness Tamer, De-Boom, Guitar Resonance Smooth, Cymbal Ring Killer, Master Polish, Podcast Clarity</li>
             <li>Real-time spectrum display and gain reduction metering</li>
           </ul>
+        </div>
+      </section>
+
+      <!-- More from the Zarlino ecosystem -->
+      <section class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-6">More from the Zarlino Audio lineup</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="/plugins/zscorch" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
+            <div class="flex items-center justify-between">
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZScorch</h3>
+              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Adaptive Harmonic Processor</span>
+            </div>
+            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Multi-mode multiband harmonic saturation with Lift, Character, and Mix macros. Warm up, distort, and glue with six saturation topologies.</p>
+            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
+          </a>
+          <a href="/plugins/zvocals" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
+            <div class="flex items-center justify-between">
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZVocals</h3>
+              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Vocal Channel Strip</span>
+            </div>
+            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">A five-stage vocal channel strip — SSL EQ, FET, multiband, opto, de-esser — controlled by just three macros: TONE, PUNCH, and BODY.</p>
+            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
+          </a>
         </div>
       </section>
 

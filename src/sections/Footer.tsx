@@ -7,10 +7,13 @@ gsap.registerPlugin(ScrollTrigger);
 const footerLinks = {
   Products: [
     { label: 'ZTame', href: '/plugins/ztame' },
+    { label: 'ZScorch', href: '/plugins/zscorch' },
+    { label: 'ZVocals', href: '/plugins/zvocals' },
   ],
   Resources: [
-    { label: 'Documentation', href: '/plugins/ztame' },
-    { label: 'FAQ', href: '/plugins/ztame' },
+    { label: 'ZTame Documentation', href: '/plugins/ztame' },
+    { label: 'ZScorch FAQ', href: '/plugins/zscorch#faq' },
+    { label: 'ZVocals FAQ', href: '/plugins/zvocals#faq' },
     { label: 'Report a Bug or Suggestion', href: '/report' },
   ],
   Company: ['About', 'Contact'],
@@ -74,7 +77,7 @@ const Footer = () => {
           <div className="footer-col col-span-2 md:col-span-1">
             <img src="/images/zarlino-logo.svg" alt="Zarlino Audio" className="h-7 w-auto mb-1" />
             <p className="mt-3 font-['Inter'] text-[14px] text-[#64748B] leading-[1.6]">
-              Zarlino Audio makes VST/AU plugins for mixing and mastering engineers.
+              Zarlino Audio makes Windows VST3 plugins for mixing and mastering engineers.
             </p>
           </div>
 

@@ -1,0 +1,369 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Download } from 'lucide-react';
+---
+
+<BaseLayout
+  title="ZScorch — Adaptive Harmonic Processor by Zarlino Audio"
+  description="ZScorch is Zarlino Audio's adaptive harmonic processor. Multiband saturation across six topologies, dynamic spectral tilt, and a high-frequency exciter driven by Lift, Character, and Mix macros. Windows VST3."
+  canonicalURL="https://zarlinoaudio.com/plugins/zscorch"
+  schemaType="product"
+>
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ZScorch",
+    "applicationCategory": "MusicApplication",
+    "operatingSystem": "Windows 10 22H2 or later",
+    "description": "Adaptive harmonic processor with multiband saturation across six topologies (Tube, Tape, Germanium, Transistor, Diode, Wavefold), dynamic spectral tilt, and a high-frequency exciter. Three macros — Lift, Character, and Mix — drive the whole chain.",
+    "offers": {
+      "@type": "Offer",
+      "price": "129",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/PreOrder",
+      "description": "Pre-order pricing. A 14-day fully functional trial is built into the plugin.",
+      "url": "https://zarlinoaudio.com/plugins/zscorch"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Zarlino Audio"
+    },
+    "version": "1.0.0",
+    "sku": "ZA-ZSCORCH-100"
+  })} />
+
+  <!-- BreadcrumbList Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://zarlinoaudio.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Plugins", "item": "https://zarlinoaudio.com/#plugins" },
+      { "@type": "ListItem", "position": 3, "name": "ZScorch", "item": "https://zarlinoaudio.com/plugins/zscorch" }
+    ]
+  })} />
+
+  <!-- FAQPage Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is ZScorch?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ZScorch is an adaptive harmonic processor. It splits audio into 1 to 4 bands with Linkwitz-Riley crossovers, applies one of six saturation topologies per band, adds dynamic spectral tilt and a high-frequency exciter, then recombines through a ceiling limiter and dry/wet mix."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What saturation modes does ZScorch offer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ZScorch offers six saturation modes: Tube (asymmetric tanh), Tape, Germanium, Transistor (push-pull dead-zone), Diode (symmetric soft clip), and Wavefold. Wavefold is the most aggressive and forces 4x oversampling."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What do the Lift, Character, and Mix macros do?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Lift (0–1) is the macro saturation amount, Character (−1..1) steers the tonal balance of the saturation, and Mix (0–1) blends the processed signal with the delay-compensated dry signal. They are the primary controls for shaping the sound."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does ZScorch support AU or AAX formats?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. ZScorch version 1.0.0 is Windows VST3 plus a standalone app. AU and AAX support may be considered for future releases."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can ZScorch process mono audio?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. ZScorch version 1.0.0 is a stereo-only processor. Its multiband crossover, saturation, and exciter stages require a stereo bus."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a free trial for ZScorch?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. ZScorch includes a 14-day fully functional trial. A license key is required for continued use after the trial period."
+        }
+      }
+    ]
+  })} />
+
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[900px] mx-auto">
+      <!-- Breadcrumb -->
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/" class="hover:text-white transition-colors">Zarlino Audio</a>
+        <span class="mx-2">/</span>
+        <a href="/#plugins" class="hover:text-white transition-colors">Plugins</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">ZScorch</span>
+      </nav>
+
+      <div class="flex items-center gap-2 mb-4">
+        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-3 py-1">
+          Adaptive Harmonic Processor
+        </span>
+        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-3 py-1">
+          Preorder
+        </span>
+      </div>
+
+      <!-- H1 -->
+      <h1 class="font-['Space_Grotesk'] font-semibold text-white" style="font-size: clamp(40px, 5vw, 64px); line-height: 1.1; letter-spacing: -0.03em;">
+        ZScorch
+      </h1>
+
+      <!-- Tagline -->
+      <p class="mt-4 font-['Inter'] text-[18px] text-[#94A3B8] leading-[1.7] max-w-[650px]">
+        An adaptive harmonic processor that adds warmth, edge, and glue through multiband saturation — with six distortion topologies, dynamic spectral tilt, and a high-frequency exciter, all shaped by three simple macros.
+      </p>
+
+      <!-- Pricing + CTA -->
+      <div class="mt-8 flex items-center gap-4 flex-wrap">
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$129</span>
+        <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
+          Pre-order — a 14-day fully functional trial is built in.
+        </span>
+        <a href="#download" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
+          Try ZScorch
+        </a>
+      </div>
+
+      <!-- Product Image -->
+      <div class="mt-12 rounded-xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
+        <img src="/images/zscorch-ui.jpg" alt="ZScorch adaptive harmonic processor plugin user interface showing multiband saturation controls, Lift, Character, and Mix macros" class="w-full h-auto object-cover" />
+      </div>
+
+      <!-- Download -->
+      <section class="mt-14" id="download">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Download ZScorch 1.0.0</h2>
+        <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
+          Grab the installer for the full standalone app, or the VST3 for your DAW. All builds are Windows 10 22H2+ (64-bit).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a
+            href="/downloads/ZScorch-v1.0.0-Windows-Installer.exe"
+            download
+            class="group flex flex-col justify-between rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 hover:bg-[rgba(0,212,255,0.08)] transition-colors duration-300"
+          >
+            <div>
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">Standalone Installer</h3>
+              <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Windows installer (.exe) — includes the app and VST3 plugin.</p>
+            </div>
+            <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
+              <Download size={15} /> Download .exe &middot; 4 MB
+            </span>
+          </a>
+
+          <a
+            href="/downloads/ZScorch-v1.0.0-Windows-VST3.zip"
+            download
+            class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
+          >
+            <div>
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">VST3 Plugin</h3>
+              <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">VST3 bundle (.zip) for FL Studio, Ableton Live, Cubase, Reaper, and more.</p>
+            </div>
+            <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
+              <Download size={15} /> Download VST3 &middot; 2 MB
+            </span>
+          </a>
+
+          <a
+            href="/downloads/ZScorch-v1.0.0-Windows-Standalone.zip"
+            download
+            class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
+          >
+            <div>
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">Standalone App</h3>
+              <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Portable standalone build (.zip) — no installer required.</p>
+            </div>
+            <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
+              <Download size={15} /> Download .zip &middot; 2 MB
+            </span>
+          </a>
+        </div>
+      </section>
+
+      <!-- What It Does -->
+      <section class="mt-16">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">What ZScorch Does</h2>
+        <div class="font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.8] space-y-4">
+          <p>
+            ZScorch splits your audio into 1 to 4 bands with Linkwitz-Riley crossovers, saturates each band independently, and recombines them through a ceiling limiter and dry/wet mix. Because each band can use a different saturation topology, you can keep low end clean while adding tape warmth to the mids and diode edge to the highs.
+          </p>
+          <p>
+            Three macros — <strong class="text-[#CBD5E1]">Lift</strong>, <strong class="text-[#CBD5E1]">Character</strong>, and <strong class="text-[#CBD5E1]">Mix</strong> — shape the whole chain. Lift drives the saturation amount, Character steers the tonal balance, and Mix blends the processed and dry signals. A dynamic spectral tilt adds or removes high-frequency energy, and a dedicated exciter high-passes around 3.5 kHz to add air and presence.
+          </p>
+          <p>
+            Insert ZScorch on a drum bus to glue and energize, on guitars for aggressive or musical distortion, on a bass to add harmonic weight, or on a mix bus for gentle analog-style saturation and top-end sparkle.
+          </p>
+        </div>
+      </section>
+
+      <!-- Key Features -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Key Features</h2>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Six saturation topologies: Tube, Tape, Germanium, Transistor, Diode, Wavefold
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            1–4 band Linkwitz-Riley multiband processing (defaults 250 Hz, 1.5 kHz, 6 kHz)
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Lift, Character, and Mix macros for one-glance sound shaping
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Dynamic spectral tilt (±6 dB complementary shelves at 1 kHz pivot)
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            High-frequency exciter with 3.5 kHz high-pass gate and 2x oversampled harmonic generation
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Pre/Post EQ (low shelf, bell, high shelf) and per-band gain staging
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Output ceiling limiter and latency-aligned Dry/Wet control
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            2x oversampling standard, 4x optional (Wavefold forces 4x)
+          </li>
+          <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
+            <span class="text-[#00D4FF] mt-1">&#10003;</span>
+            Seven factory presets: Warm Analog Glue, Vintage Tape Sizzle, Transistor Edge, Clean Harmonic Lift, Multi-Band Character, Aggressive Crunch, Smooth Mastering Chain
+          </li>
+        </ul>
+      </section>
+
+      <!-- Controls Overview -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Controls</h2>
+        <div class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8] space-y-2">
+          <p><strong class="text-[#CBD5E1]">Lift</strong> — Master saturation amount (0–1). Drives harmonic content across all active bands.</p>
+          <p><strong class="text-[#CBD5E1]">Character</strong> — Steers the tonal balance of the saturation (−1..1), from darker to brighter harmonics.</p>
+          <p><strong class="text-[#CBD5E1]">Mix</strong> — Dry/wet blend (0–1) of the processed and delay-compensated dry signals.</p>
+          <p><strong class="text-[#CBD5E1]">Band Count</strong> — Single, Two, Three, or Four bands. Crossovers are user-adjustable Linkwitz-Riley (defaults 250 Hz / 1.5 kHz / 6 kHz).</p>
+          <p><strong class="text-[#CBD5E1]">Saturation Mode (per band)</strong> — Tube, Tape, Germanium, Transistor, Diode, or Wavefold.</p>
+          <p><strong class="text-[#CBD5E1]">Harm Reduction (per band)</strong> — Spectral shelf that reduces harmonic build-up in the high end (default 0.7).</p>
+          <p><strong class="text-[#CBD5E1]">Tilt</strong> — Dynamic spectral tilt with complementary ±3 dB shelves at a 1 kHz pivot (net ±6 dB).</p>
+          <p><strong class="text-[#CBD5E1]">Exciter</strong> — High-frequency enhancer gated above 3.5 kHz, generating harmonics with a 2x oversampled x + k·x³ polynomial.</p>
+          <p><strong class="text-[#CBD5E1]">Pre/Post EQ</strong> — Low shelf (20–500 Hz, ±12 dB), bell, and high shelf before and after the saturation stage.</p>
+          <p><strong class="text-[#CBD5E1]">Output Ceiling</strong> — Ceiling limiter (−12 to −0.1 dB) that tames peak overshoot from saturation.</p>
+          <p><strong class="text-[#CBD5E1]">Oversampling</strong> — 2x standard, 4x optional. Wavefold mode requires 4x.</p>
+        </div>
+      </section>
+
+      <!-- System Requirements -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">System Requirements</h2>
+        <ul class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8] space-y-1 list-disc list-inside">
+          <li>Windows 10 22H2 or later (64-bit)</li>
+          <li>VST3-compatible 64-bit host (FL Studio, Ableton Live, Cubase, Reaper, Studio One, Bitwig) or standalone app</li>
+          <li>4 GB RAM minimum</li>
+          <li>44.1 kHz – 192 kHz audio interface or session</li>
+          <li>Channels: Stereo only (no mono or multi-channel support in v1.0.0)</li>
+          <li>Latency: minimal — only the oversampling and exciter filter group delay</li>
+        </ul>
+      </section>
+
+      <!-- FAQ -->
+      <section class="mt-12" id="faq">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Frequently Asked Questions</h2>
+        <div class="space-y-6 font-['Inter']">
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">What is ZScorch?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZScorch is an adaptive harmonic processor. It splits audio into 1 to 4 bands, saturates each band with one of six topologies, adds dynamic spectral tilt and a high-frequency exciter, and recombines through a ceiling limiter and dry/wet mix.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">What saturation modes does ZScorch offer?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Six modes: Tube (asymmetric tanh), Tape, Germanium, Transistor (push-pull dead-zone), Diode (symmetric soft clip), and Wavefold. Wavefold is the most aggressive and forces 4x oversampling.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">What do the Lift, Character, and Mix macros do?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Lift is the macro saturation amount (0–1), Character steers the tonal balance of the harmonics (−1..1), and Mix blends processed with delay-compensated dry signal (0–1).</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">Does ZScorch support AU or AAX formats?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZScorch version 1.0.0 is Windows VST3 plus a standalone app. AU (macOS) and AAX (Pro Tools) support may be considered for future releases.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">Can I use ZScorch on mono tracks?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZScorch version 1.0.0 is a stereo-only processor, designed for stereo tracks and buses.</p>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZScorch includes a 14-day fully functional trial. A license key is required for continued use after the trial period.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Changelog -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Changelog</h2>
+        <div class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8]">
+          <h3 class="text-[16px] font-semibold text-white mb-2">1.0.0 — Adaptive Harmonic Processor</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Multiband adaptive harmonic processor with 1–4 band Linkwitz-Riley crossover</li>
+            <li>Six saturation topologies: Tube, Tape, Germanium, Transistor, Diode, Wavefold</li>
+            <li>Lift, Character, and Mix macros</li>
+            <li>Dynamic spectral tilt and high-frequency exciter (3.5 kHz gate, 2x oversampled)</li>
+            <li>Pre/Post EQ, per-band gain staging, output ceiling limiter</li>
+            <li>2x/4x oversampling and latency-aligned Dry/Wet</li>
+            <li>Seven factory presets</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- More from the Zarlino ecosystem -->
+      <section class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-6">More from the Zarlino Audio lineup</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="/plugins/ztame" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
+            <div class="flex items-center justify-between">
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZTame</h3>
+              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Resonance Suppressor</span>
+            </div>
+            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">High-resolution FFT-based dynamic resonance suppression for harsh frequencies and ringing — the Soothe 3 alternative for spectral dynamics.</p>
+            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
+          </a>
+          <a href="/plugins/zvocals" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
+            <div class="flex items-center justify-between">
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZVocals</h3>
+              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Vocal Channel Strip</span>
+            </div>
+            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">A five-stage vocal channel strip — SSL EQ, FET, multiband, opto, de-esser — controlled by just three macros: TONE, PUNCH, and BODY.</p>
+            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Back to Plugins -->
+      <div class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
+        <a href="/#plugins" class="font-['Inter'] text-[15px] text-[#00D4FF] hover:underline">
+          &larr; Back to All Plugins
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

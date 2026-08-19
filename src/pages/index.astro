@@ -4,8 +4,8 @@ import HomePage from '../components/HomePage';
 ---
 
 <BaseLayout
-  title="Zarlino Audio — Professional VST/AU Plugins for Mixing and Mastering"
-  description="Zarlino Audio makes VST/AU plugins for mixing and mastering engineers. Shop ZTame — a precision high-resolution FFT-based automatic resonance suppressor built for professionals."
+  title="Zarlino Audio — Precision Audio Processing Plugins: ZTame, ZScorch, ZVocals"
+  description="Zarlino Audio builds precision audio processing plugins for mixing and mastering. ZTame — automatic resonance suppression. ZScorch — adaptive harmonic processing. ZVocals — a three-macro vocal channel strip."
   canonicalURL="https://zarlinoaudio.com/"
   schemaType="website"
 >
@@ -16,11 +16,58 @@ import HomePage from '../components/HomePage';
     "name": "Zarlino Audio",
     "url": "https://zarlinoaudio.com",
     "logo": "https://zarlinoaudio.com/images/zarlino-logo.svg",
-    "description": "Zarlino Audio makes professional-grade VST/AU audio processing plugins for mixing, mastering, and sound design.",
+    "description": "Zarlino Audio makes precision audio processing plugins for mixing, mastering, and vocal production. Creators of ZTame, ZScorch, and ZVocals.",
     "sameAs": [
       "https://twitter.com/zarlinoaudio",
       "https://instagram.com/zarlinoaudio",
       "https://youtube.com/@zarlinoaudio"
+    ]
+  })} />
+
+  <!-- WebSite Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Zarlino Audio",
+    "url": "https://zarlinoaudio.com",
+    "description": "Precision audio processing plugins for mixing, mastering, and vocal production.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Zarlino Audio",
+      "url": "https://zarlinoaudio.com"
+    }
+  })} />
+
+  <!-- ItemList of Products -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Zarlino Audio Plugin Lineup",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "ZTame",
+        "url": "https://zarlinoaudio.com/plugins/ztame",
+        "image": "https://zarlinoaudio.com/images/ztame-ui.png",
+        "description": "High-resolution FFT-based automatic resonance suppressor for harsh frequencies and ringing."
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "ZScorch",
+        "url": "https://zarlinoaudio.com/plugins/zscorch",
+        "image": "https://zarlinoaudio.com/images/zscorch-ui.jpg",
+        "description": "Adaptive harmonic processor with multiband saturation across six topologies."
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "ZVocals",
+        "url": "https://zarlinoaudio.com/plugins/zvocals",
+        "image": "https://zarlinoaudio.com/images/zvocals-ui.jpg",
+        "description": "Three-macro vocal channel strip — SSL EQ, FET, multiband, opto, and de-esser."
+      }
     ]
   })} />
 
