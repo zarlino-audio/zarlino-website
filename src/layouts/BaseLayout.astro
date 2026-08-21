@@ -9,13 +9,15 @@ export interface Props {
   ogImage?: string;
   canonicalURL?: string;
   schemaType?: string;
+  noindex?: boolean;
 }
 const {
   title,
   description,
   ogImage = '/images/zarlino-logo.svg',
   canonicalURL,
-  schemaType
+  schemaType,
+  noindex = false
 } = Astro.props;
 ---
 
@@ -24,6 +26,9 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Robots -->
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
 
     <!-- Primary Meta -->
     <title>{title}</title>
@@ -58,5 +63,25 @@ const {
     <AppShell client:load />
     <slot />
     <Footer client:load />
+
+    <!-- Page-view beacon for the /admin dashboard (no-op if KV is not bound) -->
+    <script is:inline>
+      (function () {
+        try {
+          var p = window.location.pathname;
+          if (p === '/admin' || p.startsWith('/api/')) return;
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/track', new Blob([JSON.stringify({ path: p })], { type: 'application/json' }));
+          } else {
+            fetch('/api/track', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: p }),
+              keepalive: true,
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
   </body>
 </html>

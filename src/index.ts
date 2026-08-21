@@ -15,10 +15,14 @@ export interface Env {
   ASSETS: Fetcher;
   ZARLINO_LICENSE_PRIVATE_KEY?: string;
   GITHUB_TOKEN?: string;
+  ADMIN_TOKEN?: string;
+  ZARLINO_KV?: KVNamespace;
 }
 
 const FEEDBACK_REPO = 'zarlino-audio/zarlino-feedback';
+const SITE_REPO = 'zarlino-audio/zarlino-website';
 const FEEDBACK_CATEGORIES = ['bug', 'suggestion', 'other'] as const;
+const SITE_BASE = 'https://zarlinoaudio.com';
 
 const PROMO_END = new Date('2026-08-25T23:59:59Z');
 const PLUGIN_ID = 'ZTAME';
@@ -30,8 +34,8 @@ function json(body: unknown, status = 200): Response {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
 }
@@ -120,6 +124,12 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
   const payloadBytes = new Uint8Array(payload);
 
   const signature = await signRsaSha256(pem, payloadBytes);
+
+  if (env.ZARLINO_KV) {
+    const today = new Date().toISOString().slice(0, 10);
+    await incr(env.ZARLINO_KV, 'licenses:total');
+    await incr(env.ZARLINO_KV, `licenses:${today}`);
+  }
 
   const blob: number[] = Array.from(payloadBytes);
   blob.push((signature.length >> 8) & 0xff, signature.length & 0xff);
@@ -214,6 +224,183 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
   return json({ ok: true, url: issue.html_url || '' });
 }
 
+/* ------------------------------------------------------------------ *
+ * Admin dashboard + site monitoring
+ * ------------------------------------------------------------------ */
+
+const SITE_PAGES = [
+  '/',
+  '/plugins/ztame',
+  '/plugins/zscorch',
+  '/plugins/zvocals',
+  '/plugins/essentials',
+  '/report',
+];
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function adminAuthorized(request: Request, env: Env): boolean {
+  const token = env.ADMIN_TOKEN;
+  if (!token) return false;
+  const url = new URL(request.url);
+  const q = url.searchParams.get('token');
+  if (q && timingSafeEqual(q, token)) return true;
+  const auth = request.headers.get('Authorization') || '';
+  if (auth.startsWith('Bearer ')) return timingSafeEqual(auth.slice(7), token);
+  return false;
+}
+
+async function incr(kv: KVNamespace, key: string): Promise<void> {
+  const cur = await kv.get(key);
+  await kv.put(key, String((Number(cur) || 0) + 1));
+}
+
+async function fetchGitHub(path: string, env: Env): Promise<Response> {
+  return fetch(`https://api.github.com${path}`, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'zarlino-website-worker',
+      ...(env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}` } : {}),
+    },
+  });
+}
+
+interface GhIssue {
+  number: number;
+  title: string;
+  state: string;
+  html_url: string;
+  created_at: string;
+  labels: Array<{ name: string }>;
+}
+
+async function handleAdminStats(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  if (!adminAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+  if (!env.ADMIN_TOKEN) return json({ error: 'Admin is not configured' }, 500);
+
+  // 1. Bug reports / feedback issues (public repo)
+  let feedback = { available: false, open: 0, closed: 0, total: 0, recent: [] as Array<Record<string, unknown>> };
+  try {
+    const res = await fetchGitHub(
+      `/repos/${FEEDBACK_REPO}/issues?state=all&per_page=100&sort=updated&direction=desc`,
+      env,
+    );
+    if (res.ok) {
+      const issues = (await res.json()) as GhIssue[];
+      feedback = {
+        available: true,
+        open: issues.filter((i) => i.state === 'open').length,
+        closed: issues.filter((i) => i.state === 'closed').length,
+        total: issues.length,
+        recent: issues.slice(0, 10).map((i) => ({
+          number: i.number,
+          title: i.title,
+          state: i.state,
+          labels: i.labels.map((l) => l.name),
+          url: i.html_url,
+          createdAt: i.created_at,
+        })),
+      };
+    }
+  } catch {
+    /* feedback stays unavailable */
+  }
+
+  // 2. Site health
+  const site = await Promise.all(
+    SITE_PAGES.map(async (p) => {
+      try {
+        const r = await fetch(SITE_BASE + p, { method: 'GET' });
+        return { path: p, status: r.status, ok: r.status < 400 };
+      } catch {
+        return { path: p, status: 0, ok: false };
+      }
+    }),
+  );
+
+  // 3. Deploy status (private repo — only available if token has repo scope)
+  let deploy = { available: false, runs: [] as Array<Record<string, unknown>> };
+  try {
+    const res = await fetchGitHub(`/repos/${SITE_REPO}/actions/runs?per_page=5`, env);
+    if (res.ok) {
+      const data = (await res.json()) as { workflow_runs?: Array<{
+        name: string; status: string; conclusion: string | null;
+        head_branch: string; created_at: string; html_url: string;
+      }> };
+      deploy = {
+        available: true,
+        runs: (data.workflow_runs || []).map((r) => ({
+          name: r.name,
+          status: r.status,
+          conclusion: r.conclusion,
+          branch: r.head_branch,
+          createdAt: r.created_at,
+          url: r.html_url,
+        })),
+      };
+    }
+  } catch {
+    /* deploy stays unavailable */
+  }
+
+  // 4. Counters (KV optional)
+  let counters: Record<string, unknown> = { enabled: false };
+  if (env.ZARLINO_KV) {
+    const today = new Date().toISOString().slice(0, 10);
+    const [viewsTotal, viewsToday, licTotal, licToday] = await Promise.all([
+      env.ZARLINO_KV.get('views:total'),
+      env.ZARLINO_KV.get(`views:${today}`),
+      env.ZARLINO_KV.get('licenses:total'),
+      env.ZARLINO_KV.get(`licenses:${today}`),
+    ]);
+    counters = {
+      enabled: true,
+      views: { total: Number(viewsTotal || 0), today: Number(viewsToday || 0) },
+      licenses: { total: Number(licTotal || 0), today: Number(licToday || 0) },
+    };
+  }
+
+  return json({
+    generatedAt: new Date().toISOString(),
+    feedback,
+    site,
+    deploy,
+    counters,
+    links: {
+      cloudflare: 'https://dash.cloudflare.com',
+      feedbackRepo: `https://github.com/${FEEDBACK_REPO}/issues`,
+      sitemap: `${SITE_BASE}/sitemap-index.xml`,
+    },
+  });
+}
+
+async function handleTrack(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.ZARLINO_KV) return new Response(null, { status: 204 });
+
+  let path = '/';
+  try {
+    const body = (await request.json()) as { path?: unknown };
+    if (typeof body.path === 'string') path = body.path.slice(0, 200);
+  } catch {
+    /* keep default path */
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  await incr(env.ZARLINO_KV, 'views:total');
+  await incr(env.ZARLINO_KV, `views:${today}`);
+  await incr(env.ZARLINO_KV, `views:${today}:${path}`);
+  return new Response(null, { status: 204 });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -222,6 +409,12 @@ export default {
     }
     if (url.pathname === '/api/feedback') {
       return handleFeedback(request, env);
+    }
+    if (url.pathname === '/api/track') {
+      return handleTrack(request, env);
+    }
+    if (url.pathname === '/api/admin/stats') {
+      return handleAdminStats(request, env);
     }
     return env.ASSETS.fetch(request);
   },

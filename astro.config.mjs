@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     tailwind(),
     sitemap({
-      filter: (page) => !page.includes('/404'),
+      filter: (page) => !page.includes('/404') && !page.includes('/admin'),
     }),
   ],
   output: 'static',

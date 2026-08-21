@@ -111,7 +111,10 @@ const Footer = () => {
         {/* Bottom Row */}
         <div className="mt-12 pt-6 border-t border-[rgba(255,255,255,0.06)] flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="font-['Inter'] text-[13px] text-[#475569]">
-            2026 Zarlino Audio. All rights reserved.
+            2026 Zarlino Audio. All rights reserved.{' '}
+            <a href="/admin" className="text-[#334155] hover:text-[#64748B] transition-colors">
+              Admin
+            </a>
           </p>
 
           <div className="flex items-center gap-4">

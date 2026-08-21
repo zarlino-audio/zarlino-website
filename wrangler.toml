@@ -6,5 +6,18 @@ compatibility_date = "2024-11-01"
 directory = "./dist"
 not_found_handling = "404-page"
 
+[vars]
+# Token for the /admin dashboard (GET /api/admin/stats). Rotate to a
+# different value and set as a Worker secret if you want it out of git.
+ADMIN_TOKEN = "PGRUxCidKulFTgLsIE3jJhON079BwD8t"
+
+# Optional: enable page-view + license counters in the admin dashboard.
+# 1. Create a KV namespace: https://dash.cloudflare.com -> Workers & Pages
+#    -> zarlino-website -> Settings -> KV namespace bindings -> Add.
+# 2. Paste the namespace ID below and uncomment this block.
+# [[kv_namespaces]]
+# binding = "ZARLINO_KV"
+# id = "PASTE_NAMESPACE_ID_HERE"
+
 [observability]
 enabled = true
