@@ -33,7 +33,7 @@ type Stats = {
       createdAt: string;
     }>;
   };
-  site: Array<{ path: string; status: number; ok: boolean }>;
+  site: Array<{ path: string; status: number | null; ok: boolean | null }>;
   deploy: {
     available: boolean;
     runs: Array<{
@@ -64,6 +64,16 @@ const fetchStats = async (token: string): Promise<Stats> => {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to load stats');
   return data as Stats;
+};
+
+/** Probe a page from the browser — a real check against the Cloudflare edge. */
+const probePage = async (path: string): Promise<{ status: number; ok: boolean }> => {
+  try {
+    const r = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+    return { status: r.status, ok: r.status < 400 };
+  } catch {
+    return { status: 0, ok: false };
+  }
 };
 
 const StatCard = ({
@@ -125,9 +135,15 @@ const AdminDashboard = () => {
     setError('');
     try {
       const data = await fetchStats(t);
-      setStats(data);
+      // Probe each page from the browser (HEAD to the edge). Keep the
+      // placeholder while probes run so the UI doesn't flash "unhealthy".
+      setStats({ ...data, site: data.site.map((p) => ({ ...p, status: null, ok: null })) });
       localStorage.setItem(TOKEN_KEY, t);
       setStoredToken(t);
+      const probed = await Promise.all(
+        data.site.map(async (p) => ({ ...p, ...(await probePage(p.path)) })),
+      );
+      setStats((prev) => (prev ? { ...prev, site: probed } : prev));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load stats');
       setStats(null);
@@ -215,6 +231,7 @@ const AdminDashboard = () => {
 
   const { feedback, site, deploy, counters, links } = stats;
   const healthy = site.filter((p) => p.ok).length;
+  const checked = site.filter((p) => p.ok !== null).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -245,7 +262,7 @@ const AdminDashboard = () => {
       {/* Stat row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Bug} label="Open issues" value={feedback.available ? feedback.open : '—'} sub={feedback.available ? `${feedback.total} total · ${feedback.closed} closed` : 'Unavailable'} accent="text-[#FCA5A5]" />
-        <StatCard icon={Server} label="Pages healthy" value={healthy} sub={`${site.length} monitored`} accent="text-[#86EFAC]" />
+        <StatCard icon={Server} label="Pages healthy" value={checked === site.length ? healthy : '…'} sub={checked === site.length ? `${site.length} monitored` : `checking ${checked}/${site.length}`} accent="text-[#86EFAC]" />
         <StatCard icon={BarChart3} label="Page views" value={counters.enabled ? counters.views?.total ?? 0 : '—'} sub={counters.enabled ? `${counters.views?.today ?? 0} today` : 'KV not connected'} />
         <StatCard icon={FileText} label="Licenses issued" value={counters.enabled ? counters.licenses?.total ?? 0 : '—'} sub={counters.enabled ? `${counters.licenses?.today ?? 0} today` : 'KV not connected'} />
       </div>
@@ -307,9 +324,9 @@ const AdminDashboard = () => {
           {site.map((page) => (
             <div key={page.path} className="flex items-center justify-between rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
               <span className="font-['Inter'] text-[13px] text-[#94A3B8] font-mono">{page.path}</span>
-              <span className={`inline-flex items-center gap-1.5 font-['Inter'] text-[12px] ${page.ok ? 'text-[#86EFAC]' : 'text-[#FCA5A5]'}`}>
-                {page.ok ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
-                {page.ok ? `${page.status}` : page.status === 0 ? 'no response' : `${page.status}`}
+              <span className={`inline-flex items-center gap-1.5 font-['Inter'] text-[12px] ${page.ok === null ? 'text-[#94A3B8]' : page.ok ? 'text-[#86EFAC]' : 'text-[#FCA5A5]'}`}>
+                {page.ok === null ? <Loader2 size={13} className="animate-spin" /> : page.ok ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+                {page.ok === null ? 'checking…' : page.status === 0 ? 'no response' : `${page.status}`}
               </span>
             </div>
           ))}
