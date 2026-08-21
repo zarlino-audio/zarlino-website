@@ -313,11 +313,13 @@ async function handleAdminStats(request: Request, env: Env): Promise<Response> {
     /* feedback stays unavailable */
   }
 
-  // 2. Site health
+  // 2. Site health (serve from the ASSETS binding so we don't self-fetch
+  //    through the public URL, which would loop back into this Worker)
   const site = await Promise.all(
     SITE_PAGES.map(async (p) => {
       try {
-        const r = await fetch(SITE_BASE + p, { method: 'GET' });
+        const req = new Request(`https://zarlinoaudio.com${p}`, { method: 'GET' });
+        const r = await env.ASSETS.fetch(req);
         return { path: p, status: r.status, ok: r.status < 400 };
       } catch {
         return { path: p, status: 0, ok: false };
