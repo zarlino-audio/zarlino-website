@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import LicenseForm from '../../components/LicenseForm';
 import { Download } from 'lucide-react';
 ---
 
@@ -199,6 +200,15 @@ import { Download } from 'lucide-react';
         </div>
       </section>
 
+      <!-- License -->
+      <section class="mt-14" id="license">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Activate ZScorch</h2>
+        <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
+          ZScorch is free during the public beta. Request a perpetual license key below — it will be generated instantly for your email.
+        </p>
+        <LicenseForm plugin="zscorch" client:load />
+      </section>
+
       <!-- What It Does -->
       <section class="mt-16">
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">What ZScorch Does</h2>
@@ -347,14 +357,6 @@ import { Download } from 'lucide-react';
               <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Resonance Suppressor</span>
             </div>
             <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">High-resolution FFT-based dynamic resonance suppression for harsh frequencies and ringing — the Soothe 3 alternative for spectral dynamics.</p>
-            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
-          </a>
-          <a href="/plugins/zvocals" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
-            <div class="flex items-center justify-between">
-              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZVocals</h3>
-              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Vocal Channel Strip</span>
-            </div>
-            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">A five-stage vocal channel strip — SSL EQ, FET, multiband, opto, de-esser — controlled by just three macros: TONE, PUNCH, and BODY.</p>
             <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
           </a>
         </div>

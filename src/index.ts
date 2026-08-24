@@ -1,8 +1,11 @@
 /**
  * Zarlino Audio — Website Worker
  *
- * Serves the static Astro build via the [assets] binding and exposes a
- * `POST /api/license` endpoint that issues a signed ZTame license key.
+ * Serves the static Astro build via the [assets] binding and exposes:
+ *   POST /api/license   — issues a signed license key per plugin (ZTame, ZScorch)
+ *   POST /api/feedback  — files feedback issues to the zarlino-feedback repo
+ *   POST /api/track     — records page-view counters (KV)
+ *   GET  /api/admin/stats — token-gated admin dashboard + site monitoring
  *
  * License blob format (must match tools/generate_license_keys.py):
  *   uint16 pluginIdLen | pluginId UTF-8 | uint16 emailLen | email UTF-8 |
@@ -24,8 +27,19 @@ const SITE_REPO = 'zarlino-audio/zarlino-website';
 const FEEDBACK_CATEGORIES = ['bug', 'suggestion', 'other'] as const;
 const SITE_BASE = 'https://zarlinoaudio.com';
 
-const PROMO_END = new Date('2026-08-25T23:59:59Z');
-const PLUGIN_ID = 'ZTAME';
+// Supported plugins — `id` is the plugin ID embedded in the binary and checked
+// by ZLicenseManager; `promoEnd` gates the free-license window (null = free via
+// the request form; configure per business policy).
+interface PluginSpec {
+  id: string;
+  name: string;
+  promoEnd: Date | null;
+}
+
+const PLUGINS: Record<string, PluginSpec> = {
+  ztame:   { id: 'ZTAME',   name: 'ZTame',   promoEnd: new Date('2026-08-25T23:59:59Z') },
+  zscorch: { id: 'ZSCORCH', name: 'ZScorch', promoEnd: null },
+};
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function json(body: unknown, status = 200): Response {
@@ -89,7 +103,7 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
     return json({ error: 'License service is not configured' }, 500);
   }
 
-  let body: { email?: unknown };
+  let body: { email?: unknown; plugin?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -102,12 +116,25 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
     return json({ error: 'Enter a valid email address' }, 400);
   }
 
+  const pluginKey =
+    typeof body.plugin === 'string' ? body.plugin.trim().toLowerCase() : 'ztame';
+  const spec = PLUGINS[pluginKey];
+  if (!spec) {
+    return json(
+      {
+        error: `Unknown plugin "${pluginKey}". Supported: ${Object.keys(PLUGINS).join(', ')}.`,
+      },
+      400,
+    );
+  }
+
   const now = new Date();
-  if (now > PROMO_END) {
+  if (spec.promoEnd && now > spec.promoEnd) {
     return json(
       {
         error:
-          'The free ZTame licensing period ended on August 25, 2026. Contact support@zarlinoaudio.com for licensing options.',
+          `The free ${spec.name} licensing period ended on ${spec.promoEnd.toISOString().slice(0, 10)}. ` +
+          'Contact support@zarlinoaudio.com for licensing options.',
       },
       403,
     );
@@ -117,7 +144,7 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
   const expiration = 'perpetual';
 
   const payload: number[] = [];
-  encodeField(payload, PLUGIN_ID);
+  encodeField(payload, spec.id);
   encodeField(payload, email);
   encodeField(payload, issueDate);
   encodeField(payload, expiration);
@@ -137,7 +164,9 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
 
   return json({
     licenseKey: bytesToBase64(new Uint8Array(blob)),
-    pluginId: PLUGIN_ID,
+    pluginId: spec.id,
+    plugin: pluginKey,
+    pluginName: spec.name,
     email,
     issueDate,
     expiration,
@@ -232,8 +261,6 @@ const SITE_PAGES = [
   '/',
   '/plugins/ztame',
   '/plugins/zscorch',
-  '/plugins/zvocals',
-  '/plugins/essentials',
   '/report',
 ];
 

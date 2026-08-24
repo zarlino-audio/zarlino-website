@@ -3,7 +3,12 @@ import { KeyRound, Check, Copy, AlertCircle, Loader2 } from 'lucide-react';
 
 type LicenseState = 'idle' | 'loading' | 'success' | 'error';
 
-const LicenseForm = () => {
+const PLUGIN_NAMES: Record<string, string> = {
+  ztame: 'ZTame',
+  zscorch: 'ZScorch',
+};
+
+const LicenseForm = ({ plugin = 'ztame' }: { plugin?: string }) => {
   const [email, setEmail] = useState('');
   const [state, setState] = useState<LicenseState>('idle');
   const [licenseKey, setLicenseKey] = useState('');
@@ -21,7 +26,7 @@ const LicenseForm = () => {
       const res = await fetch('/api/license', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, plugin }),
       });
 
       const data = await res.json();
@@ -61,7 +66,9 @@ const LicenseForm = () => {
             Get Your Free License
           </h3>
           <p className="font-['Inter'] text-[13px] text-[#94A3B8]">
-            Free until August 25, 2026 — your key is perpetual.
+            {plugin === 'ztame'
+              ? 'Free until August 25, 2026 — your key is perpetual.'
+              : 'Generated instantly — your key is perpetual.'}
           </p>
         </div>
       </div>
@@ -70,7 +77,9 @@ const LicenseForm = () => {
         <div className="mt-6">
           <div className="flex items-start gap-2 font-['Inter'] text-[14px] text-[#86EFAC]">
             <Check size={16} className="mt-0.5 flex-shrink-0" />
-            <span>License generated! Paste this key into ZTame's license dialog.</span>
+            <span>
+              License generated! Paste this key into {PLUGIN_NAMES[plugin] ?? 'your plugin'}'s license dialog.
+            </span>
           </div>
 
           <div className="mt-4 flex items-center gap-2">

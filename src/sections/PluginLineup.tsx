@@ -4,7 +4,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const plugins = [
+const plugins: {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  image: string;
+  badge: string;
+  priceLabel: string;
+}[] = [
   {
     id: 'ztame',
     name: 'ZTame',
@@ -25,28 +34,6 @@ const plugins = [
     price: 79,
     image: '/images/zscorch-ui.jpg',
     badge: 'Public Beta',
-    priceLabel: 'FREE',
-  },
-  {
-    id: 'zvocals',
-    name: 'ZVocals',
-    category: 'Vocal Channel Strip',
-    description:
-      'Three-macro vocal processor: TONE, PUNCH, and BODY drive a five-stage chain — SSL EQ, FET compression, 4-band multiband, opto compression, and an always-adaptive de-esser.',
-    price: 49,
-    image: '/images/zvocals-ui.jpg',
-    badge: 'Public Beta',
-    priceLabel: 'FREE',
-  },
-  {
-    id: 'essentials',
-    name: 'Zarlino Essentials',
-    category: 'Complete Toolkit Bundle',
-    description:
-      'All three Zarlino Audio plugins in one bundle — ZTame, ZScorch, and ZVocals — for $120 after the beta, a $57 saving on the separate total of $177.',
-    price: 120,
-    image: '/images/zarlino-logo.svg',
-    badge: 'Bundle',
     priceLabel: 'FREE',
   },
 ];
@@ -121,14 +108,22 @@ const PluginLineup = () => {
               key={plugin.id}
               className="plugin-card group bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)] hover:border-[rgba(255,255,255,0.1)] transition-all duration-[400ms] ease-out"
             >
-              {/* Image */}
-              <div className="aspect-[16/10] overflow-hidden">
-                <img
-                  src={plugin.image}
-                  alt={plugin.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
+              {/* Image (or branded placeholder when no screenshot exists) */}
+              <div className="aspect-[16/10] overflow-hidden relative">
+                {plugin.image ? (
+                  <img
+                    src={plugin.image}
+                    alt={plugin.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[rgba(0,212,255,0.14)] via-[rgba(0,212,255,0.05)] to-transparent">
+                    <span className="font-['Space_Grotesk'] font-semibold text-[34px] tracking-tight text-white/25">
+                      {plugin.name}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Content */}
@@ -160,10 +155,10 @@ const PluginLineup = () => {
                       Learn More
                     </a>
                     <a
-                      href={plugin.id === 'essentials' ? '/plugins/essentials#pricing' : `/plugins/${plugin.id}#download`}
+                      href={`/plugins/${plugin.id}#download`}
                       className="font-['Inter'] font-medium text-[14px] text-[#00D4FF] hover:underline transition-all"
                     >
-                      {plugin.id === 'ztame' ? 'Get Free License' : plugin.id === 'essentials' ? 'View Bundle' : 'Download Trial'}
+                      {plugin.id === 'ztame' ? 'Get Free License' : 'Download Trial'}
                     </a>
                   </div>
                 </div>
