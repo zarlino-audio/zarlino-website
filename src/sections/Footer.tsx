@@ -8,13 +8,10 @@ const footerLinks = {
   Products: [
     { label: 'ZTame', href: '/plugins/ztame' },
     { label: 'ZScorch', href: '/plugins/zscorch' },
-    { label: 'ZVocals', href: '/plugins/zvocals' },
-    { label: 'Zarlino Essentials', href: '/plugins/essentials' },
   ],
   Resources: [
     { label: 'ZTame Documentation', href: '/plugins/ztame' },
     { label: 'ZScorch FAQ', href: '/plugins/zscorch#faq' },
-    { label: 'ZVocals FAQ', href: '/plugins/zvocals#faq' },
     { label: 'Report a Bug or Suggestion', href: '/report' },
   ],
   Company: ['About', 'Contact'],

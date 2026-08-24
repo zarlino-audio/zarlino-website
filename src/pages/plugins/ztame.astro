@@ -217,7 +217,7 @@ import { Download } from 'lucide-react';
           Running the beta and something feels off?{' '}
           <a href="/report" class="text-[#00D4FF] hover:underline">Report a bug or suggestion</a>.
         </p>
-        <LicenseForm client:load />
+        <LicenseForm plugin="ztame" client:load />
       </section>
 
       <!-- What It Does -->
@@ -327,7 +327,7 @@ import { Download } from 'lucide-react';
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Can I use ZTame on mono tracks?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is a stereo-only processor. Its FFT engine, spectral detection, and Mid/Side modes require a stereo bus, so it is intended for stereo tracks and buses. If you need mono processing, use it on a stereo bus, or look at <a href="/plugins/zvocals" class="text-[#00D4FF] hover:underline">ZVocals</a> for a channel strip that handles mono and stereo sources natively.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is a stereo-only processor. Its FFT engine, spectral detection, and Mid/Side modes require a stereo bus, so it is intended for stereo tracks and buses. If you need mono processing, use it on a stereo bus instead.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
@@ -366,14 +366,6 @@ import { Download } from 'lucide-react';
               <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Adaptive Harmonic Processor</span>
             </div>
             <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Multi-mode multiband harmonic saturation with Lift, Character, and Mix macros. Warm up, distort, and glue with six saturation topologies.</p>
-            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
-          </a>
-          <a href="/plugins/zvocals" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
-            <div class="flex items-center justify-between">
-              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZVocals</h3>
-              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Vocal Channel Strip</span>
-            </div>
-            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">A five-stage vocal channel strip — SSL EQ, FET, multiband, opto, de-esser — controlled by just three macros: TONE, PUNCH, and BODY.</p>
             <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
           </a>
         </div>

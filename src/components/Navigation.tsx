@@ -18,7 +18,6 @@ const Navigation = () => {
     { label: 'Plugins', href: '/#plugins' },
     { label: 'ZTame', href: '/plugins/ztame' },
     { label: 'ZScorch', href: '/plugins/zscorch' },
-    { label: 'ZVocals', href: '/plugins/zvocals' },
     { label: 'Feedback', href: '/report' },
   ];
 
