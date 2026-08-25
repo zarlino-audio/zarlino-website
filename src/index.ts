@@ -2,11 +2,11 @@
  * Zarlino Audio — Website Worker
  *
  * Serves the static Astro build via the [assets] binding and exposes:
- *   POST /api/license           — issues a signed license key per plugin (ZTame, ZScorch)
- *   POST /api/feedback          — files feedback issues to the zarlino-feedback repo
- *   POST /api/track             — records page-view counters (KV)
- *   GET  /api/admin/stats       — token-gated admin dashboard + site monitoring
- *   POST /api/affiliates/enrol  — accepts affiliate applications (stored in KV)
+ *   POST /api/license   — issues a signed license key per plugin (ZTame, ZScorch)
+ *   POST /api/feedback  — files feedback issues to the zarlino-feedback repo
+ *   POST /api/track     — records page-view counters (KV)
+ *   POST /api/affiliates/enrol — captures an affiliate application (KV)
+ *   GET  /api/admin/stats — token-gated admin dashboard + site monitoring
  *
  * License blob format (must match tools/generate_license_keys.py):
  *   uint16 pluginIdLen | pluginId UTF-8 | uint16 emailLen | email UTF-8 |
@@ -43,15 +43,3 @@ const PLUGINS: Record<string, PluginSpec> = {
   zscorch: { id: 'ZSCORCH', name: 'ZScorch', promoEnd: null },
 };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-}
