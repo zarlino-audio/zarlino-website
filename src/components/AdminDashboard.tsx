@@ -15,7 +15,10 @@ import {
   Server,
   FileText,
   LogOut,
+  Users,
+  RefreshCw,
 } from 'lucide-react';
+import AffiliateReportView from './AffiliateReportView';
 
 type Stats = {
   generatedAt: string;
@@ -57,13 +60,68 @@ type Stats = {
   };
 };
 
+type AffApplication = {
+  id: string;
+  name: string;
+  email: string;
+  platform: string;
+  audience: string;
+  notes: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  code?: string;
+};
+
+type Affiliate = {
+  code: string;
+  appId: string;
+  name: string;
+  email: string;
+  platform: string;
+  approvedAt: string;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+};
+
+type AffReport = {
+  enabled: boolean;
+  generatedAt: string;
+  commissionRate: number;
+  referralBase: string;
+  stats: {
+    totalApplications: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    clicks: number;
+    conversions: number;
+    referredRevenue: number;
+    estimatedCommission: number;
+    conversionRate: number;
+  };
+  applications: AffApplication[];
+  affiliates: Affiliate[];
+};
+
 const TOKEN_KEY = 'zarlino_admin_token';
+
+/** Live Executive OS console (Cloudflare Workers). First visit forces founder
+ *  username/password setup, then signs in. */
+const EXEC_OS_URL = 'https://zarlino-executive-os.zarlino001.workers.dev';
 
 const fetchStats = async (token: string): Promise<Stats> => {
   const res = await fetch(`/api/admin/stats?token=${encodeURIComponent(token)}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to load stats');
   return data as Stats;
+};
+
+const fetchAffiliateReport = async (token: string): Promise<AffReport> => {
+  const res = await fetch(`/api/affiliates/report?token=${encodeURIComponent(token)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to load affiliate report');
+  return data as AffReport;
 };
 
 /** Probe a page from the browser — a real check against the Cloudflare edge. */
@@ -123,12 +181,50 @@ const AdminDashboard = () => {
   const [token, setToken] = useState('');
   const [storedToken, setStoredToken] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [aff, setAff] = useState<AffReport | null>(null);
+  const [affLoading, setAffLoading] = useState(false);
+  const [affError, setAffError] = useState('');
+  const [busyId, setBusyId] = useState('');
+  const [copied, setCopied] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     setStoredToken(localStorage.getItem(TOKEN_KEY));
   }, []);
+
+  const loadAffiliate = useCallback(async (t: string) => {
+    setAffLoading(true);
+    setAffError('');
+    try {
+      setAff(await fetchAffiliateReport(t));
+    } catch (e) {
+      setAffError(e instanceof Error ? e.message : 'Failed to load affiliate report');
+      setAff(null);
+    } finally {
+      setAffLoading(false);
+    }
+  }, []);
+
+  const decideAffiliate = async (id: string, action: 'approve' | 'reject') => {
+    if (!storedToken) return;
+    setBusyId(id);
+    setAffError('');
+    try {
+      const res = await fetch(`/api/affiliates/${action}?token=${encodeURIComponent(storedToken)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} application`);
+      await loadAffiliate(storedToken);
+    } catch (e) {
+      setAffError(e instanceof Error ? e.message : `Failed to ${action} application`);
+    } finally {
+      setBusyId('');
+    }
+  };
 
   const load = useCallback(async (t: string) => {
     setLoading(true);
@@ -144,13 +240,14 @@ const AdminDashboard = () => {
         data.site.map(async (p) => ({ ...p, ...(await probePage(p.path)) })),
       );
       setStats((prev) => (prev ? { ...prev, site: probed } : prev));
+      await loadAffiliate(t);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load stats');
       setStats(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadAffiliate]);
 
   // Auto-login if a token is already stored.
   useEffect(() => {
@@ -266,6 +363,32 @@ const AdminDashboard = () => {
         <StatCard icon={BarChart3} label="Page views" value={counters.enabled ? counters.views?.total ?? 0 : '—'} sub={counters.enabled ? `${counters.views?.today ?? 0} today` : 'KV not connected'} />
         <StatCard icon={FileText} label="Licenses issued" value={counters.enabled ? counters.licenses?.total ?? 0 : '—'} sub={counters.enabled ? `${counters.licenses?.today ?? 0} today` : 'KV not connected'} />
       </div>
+
+      {/* Affiliate program */}
+      <SectionCard title="Affiliate program" icon={Users}>
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <p className="font-['Inter'] text-[13px] text-[#64748B]">
+            Applications, referral links, clicks, conversions &amp; commission.
+          </p>
+          <a
+            href="/affiliate-report"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg border border-[rgba(0,212,255,0.35)] px-3 py-1.5 font-['Inter'] text-[12px] text-[#00D4FF] hover:bg-[rgba(0,212,255,0.08)] transition-colors"
+          >
+            <RefreshCw size={12} /> Manager report page
+          </a>
+        </div>
+        {affLoading ? (
+          <p className="font-['Inter'] text-[14px] text-[#94A3B8]">Loading affiliate report…</p>
+        ) : aff ? (
+          <AffiliateReportView report={aff} busyId={busyId} onDecide={decideAffiliate} error={affError} />
+        ) : (
+          <p className="font-['Inter'] text-[14px] text-[#64748B]">
+            {affError || 'Affiliate report unavailable.'}
+          </p>
+        )}
+      </SectionCard>
 
       {/* Feedback */}
       <SectionCard title="Bug reports & feedback" icon={Bug}>

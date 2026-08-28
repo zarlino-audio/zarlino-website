@@ -421,9 +421,336 @@ async function handleTrack(request: Request, env: Env): Promise<Response> {
   return new Response(null, { status: 204 });
 }
 
+/* ------------------------------------------------------------------ *
+ * Affiliate program — self-enrolment + acquisition-manager reporting
+ *
+ *   POST /api/affiliates/enrol   (public)  — submit an application
+ *   GET  /api/affiliates/report  (admin)   — manager report (apps + stats)
+ *   POST /api/affiliates/approve (admin)   — approve app, issue referral code
+ *   POST /api/affiliates/reject  (admin)   — reject an application
+ *   POST /api/affiliates/click   (public)  — record a referral-link click
+ *   POST /api/affiliates/convert (admin)   — record a referred sale
+ *
+ * Storage (Cloudflare KV, binding ZARLINO_KV):
+ *   aff:app:<id>      application record   (status: pending|approved|rejected)
+ *   aff:code:<code>   approved affiliate record
+ *   aff:clicks:<code> click counter (KV incr)
+ *   aff:conv:<code>   conversion counter
+ *   aff:rev:<code>    referred revenue accumulator
+ *
+ * Referral link format:  https://zarlinoaudio.com/?ref=<CODE>
+ * The main fetch() below intercepts `?ref=` on page loads, records a click,
+ * and serves the page with the ref parameter stripped.
+ * ------------------------------------------------------------------ */
+
+const AFF_COMMISSION_RATE = 0.25; // 25% commission — must match the public /affiliates page.
+
+interface AffApp {
+  id: string;
+  name: string;
+  email: string;
+  platform: string;
+  audience: string;
+  notes: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  code?: string;
+  decidedAt?: string;
+}
+
+interface AffCode {
+  code: string;
+  appId: string;
+  name: string;
+  email: string;
+  platform: string;
+  approvedAt: string;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+}
+
+function makeAffCode(name: string): string {
+  const base = name
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '')
+    .slice(0, 3) || 'ZAR';
+  const rand = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+  return `${base}${rand}`.slice(0, 8);
+}
+
+async function readAffApp(kv: KVNamespace, id: string): Promise<AffApp | null> {
+  const raw = await kv.get(`aff:app:${id}`);
+  return raw ? (JSON.parse(raw) as AffApp) : null;
+}
+
+async function readAffCode(kv: KVNamespace, code: string): Promise<AffCode | null> {
+  const raw = await kv.get(`aff:code:${code}`);
+  if (!raw) return null;
+  const rec = JSON.parse(raw) as AffCode;
+  rec.clicks = Number(await kv.get(`aff:clicks:${code}`)) || 0;
+  rec.conversions = Number(await kv.get(`aff:conv:${code}`)) || 0;
+  rec.revenue = Number(await kv.get(`aff:rev:${code}`)) || 0;
+  return rec;
+}
+
+async function handleAffiliateEnrol(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.ZARLINO_KV) {
+    return json(
+      { error: 'Affiliate sign-ups are temporarily unavailable. Email support@zarlinoaudio.com instead.' },
+      503,
+    );
+  }
+
+  let body: { name?: unknown; email?: unknown; platform?: unknown; audience?: unknown; notes?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
+  const email =
+    typeof body.email === 'string' ? body.email.trim().toLowerCase().slice(0, 200) : '';
+  const platform = typeof body.platform === 'string' ? body.platform.trim().slice(0, 200) : '';
+  const audience = typeof body.audience === 'string' ? body.audience.trim().slice(0, 200) : '';
+  const notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 2000) : '';
+
+  if (name.length < 2) return json({ error: 'Enter your full name.' }, 400);
+  if (!EMAIL_RE.test(email)) return json({ error: 'Enter a valid email address.' }, 400);
+
+  // Deduplicate by email across existing applications.
+  const existing = await env.ZARLINO_KV.list({ prefix: 'aff:app:' });
+  for (const key of existing.keys) {
+    const app = JSON.parse((await env.ZARLINO_KV.get(key.name)) || '{}') as AffApp;
+    if (app.email === email) {
+      return json({
+        id: app.id,
+        alreadyApplied: true,
+        status: app.status,
+        message:
+          app.status === 'approved' && app.code
+            ? 'You are already an approved affiliate. Your referral link is below.'
+            : 'You already have an application under review.',
+      });
+    }
+  }
+
+  const id = crypto.randomUUID();
+  const app: AffApp = {
+    id,
+    name,
+    email,
+    platform,
+    audience,
+    notes,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  await env.ZARLINO_KV.put(`aff:app:${id}`, JSON.stringify(app));
+  return json({ ok: true, id, status: 'pending' });
+}
+
+async function handleAffiliateReport(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  if (!adminAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+  if (!env.ADMIN_TOKEN) return json({ error: 'Admin is not configured' }, 500);
+
+  if (!env.ZARLINO_KV) {
+    return json({ enabled: false, error: 'ZARLINO_KV is not bound to the Worker.' });
+  }
+
+  const kv = env.ZARLINO_KV;
+  const [appKeys, codeKeys] = await Promise.all([
+    kv.list({ prefix: 'aff:app:' }),
+    kv.list({ prefix: 'aff:code:' }),
+  ]);
+
+  const applications: Array<Record<string, unknown>> = [];
+  for (const key of appKeys.keys) {
+    const raw = await kv.get(key.name);
+    if (raw) applications.push(JSON.parse(raw));
+  }
+  applications.sort(
+    (a, b) => String(b.createdAt).localeCompare(String(a.createdAt)),
+  );
+
+  const affiliates: AffCode[] = [];
+  for (const key of codeKeys.keys) {
+    const code = key.name.slice('aff:code:'.length);
+    const rec = await readAffCode(kv, code);
+    if (rec) affiliates.push(rec);
+  }
+  affiliates.sort((a, b) => b.approvedAt.localeCompare(a.approvedAt));
+
+  const totals = affiliates.reduce(
+    (acc, a) => {
+      acc.clicks += a.clicks;
+      acc.conversions += a.conversions;
+      acc.revenue += a.revenue;
+      return acc;
+    },
+    { clicks: 0, conversions: 0, revenue: 0 },
+  );
+
+  return json({
+    enabled: true,
+    generatedAt: new Date().toISOString(),
+    commissionRate: AFF_COMMISSION_RATE,
+    referralBase: `${SITE_BASE}/?ref=`,
+    stats: {
+      totalApplications: applications.length,
+      pending: applications.filter((a) => a.status === 'pending').length,
+      approved: affiliates.length,
+      rejected: applications.filter((a) => a.status === 'rejected').length,
+      clicks: totals.clicks,
+      conversions: totals.conversions,
+      referredRevenue: totals.revenue,
+      estimatedCommission: Math.round(totals.revenue * AFF_COMMISSION_RATE * 100) / 100,
+      conversionRate: totals.clicks > 0 ? (totals.conversions / totals.clicks) * 100 : 0,
+    },
+    applications,
+    affiliates,
+  });
+}
+
+async function handleAffiliateDecide(request: Request, env: Env, action: 'approve' | 'reject'): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!adminAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+  if (!env.ADMIN_TOKEN) return json({ error: 'Admin is not configured' }, 500);
+  if (!env.ZARLINO_KV) return json({ error: 'ZARLINO_KV is not bound' }, 503);
+
+  let body: { id?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+  const id = typeof body.id === 'string' ? body.id.trim() : '';
+  if (!id) return json({ error: 'Missing application id' }, 400);
+
+  const kv = env.ZARLINO_KV;
+  const app = await readAffApp(kv, id);
+  if (!app) return json({ error: 'Application not found' }, 404);
+
+  if (action === 'reject') {
+    app.status = 'rejected';
+    app.decidedAt = new Date().toISOString();
+    await kv.put(`aff:app:${id}`, JSON.stringify(app));
+    return json({ ok: true, id, status: 'rejected' });
+  }
+
+  if (app.status === 'approved' && app.code) {
+    return json({ ok: true, id, status: 'approved', code: app.code, referralUrl: `${SITE_BASE}/?ref=${app.code}` });
+  }
+
+  // Issue a unique referral code.
+  let code = makeAffCode(app.name);
+  let guard = 0;
+  while ((await kv.get(`aff:code:${code}`)) && guard < 10) {
+    code = makeAffCode(app.name);
+    guard++;
+  }
+
+  app.status = 'approved';
+  app.code = code;
+  app.decidedAt = new Date().toISOString();
+  await kv.put(`aff:app:${id}`, JSON.stringify(app));
+
+  const rec: AffCode = {
+    code,
+    appId: id,
+    name: app.name,
+    email: app.email,
+    platform: app.platform,
+    approvedAt: new Date().toISOString(),
+    clicks: 0,
+    conversions: 0,
+    revenue: 0,
+  };
+  await kv.put(`aff:code:${code}`, JSON.stringify(rec));
+  await kv.put(`aff:clicks:${code}`, '0');
+  await kv.put(`aff:conv:${code}`, '0');
+  await kv.put(`aff:rev:${code}`, '0');
+
+  return json({ ok: true, id, status: 'approved', code, referralUrl: `${SITE_BASE}/?ref=${code}` });
+}
+
+async function handleAffiliateClick(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.ZARLINO_KV) return new Response(null, { status: 204 });
+
+  let code = '';
+  try {
+    const body = (await request.json()) as { code?: unknown };
+    if (typeof body.code === 'string') code = body.code.trim().toUpperCase();
+  } catch {
+    /* ignore */
+  }
+  if (!code) return new Response(null, { status: 204 });
+  if (!(await env.ZARLINO_KV.get(`aff:code:${code}`))) return new Response(null, { status: 204 });
+  await incr(env.ZARLINO_KV, `aff:clicks:${code}`);
+  return new Response(null, { status: 204 });
+}
+
+async function handleAffiliateConvert(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!adminAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+  if (!env.ADMIN_TOKEN) return json({ error: 'Admin is not configured' }, 500);
+  if (!env.ZARLINO_KV) return json({ error: 'ZARLINO_KV is not bound' }, 503);
+
+  let body: { code?: unknown; amount?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+  const code = typeof body.code === 'string' ? body.code.trim().toUpperCase() : '';
+  const amount = typeof body.amount === 'number' && Number.isFinite(body.amount) ? Math.max(0, body.amount) : 0;
+  if (!code) return json({ error: 'Missing referral code' }, 400);
+  if (!(await env.ZARLINO_KV.get(`aff:code:${code}`))) {
+    return json({ error: 'Unknown referral code' }, 404);
+  }
+
+  const kv = env.ZARLINO_KV;
+  await incr(kv, `aff:conv:${code}`);
+  const cur = Number(await kv.get(`aff:rev:${code}`)) || 0;
+  await kv.put(`aff:rev:${code}`, String(Math.round((cur + amount) * 100) / 100));
+  return json({ ok: true, code });
+}
+
+/** Record a referral click when a page is loaded with `?ref=<CODE>`, then
+ *  serve the page with the ref parameter stripped so the URL stays clean. */
+async function handleReferralPageLoad(request: Request, env: Env): Promise<Response | null> {
+  const url = new URL(request.url);
+  const code = (url.searchParams.get('ref') || '').trim().toUpperCase();
+  if (!code) return null;
+  if (env.ZARLINO_KV && (await env.ZARLINO_KV.get(`aff:code:${code}`))) {
+    // Fire-and-forget; never block page load on analytics.
+    const prev = Number(await env.ZARLINO_KV.get(`aff:clicks:${code}`)) || 0;
+    void env.ZARLINO_KV.put(`aff:clicks:${code}`, String(prev + 1));
+  }
+  url.searchParams.delete('ref');
+  const next = new Request(url.toString(), request);
+  return env.ASSETS.fetch(next);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // Referral links: /?ref=CODE — record the click, serve clean page.
+    if (request.method === 'GET' && url.searchParams.has('ref')) {
+      const viaRef = await handleReferralPageLoad(request, env);
+      if (viaRef) return viaRef;
+    }
+
     if (url.pathname === '/api/license') {
       return handleLicense(request, env);
     }
@@ -435,6 +762,24 @@ export default {
     }
     if (url.pathname === '/api/admin/stats') {
       return handleAdminStats(request, env);
+    }
+    if (url.pathname === '/api/affiliates/enrol') {
+      return handleAffiliateEnrol(request, env);
+    }
+    if (url.pathname === '/api/affiliates/report') {
+      return handleAffiliateReport(request, env);
+    }
+    if (url.pathname === '/api/affiliates/approve') {
+      return handleAffiliateDecide(request, env, 'approve');
+    }
+    if (url.pathname === '/api/affiliates/reject') {
+      return handleAffiliateDecide(request, env, 'reject');
+    }
+    if (url.pathname === '/api/affiliates/click') {
+      return handleAffiliateClick(request, env);
+    }
+    if (url.pathname === '/api/affiliates/convert') {
+      return handleAffiliateConvert(request, env);
     }
     return env.ASSETS.fetch(request);
   },

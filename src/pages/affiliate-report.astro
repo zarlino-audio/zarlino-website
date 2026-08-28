@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AffiliateManagerReport from '../components/AffiliateManagerReport';
+---
+
+<BaseLayout
+  title="Affiliate Program Report — Zarlino Audio"
+  description="Private affiliate program reporting for the Zarlino Audio acquisition manager: applications, referral links, clicks, conversions and commission."
+  canonicalURL="https://zarlinoaudio.com/affiliate-report"
+  noindex
+>
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[960px] mx-auto">
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/" class="hover:text-white transition-colors">Zarlino Audio</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">Affiliate Program Report</span>
+      </nav>
+      <AffiliateManagerReport client:load />
+    </div>
+  </main>
+</BaseLayout>

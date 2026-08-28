@@ -11,13 +11,12 @@ not_found_handling = "404-page"
 # different value and set as a Worker secret if you want it out of git.
 ADMIN_TOKEN = "PGRUxCidKulFTgLsIE3jJhON079BwD8t"
 
-# Optional: enable page-view + license counters in the admin dashboard.
-# 1. Create a KV namespace: https://dash.cloudflare.com -> Workers & Pages
-#    -> zarlino-website -> Settings -> KV namespace bindings -> Add.
-# 2. Paste the namespace ID below and uncomment this block.
-# [[kv_namespaces]]
-# binding = "ZARLINO_KV"
-# id = "PASTE_NAMESPACE_ID_HERE"
+# KV namespace for page-view/license counters AND the affiliate program
+# (applications, referral codes, click/conversion tracking). Created with:
+#   wrangler kv namespace create ZARLINO_KV
+[[kv_namespaces]]
+binding = "ZARLINO_KV"
+id = "66bc47e33fe145f697cf1f80912f269e"
 
 [observability]
 enabled = true
