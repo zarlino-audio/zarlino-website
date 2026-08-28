@@ -328,9 +328,9 @@ async function handlePaystackVerify(request: Request, env: Env): Promise<Respons
         metadata?: { items?: PaystackLineItem[]; cart_ref?: string };
       };
     };
-    // Paystack returns 404 + {status:false,message} for unknown references.
+    // Paystack returns 404 (or 200 with {status:false}) for unknown references.
     if (!res.ok || data.status === false) {
-      const status = res.status === 404 ? 404 : 502;
+      const status = res.ok ? 404 : res.status === 404 ? 404 : 502;
       return json({ error: data.message || 'Verification failed', reference }, status);
     }
 

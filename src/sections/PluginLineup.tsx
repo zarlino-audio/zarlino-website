@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import AddToCartButton from '../components/AddToCartButton';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -143,7 +144,7 @@ const PluginLineup = () => {
                   {plugin.description}
                 </p>
 
-                <div className="mt-5 flex items-center justify-between">
+                <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
                   <span className="font-['Space_Grotesk'] font-semibold text-[18px] text-white">
                     {plugin.priceLabel}
                   </span>
@@ -154,12 +155,9 @@ const PluginLineup = () => {
                     >
                       Learn More
                     </a>
-                    <a
-                      href={`/plugins/${plugin.id}#download`}
-                      className="font-['Inter'] font-medium text-[14px] text-[#00D4FF] hover:underline transition-all"
-                    >
-                      {plugin.id === 'ztame' ? 'Get Free License' : 'Download Trial'}
-                    </a>
+                    <AddToCartButton
+                      item={{ id: plugin.id, name: plugin.name, price: plugin.price, image: plugin.image, category: plugin.category }}
+                    />
                   </div>
                 </div>
               </div>

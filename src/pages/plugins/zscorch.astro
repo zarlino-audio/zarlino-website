@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LicenseForm from '../../components/LicenseForm';
 import { Download } from 'lucide-react';
+import AddToCartButton from '../../components/AddToCartButton';
 ---
 
 <BaseLayout
@@ -142,6 +143,10 @@ import { Download } from 'lucide-react';
         <a href="#download" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
           Try ZScorch
         </a>
+        <AddToCartButton
+          client:load
+          item={{ id: 'zscorch', name: 'ZScorch', price: 1200, image: '/images/zscorch-ui.jpg', category: 'Harmonic Processor' }}
+        />
       </div>
 
       <!-- Product Image -->
