@@ -1,4 +1,5 @@
-import { X, Trash2, ShoppingBag } from 'lucide-react';
+import { useState } from 'react';
+import { X, Trash2, ShoppingBag, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 
 interface CartDrawerProps {
@@ -8,6 +9,44 @@ interface CartDrawerProps {
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const { items, removeItem, clearCart, total } = useCartStore();
+  const [email, setEmail] = useState('');
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [error, setError] = useState('');
+
+  const startCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (checkingOut || items.length === 0) return;
+    const em = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) {
+      setError('Enter a valid email address to receive your licenses.');
+      return;
+    }
+    setCheckingOut(true);
+    setError('');
+    try {
+      const ref = new URLSearchParams(window.location.search).get('ref') || '';
+      const res = await fetch('/api/paystack/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: em,
+          items: items.map((i) => ({ plugin: i.id, qty: 1 })),
+          ref,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.authorization_url) {
+        setError(data.error || 'Could not start checkout right now. Try again later.');
+        setCheckingOut(false);
+        return;
+      }
+      // Hand off to Paystack's hosted checkout; the /checkout page verifies.
+      window.location.href = data.authorization_url;
+    } catch {
+      setError('Network error. Please try again.');
+      setCheckingOut(false);
+    }
+  };
 
   return (
     <>
@@ -71,7 +110,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                         {item.category}
                       </p>
                       <p className="font-['Space_Grotesk'] font-semibold text-[16px] text-[#00D4FF] mt-2">
-                        ${item.price}
+                        ₵{item.price.toLocaleString()}
                       </p>
                     </div>
                     <button
@@ -92,15 +131,42 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <div className="flex items-center justify-between mb-4">
                 <span className="font-['Inter'] text-[14px] text-[#94A3B8]">Subtotal</span>
                 <span className="font-['Space_Grotesk'] font-semibold text-[24px] text-white">
-                  ${total()}
+                  ₵{total().toLocaleString()}
                 </span>
               </div>
-              <button
-                onClick={() => alert('Checkout coming soon!')}
-                className="w-full bg-[#00D4FF] text-[#050505] rounded-lg py-3 font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300"
-              >
-                Proceed to Checkout
-              </button>
+              <form onSubmit={startCheckout} className="flex flex-col gap-3">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com — where we send your licenses"
+                  className="w-full rounded-lg bg-[#050505] border border-[rgba(255,255,255,0.12)] px-4 py-3 font-['Inter'] text-[14px] text-white placeholder:text-[#475569] focus:outline-none focus:border-[#00D4FF] transition-colors"
+                />
+                {error && (
+                  <p className="flex items-center gap-2 font-['Inter'] text-[12px] text-[#FCA5A5]">
+                    <AlertCircle size={13} className="flex-shrink-0" /> {error}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={checkingOut}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#00D4FF] text-[#050505] rounded-lg py-3 font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] disabled:opacity-60 transition-colors duration-300"
+                >
+                  {checkingOut ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" /> Starting checkout…
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={14} /> Pay with Paystack
+                    </>
+                  )}
+                </button>
+              </form>
+              <p className="mt-3 font-['Inter'] text-[11px] text-[#475569] text-center leading-[1.6]">
+                Secure payment by Paystack. Licenses are generated instantly after payment.
+              </p>
               <button
                 onClick={clearCart}
                 className="w-full mt-2 py-2 font-['Inter'] text-[13px] text-[#64748B] hover:text-white transition-colors"

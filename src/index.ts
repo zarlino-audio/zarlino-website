@@ -20,6 +20,9 @@ export interface Env {
   GITHUB_TOKEN?: string;
   ADMIN_TOKEN?: string;
   ZARLINO_KV?: KVNamespace;
+  PAYSTACK_SECRET_KEY?: string;
+  PAYSTACK_PUBLIC_KEY?: string;
+  PAYSTACK_CURRENCY?: string;
 }
 
 const FEEDBACK_REPO = 'zarlino-audio/zarlino-feedback';
@@ -28,18 +31,27 @@ const FEEDBACK_CATEGORIES = ['bug', 'suggestion', 'other'] as const;
 const SITE_BASE = 'https://zarlinoaudio.com';
 
 // Supported plugins — `id` is the plugin ID embedded in the binary and checked
-// by ZLicenseManager; `promoEnd` gates the free-license window (null = free via
-// the request form; configure per business policy).
+// by ZLicenseManager; `priceUsd`/`priceGhs` are server-authoritative retail
+// prices used by Paystack checkout (never trust client prices). This Paystack
+// account is GHS-only (see PAYSTACK_CURRENCY), so checkout bills in Cedis.
 interface PluginSpec {
   id: string;
   name: string;
+  priceUsd: number;
+  priceGhs: number;
   promoEnd: Date | null;
 }
 
 const PLUGINS: Record<string, PluginSpec> = {
-  ztame:   { id: 'ZTAME',   name: 'ZTame',   promoEnd: new Date('2026-08-25T23:59:59Z') },
-  zscorch: { id: 'ZSCORCH', name: 'ZScorch', promoEnd: null },
+  ztame:   { id: 'ZTAME',   name: 'ZTame',   priceUsd: 49,   priceGhs: 750,  promoEnd: new Date('2026-08-25T23:59:59Z') },
+  zscorch: { id: 'ZSCORCH', name: 'ZScorch', priceUsd: 79,   priceGhs: 1200, promoEnd: null },
 };
+
+/** Pick the server price for the configured checkout currency. */
+function pluginPrice(spec: PluginSpec, currency: string): number {
+  if (currency === 'GHS') return spec.priceGhs;
+  return spec.priceUsd;
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function json(body: unknown, status = 200): Response {
@@ -91,6 +103,60 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
+/** Build and sign a license key for a plugin+email (shared by the free path
+ *  and the paid Paystack path). Throws on misconfiguration. */
+async function buildLicense(
+  email: string,
+  pluginKey: string,
+  env: Env,
+): Promise<{
+  licenseKey: string;
+  pluginId: string;
+  plugin: string;
+  pluginName: string;
+  email: string;
+  issueDate: string;
+  expiration: string;
+}> {
+  const pem = env.ZARLINO_LICENSE_PRIVATE_KEY;
+  if (!pem) throw new Error('License service is not configured');
+  const spec = PLUGINS[pluginKey];
+  if (!spec) throw new Error(`Unknown plugin "${pluginKey}"`);
+
+  const now = new Date();
+  const issueDate = now.toISOString().slice(0, 10);
+  const expiration = 'perpetual';
+
+  const payload: number[] = [];
+  encodeField(payload, spec.id);
+  encodeField(payload, email);
+  encodeField(payload, issueDate);
+  encodeField(payload, expiration);
+  const payloadBytes = new Uint8Array(payload);
+
+  const signature = await signRsaSha256(pem, payloadBytes);
+
+  if (env.ZARLINO_KV) {
+    const today = now.toISOString().slice(0, 10);
+    await incr(env.ZARLINO_KV, 'licenses:total');
+    await incr(env.ZARLINO_KV, `licenses:${today}`);
+  }
+
+  const blob: number[] = Array.from(payloadBytes);
+  blob.push((signature.length >> 8) & 0xff, signature.length & 0xff);
+  for (const b of signature) blob.push(b);
+
+  return {
+    licenseKey: bytesToBase64(new Uint8Array(blob)),
+    pluginId: spec.id,
+    plugin: pluginKey,
+    pluginName: spec.name,
+    email,
+    issueDate,
+    expiration,
+  };
+}
+
 async function handleLicense(request: Request, env: Env): Promise<Response> {
   if (request.method === 'OPTIONS') return json({ ok: true });
 
@@ -140,37 +206,199 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
     );
   }
 
-  const issueDate = now.toISOString().slice(0, 10);
-  const expiration = 'perpetual';
-
-  const payload: number[] = [];
-  encodeField(payload, spec.id);
-  encodeField(payload, email);
-  encodeField(payload, issueDate);
-  encodeField(payload, expiration);
-  const payloadBytes = new Uint8Array(payload);
-
-  const signature = await signRsaSha256(pem, payloadBytes);
-
-  if (env.ZARLINO_KV) {
-    const today = new Date().toISOString().slice(0, 10);
-    await incr(env.ZARLINO_KV, 'licenses:total');
-    await incr(env.ZARLINO_KV, `licenses:${today}`);
+  try {
+    return json(await buildLicense(email, pluginKey, env));
+  } catch (e) {
+    return json({ error: e instanceof Error ? e.message : 'License generation failed' }, 500);
   }
+}
 
-  const blob: number[] = Array.from(payloadBytes);
-  blob.push((signature.length >> 8) & 0xff, signature.length & 0xff);
-  for (const b of signature) blob.push(b);
+// ---------------------------------------------------------------------------
+// Paystack checkout
+// ---------------------------------------------------------------------------
+const PAYSTACK_API = 'https://api.paystack.co';
 
-  return json({
-    licenseKey: bytesToBase64(new Uint8Array(blob)),
-    pluginId: spec.id,
-    plugin: pluginKey,
-    pluginName: spec.name,
-    email,
-    issueDate,
-    expiration,
-  });
+function paystackHeaders(env: Env): Record<string, string> {
+  return {
+    Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY ?? ''}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+interface PaystackLineItem {
+  plugin: string;
+  pluginName: string;
+  unitPrice: number;
+  qty: number;
+}
+
+/** POST /api/paystack/initialize — create a Paystack transaction from the cart.
+ *  Server-side prices only; returns the hosted authorization URL. */
+async function handlePaystackInitialize(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.PAYSTACK_SECRET_KEY) return json({ error: 'Paystack is not configured' }, 500);
+
+  let body: { email?: unknown; items?: unknown; ref?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  if (!EMAIL_RE.test(email)) return json({ error: 'Enter a valid email address' }, 400);
+  const refCode = typeof body.ref === 'string' ? body.ref.trim().toUpperCase() : '';
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (items.length === 0) return json({ error: 'Your cart is empty' }, 400);
+
+  // Server-authoritative pricing — never trust client prices.
+  const currency = (env.PAYSTACK_CURRENCY || 'USD').toUpperCase();
+  const lineItems: PaystackLineItem[] = [];
+  let total = 0;
+  for (const raw of items) {
+    const it = raw as { plugin?: unknown; qty?: unknown };
+    const pluginKey = typeof it.plugin === 'string' ? it.plugin.trim().toLowerCase() : '';
+    const qty = Math.max(1, Math.min(10, Number(it.qty) || 1));
+    const spec = PLUGINS[pluginKey];
+    if (!spec) return json({ error: `Unknown plugin "${pluginKey}"` }, 400);
+    const unitPrice = pluginPrice(spec, currency);
+    lineItems.push({ plugin: pluginKey, pluginName: spec.name, unitPrice, qty });
+    total += unitPrice * qty;
+  }
+  const amountMinor = Math.round(total * 100); // Paystack amounts are in minor units (kobo/pennies)
+  const reference = `ZAR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const callbackUrl = `${SITE_BASE}/checkout?reference=${reference}`;
+
+  try {
+    const res = await fetch(`${PAYSTACK_API}/transaction/initialize`, {
+      method: 'POST',
+      headers: paystackHeaders(env),
+      body: JSON.stringify({
+        email,
+        amount: amountMinor,
+        currency,
+        reference,
+        callback_url: callbackUrl,
+        metadata: { items: lineItems, cart_ref: refCode },
+      }),
+    });
+    const data = (await res.json()) as {
+      status?: boolean;
+      message?: string;
+      data?: { authorization_url?: string; access_code?: string; reference?: string };
+    };
+    if (!res.ok || !data.status || !data.data?.authorization_url) {
+      return json({ error: data.message || 'Paystack could not initialize payment' }, 502);
+    }
+    return json({
+      ok: true,
+      authorization_url: data.data.authorization_url,
+      reference: data.data.reference ?? reference,
+      amount: total,
+      currency,
+    });
+  } catch (e) {
+    return json({ error: e instanceof Error ? e.message : 'Paystack initialization failed' }, 502);
+  }
+}
+
+/** GET /api/paystack/verify?reference=… — verify a transaction; on success
+ *  issue licenses, record revenue, and credit any attached affiliate code. */
+async function handlePaystackVerify(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  if (!env.PAYSTACK_SECRET_KEY) return json({ error: 'Paystack is not configured' }, 500);
+
+  const url = new URL(request.url);
+  const reference = (url.searchParams.get('reference') || '').trim();
+  if (!reference) return json({ error: 'Missing reference' }, 400);
+
+  try {
+    const res = await fetch(`${PAYSTACK_API}/transaction/verify/${encodeURIComponent(reference)}`, {
+      headers: paystackHeaders(env),
+    });
+    const data = (await res.json()) as {
+      status?: boolean;
+      message?: string;
+      data?: {
+        status?: string;
+        amount?: number;
+        currency?: string;
+        customer?: { email?: string };
+        metadata?: { items?: PaystackLineItem[]; cart_ref?: string };
+      };
+    };
+    // Paystack returns 404 + {status:false,message} for unknown references.
+    if (!res.ok || data.status === false) {
+      const status = res.status === 404 ? 404 : 502;
+      return json({ error: data.message || 'Verification failed', reference }, status);
+    }
+
+    const txn = data.data ?? {};
+    const status = txn.status ?? 'unknown';
+    if (status !== 'success') {
+      return json({ ok: false, status, message: `Payment ${status}` });
+    }
+
+    const email = String(txn.customer?.email || '').trim().toLowerCase();
+    const amount = Number(txn.amount || 0) / 100;
+    const items = Array.isArray(txn.metadata?.items) ? txn.metadata.items : [];
+    const refCode = String(txn.metadata?.cart_ref || '').toUpperCase();
+
+    // Issue a license per paid item (idempotent-ish: verify is called once per
+    // checkout; a stored receipt lets us skip double-issuing on re-visits).
+    const alreadyIssued = env.ZARLINO_KV ? await env.ZARLINO_KV.get(`paystack:txn:${reference}`) : null;
+    const licenses: Array<{ licenseKey: string; plugin: string; pluginName: string }> = [];
+    if (!alreadyIssued) {
+      for (const it of items) {
+        const pluginKey = String(it.plugin || '').toLowerCase();
+        if (!PLUGINS[pluginKey]) continue;
+        try {
+          const lic = await buildLicense(email, pluginKey, env);
+          licenses.push({ licenseKey: lic.licenseKey, plugin: lic.plugin, pluginName: lic.pluginName });
+        } catch {
+          /* skip unconfigured plugin */
+        }
+      }
+    }
+
+    if (env.ZARLINO_KV && !alreadyIssued) {
+      const today = new Date().toISOString().slice(0, 10);
+      await incr(env.ZARLINO_KV, 'revenue:count:total');
+      await incr(env.ZARLINO_KV, `revenue:count:${today}`);
+      await env.ZARLINO_KV.put(
+        'revenue:amount:total',
+        String(Math.round((Number(await env.ZARLINO_KV.get('revenue:amount:total')) || 0 + amount) * 100) / 100),
+      );
+      await env.ZARLINO_KV.put(
+        `revenue:amount:${today}`,
+        String(Math.round((Number(await env.ZARLINO_KV.get(`revenue:amount:${today}`)) || 0 + amount) * 100) / 100),
+      );
+      await env.ZARLINO_KV.put(
+        `paystack:txn:${reference}`,
+        JSON.stringify({ reference, email, amount, currency: txn.currency ?? 'USD', status, items, refCode, paidAt: new Date().toISOString() }),
+      );
+      if (refCode && (await env.ZARLINO_KV.get(`aff:code:${refCode}`))) {
+        await incr(env.ZARLINO_KV, `aff:conv:${refCode}`);
+        const cur = Number(await env.ZARLINO_KV.get(`aff:rev:${refCode}`)) || 0;
+        await env.ZARLINO_KV.put(`aff:rev:${refCode}`, String(Math.round((cur + amount) * 100) / 100));
+      }
+    }
+
+    return json({
+      ok: true,
+      status: 'success',
+      reference,
+      email,
+      amount,
+      currency: txn.currency ?? 'USD',
+      licenses,
+      items,
+      alreadyIssued: Boolean(alreadyIssued),
+    });
+  } catch (e) {
+    return json({ error: e instanceof Error ? e.message : 'Verification failed' }, 502);
+  }
 }
 
 async function handleFeedback(request: Request, env: Env): Promise<Response> {
@@ -789,6 +1017,12 @@ export default {
 
     if (url.pathname === '/api/license') {
       return handleLicense(request, env);
+    }
+    if (url.pathname === '/api/paystack/initialize') {
+      return handlePaystackInitialize(request, env);
+    }
+    if (url.pathname === '/api/paystack/verify') {
+      return handlePaystackVerify(request, env);
     }
     if (url.pathname === '/api/feedback') {
       return handleFeedback(request, env);

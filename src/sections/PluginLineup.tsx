@@ -20,10 +20,10 @@ const plugins: {
     category: 'Resonance Suppressor',
     description:
       'High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.',
-    price: 49,
+    price: 750,
     image: '/images/ztame-ui.png',
     badge: 'Public Beta',
-    priceLabel: 'FREE',
+    priceLabel: '₵750',
   },
   {
     id: 'zscorch',
@@ -31,10 +31,10 @@ const plugins: {
     category: 'Harmonic Processor',
     description:
       'Adaptive harmonic processor with multiband saturation across six topologies — Tube, Tape, Germanium, Transistor, Diode, and Wavefold — driven by Lift, Character, and Mix macros.',
-    price: 79,
+    price: 1200,
     image: '/images/zscorch-ui.jpg',
     badge: 'Public Beta',
-    priceLabel: 'FREE',
+    priceLabel: '₵1,200',
   },
 ];
 

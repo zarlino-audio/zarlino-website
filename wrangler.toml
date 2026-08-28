@@ -11,6 +11,14 @@ not_found_handling = "404-page"
 # different value and set as a Worker secret if you want it out of git.
 ADMIN_TOKEN = "PGRUxCidKulFTgLsIE3jJhON079BwD8t"
 
+# Paystack checkout — public key is safe in git (client-side). The SECRET key
+# must NOT go in this file: set it with:
+#   wrangler secret put PAYSTACK_SECRET_KEY
+# This account is GHS-only (balance is in Ghana Cedis). To bill USD/NGN later,
+# enable those currencies on the Paystack dashboard and change this value.
+PAYSTACK_PUBLIC_KEY = "pk_live_d2f7554900d64fa3ae9b334777c815e8b346f885"
+PAYSTACK_CURRENCY = "GHS"
+
 # KV namespace for page-view/license counters AND the affiliate program
 # (applications, referral codes, click/conversion tracking). Created with:
 #   wrangler kv namespace create ZARLINO_KV
