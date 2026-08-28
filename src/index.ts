@@ -5,6 +5,7 @@
  *   POST /api/license   — issues a signed license key per plugin (ZTame, ZScorch)
  *   POST /api/feedback  — files feedback issues to the zarlino-feedback repo
  *   POST /api/track     — records page-view counters (KV)
+ *   POST /api/affiliates/enrol  — accepts affiliate applications (stored in KV)
  *   GET  /api/admin/stats — token-gated admin dashboard + site monitoring
  *
  * License blob format (must match tools/generate_license_keys.py):
@@ -26,6 +27,7 @@ const FEEDBACK_REPO = 'zarlino-audio/zarlino-feedback';
 const SITE_REPO = 'zarlino-audio/zarlino-website';
 const FEEDBACK_CATEGORIES = ['bug', 'suggestion', 'other'] as const;
 const SITE_BASE = 'https://zarlinoaudio.com';
+const AFFILIATES_KV_KEY = 'affiliates:list';
 
 // Supported plugins — `id` is the plugin ID embedded in the binary and checked
 // by ZLicenseManager; `promoEnd` gates the free-license window (null = free via
@@ -253,6 +255,54 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
   return json({ ok: true, url: issue.html_url || '' });
 }
 
+async function handleAffiliateEnrol(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.ZARLINO_KV) return json({ error: 'Affiliate enrolment is not configured' }, 500);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
+  if (!name) return json({ error: 'Please provide your name' }, 400);
+
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  if (!EMAIL_RE.test(email)) return json({ error: 'Enter a valid email address' }, 400);
+
+  const platform = typeof body.platform === 'string' ? body.platform.trim().slice(0, 80) : '';
+  const audience = typeof body.audience === 'string' ? body.audience.trim().slice(0, 200) : '';
+  const notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 500) : '';
+
+  const raw = await env.ZARLINO_KV.get(AFFILIATES_KV_KEY);
+  let list: Array<Record<string, unknown>> = [];
+  try {
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) list = parsed;
+    else list = [];
+  } catch {
+    list = [];
+  }
+
+  const id = crypto.randomUUID();
+  const entry: Record<string, unknown> = {
+    id,
+    name,
+    email,
+    platform,
+    audience,
+    notes,
+    createdAt: new Date().toISOString(),
+  };
+  list.push(entry);
+
+  await env.ZARLINO_KV.put(AFFILIATES_KV_KEY, JSON.stringify(list));
+  return json({ ok: true, id, total: list.length });
+}
+
 /* ------------------------------------------------------------------ *
  * Admin dashboard + site monitoring
  * ------------------------------------------------------------------ */
@@ -262,6 +312,7 @@ const SITE_PAGES = [
   '/plugins/ztame',
   '/plugins/zscorch',
   '/report',
+  '/affiliates',
 ];
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -387,12 +438,27 @@ async function handleAdminStats(request: Request, env: Env): Promise<Response> {
     };
   }
 
+  // 5. Affiliates (KV optional)
+  let affiliates = { enabled: false, total: 0, list: [] as Array<Record<string, unknown>> };
+  if (env.ZARLINO_KV) {
+    const raw = await env.ZARLINO_KV.get(AFFILIATES_KV_KEY);
+    if (raw) {
+      try {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) affiliates = { enabled: true, total: arr.length, list: arr };
+      } catch {
+        /* leave affiliates as unavailable */
+      }
+    }
+  }
+
   return json({
     generatedAt: new Date().toISOString(),
     feedback,
     site,
     deploy,
     counters,
+    affiliates,
     links: {
       cloudflare: 'https://dash.cloudflare.com',
       feedbackRepo: `https://github.com/${FEEDBACK_REPO}/issues`,
@@ -435,6 +501,9 @@ export default {
     }
     if (url.pathname === '/api/admin/stats') {
       return handleAdminStats(request, env);
+    }
+    if (url.pathname === '/api/affiliates/enrol') {
+      return handleAffiliateEnrol(request, env);
     }
     return env.ASSETS.fetch(request);
   },

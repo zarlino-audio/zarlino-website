@@ -13,6 +13,7 @@ const footerLinks = {
     { label: 'ZTame Documentation', href: '/plugins/ztame' },
     { label: 'ZScorch FAQ', href: '/plugins/zscorch#faq' },
     { label: 'Report a Bug or Suggestion', href: '/report' },
+    { label: 'Affiliate Program', href: '/affiliates' },
   ],
   Company: ['About', 'Contact'],
   Legal: ['Privacy Policy', 'Terms of Service', 'License Agreement'],

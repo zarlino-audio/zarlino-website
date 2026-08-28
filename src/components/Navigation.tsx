@@ -19,6 +19,7 @@ const Navigation = () => {
     { label: 'ZTame', href: '/plugins/ztame' },
     { label: 'ZScorch', href: '/plugins/zscorch' },
     { label: 'Feedback', href: '/report' },
+    { label: 'Affiliates', href: '/affiliates' },
   ];
 
   return (

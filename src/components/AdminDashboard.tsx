@@ -15,6 +15,7 @@ import {
   Server,
   FileText,
   LogOut,
+  Handshake,
 } from 'lucide-react';
 
 type Stats = {
@@ -49,6 +50,11 @@ type Stats = {
     enabled: boolean;
     views?: { total: number; today: number };
     licenses?: { total: number; today: number };
+  };
+  affiliates: {
+    enabled: boolean;
+    total: number;
+    list: Array<Record<string, unknown>>;
   };
   links: {
     cloudflare: string;
@@ -229,7 +235,7 @@ const AdminDashboard = () => {
     );
   }
 
-  const { feedback, site, deploy, counters, links } = stats;
+  const { feedback, site, deploy, counters, affiliates, links } = stats;
   const healthy = site.filter((p) => p.ok).length;
   const checked = site.filter((p) => p.ok !== null).length;
 
@@ -265,6 +271,7 @@ const AdminDashboard = () => {
         <StatCard icon={Server} label="Pages healthy" value={checked === site.length ? healthy : '…'} sub={checked === site.length ? `${site.length} monitored` : `checking ${checked}/${site.length}`} accent="text-[#86EFAC]" />
         <StatCard icon={BarChart3} label="Page views" value={counters.enabled ? counters.views?.total ?? 0 : '—'} sub={counters.enabled ? `${counters.views?.today ?? 0} today` : 'KV not connected'} />
         <StatCard icon={FileText} label="Licenses issued" value={counters.enabled ? counters.licenses?.total ?? 0 : '—'} sub={counters.enabled ? `${counters.licenses?.today ?? 0} today` : 'KV not connected'} />
+        <StatCard icon={Handshake} label="Affiliate applicants" value={affiliates.enabled ? affiliates.total : '—'} sub={affiliates.enabled ? `${affiliates.list.length} applicants` : 'KV not connected'} />
       </div>
 
       {/* Feedback */}
@@ -363,6 +370,46 @@ const AdminDashboard = () => {
           <p className="font-['Inter'] text-[14px] text-[#64748B]">
             Deploy runs are unavailable — the website repo is private and the Worker needs a{' '}
             <code className="text-[#00D4FF]">GITHUB_TOKEN</code> secret with repo scope to read them.
+          </p>
+        )}
+      </SectionCard>
+
+      {/* Affiliate applicants */}
+      <SectionCard title="Affiliate applicants" icon={Handshake}>
+        {affiliates.enabled && affiliates.list.length > 0 ? (
+          <ul className="flex flex-col gap-3">
+            {affiliates.list.map((a) => {
+              const fields: Array<{ label: string; value: unknown }> = [
+                { label: 'Platform', value: a.platform },
+                { label: 'Audience', value: a.audience },
+                { label: 'Notes', value: a.notes },
+              ];
+              return (
+                <li key={String(a.id)} className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-['Inter'] text-[14px] text-white">
+                      {String(a.name)} <span className="text-[#64748B]">&lt;{String(a.email)}&gt;</span>
+                    </div>
+                    <span className="font-['Inter'] text-[11px] text-[#475569]">
+                      {a.createdAt ? new Date(String(a.createdAt)).toLocaleDateString() : ''}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                    {fields.map((f) => (
+                      f.value ? (
+                        <span key={f.label} className="font-['Inter'] text-[12px] text-[#94A3B8]">
+                          <span className="text-[#64748B]">{f.label}:</span> {String(f.value)}
+                        </span>
+                      ) : null
+                    ))}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="font-['Inter'] text-[14px] text-[#64748B]">
+            {affiliates.enabled ? 'No affiliate applicants yet.' : 'Affiliate list unavailable — no Cloudflare KV namespace is bound yet.'}
           </p>
         )}
       </SectionCard>
