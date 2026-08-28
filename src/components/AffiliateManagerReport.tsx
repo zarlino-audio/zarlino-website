@@ -62,6 +62,26 @@ const AffiliateManagerReport = () => {
     }
   };
 
+  const removeAffiliate = async (code: string) => {
+    if (!storedToken) return;
+    setBusyId(`rm:${code}`);
+    setError('');
+    try {
+      const res = await fetch(`/api/affiliates/remove?token=${encodeURIComponent(storedToken)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove affiliate');
+      await loadReport(storedToken);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to remove affiliate');
+    } finally {
+      setBusyId('');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     setStoredToken(null);
@@ -160,7 +180,7 @@ const AffiliateManagerReport = () => {
         </p>
       )}
 
-      <AffiliateReportView report={report} loading={loading} error={error} busyId={busyId} onDecide={decide} />
+      <AffiliateReportView report={report} loading={loading} error={error} busyId={busyId} onDecide={decide} onRemove={removeAffiliate} />
     </div>
   );
 };

@@ -725,16 +725,52 @@ async function handleAffiliateConvert(request: Request, env: Env): Promise<Respo
   return json({ ok: true, code });
 }
 
+async function handleAffiliateRemove(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!adminAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+  if (!env.ADMIN_TOKEN) return json({ error: 'Admin is not configured' }, 500);
+  if (!env.ZARLINO_KV) return json({ error: 'ZARLINO_KV is not bound' }, 503);
+
+  let body: { id?: unknown; code?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+  const kv = env.ZARLINO_KV;
+  const id = typeof body.id === 'string' ? body.id.trim() : '';
+  const code = typeof body.code === 'string' ? body.code.trim().toUpperCase() : '';
+  if (!id && !code) return json({ error: 'Provide an application id or referral code' }, 400);
+
+  // Resolve the referral code from the application if only an id was given.
+  let codeToRemove = code;
+  if (!codeToRemove && id) codeToRemove = (await readAffApp(kv, id))?.code ?? '';
+  if (id) await kv.delete(`aff:app:${id}`);
+  if (codeToRemove) {
+    await kv.delete(`aff:code:${codeToRemove}`);
+    await kv.delete(`aff:clicks:${codeToRemove}`);
+    await kv.delete(`aff:conv:${codeToRemove}`);
+    await kv.delete(`aff:rev:${codeToRemove}`);
+  }
+  return json({ ok: true, removedApp: !!id, removedCode: codeToRemove });
+}
+
 /** Record a referral click when a page is loaded with `?ref=<CODE>`, then
  *  serve the page with the ref parameter stripped so the URL stays clean. */
-async function handleReferralPageLoad(request: Request, env: Env): Promise<Response | null> {
+async function handleReferralPageLoad(request: Request, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<Response | null> {
   const url = new URL(request.url);
   const code = (url.searchParams.get('ref') || '').trim().toUpperCase();
   if (!code) return null;
   if (env.ZARLINO_KV && (await env.ZARLINO_KV.get(`aff:code:${code}`))) {
-    // Fire-and-forget; never block page load on analytics.
-    const prev = Number(await env.ZARLINO_KV.get(`aff:clicks:${code}`)) || 0;
-    void env.ZARLINO_KV.put(`aff:clicks:${code}`, String(prev + 1));
+    // Best-effort counter, kept alive past the response via waitUntil so
+    // the click is never lost to fire-and-forget cancellation.
+    ctx.waitUntil(
+      (async () => {
+        const prev = Number(await env.ZARLINO_KV!.get(`aff:clicks:${code}`)) || 0;
+        await env.ZARLINO_KV!.put(`aff:clicks:${code}`, String(prev + 1));
+      })(),
+    );
   }
   url.searchParams.delete('ref');
   const next = new Request(url.toString(), request);
@@ -742,12 +778,12 @@ async function handleReferralPageLoad(request: Request, env: Env): Promise<Respo
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<Response> {
     const url = new URL(request.url);
 
     // Referral links: /?ref=CODE — record the click, serve clean page.
     if (request.method === 'GET' && url.searchParams.has('ref')) {
-      const viaRef = await handleReferralPageLoad(request, env);
+      const viaRef = await handleReferralPageLoad(request, env, ctx);
       if (viaRef) return viaRef;
     }
 
@@ -780,6 +816,9 @@ export default {
     }
     if (url.pathname === '/api/affiliates/convert') {
       return handleAffiliateConvert(request, env);
+    }
+    if (url.pathname === '/api/affiliates/remove') {
+      return handleAffiliateRemove(request, env);
     }
     return env.ASSETS.fetch(request);
   },

@@ -11,6 +11,7 @@ import {
   Banknote,
   RefreshCw,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 
 export type AffApplication = {
@@ -63,6 +64,7 @@ type Props = {
   error?: string;
   busyId?: string;
   onDecide?: (id: string, action: 'approve' | 'reject') => void;
+  onRemove?: (code: string) => void;
   onCopy?: (text: string) => void;
 };
 
@@ -76,7 +78,7 @@ const Stat = ({ label, value, sub, accent = 'text-[#00D4FF]' }: { label: string;
 
 /** Full affiliate-program report: summary stats, pending applications with
  *  approve/reject, and the approved-affiliate table with referral links. */
-const AffiliateReportView = ({ report, loading, error, busyId, onDecide, onCopy }: Props) => {
+const AffiliateReportView = ({ report, loading, error, busyId, onDecide, onRemove, onCopy }: Props) => {
   const [copied, setCopied] = useState('');
 
   const copy = (text: string, key: string) => {
@@ -207,6 +209,7 @@ const AffiliateReportView = ({ report, loading, error, busyId, onDecide, onCopy 
                   <th className="px-4 py-2.5 font-['Inter'] text-[11px] uppercase tracking-[0.08em] text-[#64748B]">Sales</th>
                   <th className="px-4 py-2.5 font-['Inter'] text-[11px] uppercase tracking-[0.08em] text-[#64748B]">Revenue</th>
                   <th className="px-4 py-2.5 font-['Inter'] text-[11px] uppercase tracking-[0.08em] text-[#64748B]">Approved</th>
+                  <th className="px-4 py-2.5 font-['Inter'] text-[11px] uppercase tracking-[0.08em] text-[#64748B]">Manage</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,6 +241,16 @@ const AffiliateReportView = ({ report, loading, error, busyId, onDecide, onCopy 
                       <td className="px-4 py-3 font-['Inter'] text-[13px] text-[#94A3B8]">{af.conversions}</td>
                       <td className="px-4 py-3 font-['Inter'] text-[13px] text-[#86EFAC]">${af.revenue.toFixed(2)}</td>
                       <td className="px-4 py-3 font-['Inter'] text-[12px] text-[#64748B]">{new Date(af.approvedAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          disabled={busyId === `rm:${af.code}`}
+                          onClick={() => onRemove?.(af.code)}
+                          className="inline-flex items-center gap-1 rounded-md border border-[rgba(252,165,165,0.35)] px-2 py-1 font-['Inter'] text-[11px] text-[#FCA5A5] hover:bg-[rgba(252,165,165,0.08)] disabled:opacity-60 transition-colors"
+                        >
+                          {busyId === `rm:${af.code}` ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Remove
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}

@@ -226,6 +226,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const removeAffiliate = async (code: string) => {
+    if (!storedToken) return;
+    setBusyId(`rm:${code}`);
+    setAffError('');
+    try {
+      const res = await fetch(`/api/affiliates/remove?token=${encodeURIComponent(storedToken)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove affiliate');
+      await loadAffiliate(storedToken);
+    } catch (e) {
+      setAffError(e instanceof Error ? e.message : 'Failed to remove affiliate');
+    } finally {
+      setBusyId('');
+    }
+  };
+
   const load = useCallback(async (t: string) => {
     setLoading(true);
     setError('');
@@ -382,7 +402,7 @@ const AdminDashboard = () => {
         {affLoading ? (
           <p className="font-['Inter'] text-[14px] text-[#94A3B8]">Loading affiliate report…</p>
         ) : aff ? (
-          <AffiliateReportView report={aff} busyId={busyId} onDecide={decideAffiliate} error={affError} />
+          <AffiliateReportView report={aff} busyId={busyId} onDecide={decideAffiliate} onRemove={removeAffiliate} error={affError} />
         ) : (
           <p className="font-['Inter'] text-[14px] text-[#64748B]">
             {affError || 'Affiliate report unavailable.'}
