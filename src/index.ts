@@ -320,6 +320,7 @@ async function handlePaystackVerify(request: Request, env: Env): Promise<Respons
     const data = (await res.json()) as {
       status?: boolean;
       message?: string;
+      code?: string;
       data?: {
         status?: string;
         amount?: number;
@@ -328,10 +329,14 @@ async function handlePaystackVerify(request: Request, env: Env): Promise<Respons
         metadata?: { items?: PaystackLineItem[]; cart_ref?: string };
       };
     };
-    // Paystack returns 404 (or 200 with {status:false}) for unknown references.
+    // Paystack reports unknown references as HTTP 400 + {code:"transaction_not_found"}
+    // (some endpoints use 404). Map those to a clean 404; anything else is a 502.
     if (!res.ok || data.status === false) {
-      const status = res.ok ? 404 : res.status === 404 ? 404 : 502;
-      return json({ error: data.message || 'Verification failed', reference }, status);
+      const notFound =
+        data.code === "transaction_not_found" ||
+        (!res.ok && res.status === 404) ||
+        (res.ok && data.status === false);
+      return json({ error: data.message || "Verification failed", reference }, notFound ? 404 : 502);
     }
 
     const txn = data.data ?? {};
