@@ -14,7 +14,7 @@ export interface Props {
 const {
   title,
   description,
-  ogImage = '/images/zarlino-logo.svg',
+  ogImage = '/images/og-image.png',
   canonicalURL,
   schemaType,
   noindex = false
@@ -22,17 +22,31 @@ const {
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="generator" content="Astro" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/images/favicon.svg" color="#00D4FF" />
 
     <!-- Robots -->
     {noindex && <meta name="robots" content="noindex,nofollow" />}
+    {!noindex && <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
 
     <!-- Primary Meta -->
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="author" content="Zarlino Audio" />
+    <meta name="application-name" content="Zarlino Audio" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="keywords" content="Zarlino Audio, ZTame, ZScorch, resonance suppressor, audio plugin, VST3, harmonic processor, mixing, mastering, Windows plugin" />
 
     <!-- Canonical -->
     {canonicalURL && <link rel="canonical" href={canonicalURL} />}
@@ -43,10 +57,15 @@ const {
     <meta property="og:type" content={schemaType || 'website'} />
     <meta property="og:url" content={canonicalURL || 'https://zarlinoaudio.com'} />
     <meta property="og:image" content={`https://zarlinoaudio.com${ogImage}`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="Zarlino Audio" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@zarlinoaudio" />
+    <meta name="twitter:creator" content="@zarlinoaudio" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={`https://zarlinoaudio.com${ogImage}`} />
@@ -54,15 +73,19 @@ const {
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <!-- SEO: hint crawlers about key pages -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
   </head>
   <body>
     <AppShell client:load />
     <slot />
-    <Footer client:load />
+    <Footer />
 
     <!-- Page-view beacon for the /admin dashboard (no-op if KV is not bound) -->
     <script is:inline>

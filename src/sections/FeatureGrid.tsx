@@ -1,9 +1,4 @@
-import { useEffect, useRef } from 'react';
 import { Settings, Layers, Waves } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const features = [
   {
@@ -27,53 +22,14 @@ const features = [
 ];
 
 const FeatureGrid = () => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const ctx = gsap.context(() => {
-      const header = section.querySelectorAll('.section-header');
-      gsap.from(header, {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 70%',
-          toggleActions: 'play none none none',
-        },
-      });
-
-      const cards = section.querySelectorAll('.feature-card');
-      gsap.from(cards, {
-        y: 50,
-        opacity: 0,
-        duration: 0.9,
-        stagger: 0.15,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 70%',
-          toggleActions: 'play none none none',
-        },
-      });
-    }, section);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
     <section
-      ref={sectionRef}
       id="features"
       className="relative z-[1] bg-[#0A0A0A] py-[140px] px-6 md:px-10"
     >
       <div className="max-w-[1200px] mx-auto">
         {/* Header */}
-        <div className="section-header">
+        <div className="section-header za-reveal">
           <span className="font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#00D4FF]">
             WHY ZARLINO
           </span>
@@ -95,12 +51,12 @@ const FeatureGrid = () => {
 
         {/* Grid */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {features.map((feature) => {
+          {features.map((feature, i) => {
             const Icon = feature.icon;
             return (
               <div
                 key={feature.title}
-                className="feature-card bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-xl p-10 hover:border-[rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-[400ms] ease-out"
+                className={`feature-card za-reveal za-d${(i % 4) + 1} bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-xl p-10 hover:border-[rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-[400ms] ease-out`}
               >
                 <Icon
                   size={40}

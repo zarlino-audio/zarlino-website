@@ -1,10 +1,4 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
-
-// SVG logos as simple geometric representations
+// DAW compatibility strip — static, no animation JS required.
 const logos = [
   { name: 'Ableton', width: 100 },
   { name: 'Logic Pro', width: 90 },
@@ -15,34 +9,8 @@ const logos = [
 ];
 
 const TrustedBy = () => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const logoEls = section.querySelectorAll('.logo-item');
-    const ctx = gsap.context(() => {
-      gsap.from(logoEls, {
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 85%',
-          toggleActions: 'play none none none',
-        },
-      });
-    }, section);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <div
-      ref={sectionRef}
-      className="relative z-[1] bg-[#050505] border-t border-b border-[rgba(255,255,255,0.06)] py-8"
-    >
+    <div className="relative z-[1] bg-[#050505] border-t border-b border-[rgba(255,255,255,0.06)] py-8">
       <div className="max-w-[1000px] mx-auto px-6">
         <p className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#64748B] text-center mb-5">
           Compatible with

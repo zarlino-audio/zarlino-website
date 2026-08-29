@@ -26,13 +26,76 @@
     --radius: 0.625rem;
   }
 
+  html {
+    scroll-behavior: smooth;
+    /* Keep anchored sections clear of the fixed nav bar. */
+    scroll-padding-top: 96px;
+  }
+
   body {
     @apply bg-[#050505] text-white;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
+    /* Brand ambient glow behind the canvas layer. */
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(0, 212, 255, 0.05), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(124, 58, 237, 0.04), transparent 60%),
+      #050505;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
+  }
+
+  img {
+    /* Prevent layout shift while images load (sizes come from width/height attrs). */
+    height: auto;
+  }
+
+  /* Skeleton-free, cheap GPU reveals (transform/opacity only). */
+  @keyframes za-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .za-reveal {
+    opacity: 0;
+    animation: za-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .za-d1 { animation-delay: 0.05s; }
+  .za-d2 { animation-delay: 0.12s; }
+  .za-d3 { animation-delay: 0.19s; }
+  .za-d4 { animation-delay: 0.26s; }
+  .za-d5 { animation-delay: 0.33s; }
+  .za-d6 { animation-delay: 0.4s; }
+
+  /* Skip expensive layout/paint for below-the-fold long-form sections. */
+  .za-cv {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 900px;
+  }
+
+  /* Accessibility: honour reduced-motion preferences. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    .za-reveal {
+      opacity: 1 !important;
+      animation: none !important;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

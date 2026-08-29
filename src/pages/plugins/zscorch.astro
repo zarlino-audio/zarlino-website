@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LicenseForm from '../../components/LicenseForm';
 import { Download } from 'lucide-react';
 import AddToCartButton from '../../components/AddToCartButton';
+import ABPlayer from '../../components/ABPlayer';
 ---
 
 <BaseLayout
@@ -21,11 +21,10 @@ import AddToCartButton from '../../components/AddToCartButton';
     "description": "Adaptive harmonic processor with multiband saturation across six topologies (Tube, Tape, Germanium, Transistor, Diode, Wavefold), dynamic spectral tilt, and a high-frequency exciter. Three macros — Lift, Character, and Mix — drive the whole chain.",
     "offers": {
       "@type": "Offer",
-      "price": "0.00",
+      "price": "79.00",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-08-25",
-      "description": "Free during public beta (until August 25, 2026). Regular price $79 after the beta. A 14-day fully functional trial is built into the plugin.",
+      "description": "One-time purchase. $79 (₵1,200) for a perpetual license. A 14-day fully functional trial is built into the plugin.",
       "url": "https://zarlinoaudio.com/plugins/zscorch"
     },
     "author": {
@@ -97,7 +96,7 @@ import AddToCartButton from '../../components/AddToCartButton';
         "name": "Is there a free trial for ZScorch?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. ZScorch is free during the public beta, which runs until August 25, 2026. After the beta, a license key is required for continued use."
+          "text": "Yes. ZScorch includes a 14-day fully functional trial. After the trial, a perpetual license costs $79 (₵1,200) — a one-time purchase with no subscriptions or dongles."
         }
       }
     ]
@@ -118,8 +117,8 @@ import AddToCartButton from '../../components/AddToCartButton';
         <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-3 py-1">
           Adaptive Harmonic Processor
         </span>
-        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-3 py-1">
-          Public Beta
+        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.35)] rounded-full px-3 py-1">
+          v1.0
         </span>
       </div>
 
@@ -135,24 +134,46 @@ import AddToCartButton from '../../components/AddToCartButton';
 
       <!-- Pricing + CTA -->
       <div class="mt-8 flex items-center gap-4 flex-wrap">
-        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">FREE</span>
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$79</span>
         <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
-          <s class="text-[#64748B]">$79</s>&nbsp;&nbsp;Free in beta until
-          <strong class="text-white">August 25, 2026</strong>
+          ₵1,200 · Windows VST3 · one-time purchase
         </span>
         <a href="#download" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
-          Try ZScorch
+          Free 14-Day Trial
         </a>
         <AddToCartButton
           client:load
+          label="Buy ZScorch"
           item={{ id: 'zscorch', name: 'ZScorch', price: 1200, image: '/images/zscorch-ui.jpg', category: 'Harmonic Processor' }}
         />
       </div>
 
       <!-- Product Image -->
       <div class="mt-12 rounded-xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
-        <img src="/images/zscorch-ui.jpg" alt="ZScorch adaptive harmonic processor plugin user interface showing multiband saturation controls, Lift, Character, and Mix macros" class="w-full h-auto object-cover" />
+        <img src="/images/zscorch-ui.jpg" alt="ZScorch adaptive harmonic processor plugin user interface showing multiband saturation controls, Lift, Character, and Mix macros" width="1440" height="900" class="w-full h-auto object-cover" loading="lazy" />
       </div>
+
+      <!-- Hear it: A/B with disclosed presets -->
+      <section class="mt-14">
+        <ABPlayer
+          client:load
+          plugin="ZScorch"
+          demos={[
+            {
+              preset: 'Studio Drive',
+              disclosure: 'Tube saturation, 4-band LR4 split @ 150/800/3.5 kHz, per-band drive 1.1–1.4, mix 60–90%, master soft-clip.',
+              a: '/audio/ZScorch/A_studio-drive_dry.mp3',
+              b: '/audio/ZScorch/B_studio-drive_zscorch.mp3',
+            },
+            {
+              preset: 'Tape Warm',
+              disclosure: 'Tape saturation, LR4 split @ 120/900/4 kHz, gentle highs, glue-like soft clip.',
+              a: '/audio/ZScorch/A_tape-warm_dry.mp3',
+              b: '/audio/ZScorch/B_tape-warm_zscorch.mp3',
+            },
+          ]}
+        />
+      </section>
 
       <!-- Download -->
       <section class="mt-14" id="download">
@@ -205,13 +226,24 @@ import AddToCartButton from '../../components/AddToCartButton';
         </div>
       </section>
 
-      <!-- License -->
-      <section class="mt-14" id="license">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Activate ZScorch</h2>
+      <!-- Buy -->
+      <section class="mt-14" id="buy">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Get ZScorch</h2>
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
-          ZScorch is free during the public beta. Request a perpetual license key below — it will be generated instantly for your email.
+          ZScorch runs fully functional for 14 days as a free trial. After that, a license key is required.
+          Licenses are delivered instantly to your email after checkout.
         </p>
-        <LicenseForm plugin="zscorch" client:load />
+        <div class="flex items-center gap-6 flex-wrap rounded-2xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 md:p-8">
+          <div>
+            <p class="font-['Space_Grotesk'] font-semibold text-[28px] text-white">$79</p>
+            <p class="font-['Inter'] text-[13px] text-[#94A3B8]">₵1,200 · one-time · perpetual license</p>
+          </div>
+          <AddToCartButton
+            client:load
+            label="Buy ZScorch"
+            item={{ id: 'zscorch', name: 'ZScorch', price: 1200, image: '/images/zscorch-ui.jpg', category: 'Harmonic Processor' }}
+          />
+        </div>
       </section>
 
       <!-- What It Does -->
@@ -330,7 +362,7 @@ import AddToCartButton from '../../components/AddToCartButton';
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZScorch is free during the public beta, which runs until August 25, 2026. A license key is required for continued use after the beta period.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZScorch includes a 14-day fully functional trial. After the trial, a perpetual license costs $79 (₵1,200) — a one-time purchase with no subscriptions or dongles.</p>
           </div>
         </div>
       </section>

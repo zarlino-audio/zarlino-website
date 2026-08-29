@@ -42,9 +42,12 @@ interface PluginSpec {
   promoEnd: Date | null;
 }
 
+// NOTE: both plugins shipped v1.0 on 2026-08-25. The public-beta free-license
+// promo ended that day; every plugin is now a paid, one-time purchase. Keeping
+// `promoEnd` in the past for both guarantees /api/license rejects free keys.
 const PLUGINS: Record<string, PluginSpec> = {
   ztame:   { id: 'ZTAME',   name: 'ZTame',   priceUsd: 49,   priceGhs: 750,  promoEnd: new Date('2026-08-25T23:59:59Z') },
-  zscorch: { id: 'ZSCORCH', name: 'ZScorch', priceUsd: 79,   priceGhs: 1200, promoEnd: null },
+  zscorch: { id: 'ZSCORCH', name: 'ZScorch', priceUsd: 79,   priceGhs: 1200, promoEnd: new Date('2026-08-25T23:59:59Z') },
 };
 
 /** Pick the server price for the configured checkout currency. */
@@ -1007,7 +1010,37 @@ async function handleReferralPageLoad(request: Request, env: Env, ctx: { waitUnt
   }
   url.searchParams.delete('ref');
   const next = new Request(url.toString(), request);
-  return env.ASSETS.fetch(next);
+  return serveStatic(next, env);
+}
+
+/** Serve a static asset from the Astro build with explicit cache headers.
+ *  Hashed bundles are immutable; images/audio/fonts get a long CDN cache;
+ *  HTML stays uncached so deploys are visible immediately. */
+async function serveStatic(request: Request, env: Env): Promise<Response> {
+  const res = await env.ASSETS.fetch(request);
+  if (!res || res.status >= 400) return res;
+  const path = new URL(request.url).pathname;
+  let cache: string;
+  if (path.startsWith('/_astro/')) {
+    cache = 'public, max-age=31536000, immutable';
+  } else if (/\.(png|jpe?g|svg|webp|avif|ico|gif)$/i.test(path)) {
+    cache = 'public, max-age=86400';
+  } else if (/\.(mp3|wav|ogg|m4a|mp4|webm)$/i.test(path)) {
+    cache = 'public, max-age=86400';
+  } else if (/\.(woff2?|ttf|otf)$/i.test(path)) {
+    cache = 'public, max-age=86400';
+  } else if (/\.(js|css|json|map)$/i.test(path)) {
+    cache = 'public, max-age=3600';
+  } else {
+    cache = 'no-cache';
+  }
+  const headers = new Headers(res.headers);
+  headers.set('Cache-Control', cache);
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
 }
 
 export default {
@@ -1058,6 +1091,10 @@ export default {
     }
     if (url.pathname === '/api/affiliates/remove') {
       return handleAffiliateRemove(request, env);
+    }
+    // Everything else: static site (with explicit caching).
+    if (request.method === 'GET') {
+      return serveStatic(request, env);
     }
     return env.ASSETS.fetch(request);
   },

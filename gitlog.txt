@@ -1,0 +1,3 @@
+e449878 fix(paystack): map transaction_not_found (HTTP 400) to a clean 404
+7ddf1ad feat(paystack): Add-to-Cart buttons + verify 404 handling
+b849b73 feat(paystack): live checkout — GHS billing, /checkout page, revenue + affiliate tracking
