@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://zarlinoaudio.com/sitemap.xml
+Sitemap: https://zarlinoaudio.com/sitemap-index.xml
