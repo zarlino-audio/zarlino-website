@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AddToCartButton from '../../components/AddToCartButton';
+import { PRODUCTS, SITE } from '../../config/products';
+const plugins = Object.values(PRODUCTS);
+---
+
+<BaseLayout
+  title="Plugins — Zarlino Audio | ZTame & ZScorch"
+  description="Browse the Zarlino Audio plugin catalog. ZTame — automatic resonance suppression. ZScorch — adaptive harmonic processing. Windows VST3, 14-day free trial."
+  canonicalURL="https://zarlinoaudio.com/plugins"
+  schemaType="website"
+>
