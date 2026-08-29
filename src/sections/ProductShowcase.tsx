@@ -1,6 +1,8 @@
 import { Check } from 'lucide-react';
+import { PRODUCTS } from '../config/products';
 
 const ProductShowcase = () => {
+  const product = PRODUCTS.ztame;
   const features = [
     'High-resolution FFT-based automatic peak detection',
     'Per-peak dynamic notch filtering — only active resonances are reduced',
@@ -22,8 +24,8 @@ const ProductShowcase = () => {
           }}
         >
           <img
-            src="/images/ztame-ui.png"
-            alt="ZTame Resonance Suppressor Plugin"
+            src={product.image}
+            alt={`${product.name} Resonance Suppressor Plugin`}
             className="w-full h-auto object-cover"
             width={1440}
             height={900}
@@ -34,7 +36,7 @@ const ProductShowcase = () => {
         {/* Right: Content */}
         <div className="flex flex-col">
           <span className="za-reveal za-d1 font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#00D4FF]">
-            FLAGSHIP PROCESSOR
+            {product.heroKicker}
           </span>
 
           <h2
@@ -46,18 +48,15 @@ const ProductShowcase = () => {
             }}
           >
             <span className="inline-flex items-center gap-3">
-              ZTame
+              {product.name}
               <span className="align-middle font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.35)] rounded-full px-2.5 py-1">
-                v1.0
+                {product.badge}
               </span>
             </span>
           </h2>
 
           <p className="za-reveal za-d3 mt-4 font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.7]">
-            A high-resolution FFT-based automatic resonance suppressor. Detect
-            narrow, persistent spectral peaks and apply surgical dynamic
-            reduction — with selectivity gating, split-band operation, and
-            latency-aligned Dry/Wet control.
+            {product.outcome}
           </p>
 
           <ul className="za-reveal za-d4 mt-6 flex flex-col gap-3">
@@ -75,18 +74,18 @@ const ProductShowcase = () => {
 
           <div className="za-reveal za-d5 mt-8 flex items-baseline gap-4">
             <span className="font-['Space_Grotesk'] font-semibold text-[32px] text-white">
-              ₵750
+              {product.priceLabelGhs}
             </span>
             <span className="font-['Space_Grotesk'] text-[18px] text-[#64748B]">
-              $49 · Windows VST3
+              {product.usdLabel} · {product.platform} {product.format}
             </span>
           </div>
 
           <a
-            href="/plugins/ztame#buy"
+            href={product.buyUrl}
             className="za-reveal za-d6 mt-6 self-start inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-7 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300"
           >
-            Buy ZTame
+            Buy {product.name}
           </a>
         </div>
       </div>

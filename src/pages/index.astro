@@ -1,11 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomePage from '../components/HomePage';
+import { PRODUCTS, SITE } from '../config/products';
 ---
 
 <BaseLayout
   title="Zarlino Audio — Precision Audio Processing Plugins: ZTame, ZScorch"
-  description="Zarlino Audio builds precision audio processing plugins for mixing and mastering. ZTame — automatic resonance suppression. ZScorch — adaptive harmonic processing."
+  description="Zarlino Audio builds precision audio tools for mixing and mastering. ZTame — automatic resonance suppression. ZScorch — adaptive harmonic processing. Windows VST3."
   canonicalURL="https://zarlinoaudio.com/"
   schemaType="website"
 >
@@ -38,7 +39,7 @@ import HomePage from '../components/HomePage';
     }
   })} />
 
-  <!-- ItemList of Products -->
+  <!-- ItemList of Products (prices from the central product config) -->
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -48,17 +49,29 @@ import HomePage from '../components/HomePage';
         "@type": "ListItem",
         "position": 1,
         "name": "ZTame",
-        "url": "https://zarlinoaudio.com/plugins/ztame",
-        "image": "https://zarlinoaudio.com/images/ztame-ui.png",
-        "description": "High-resolution FFT-based automatic resonance suppressor for harsh frequencies and ringing."
+        "url": `${SITE.url}${PRODUCTS.ztame.slug}`,
+        "image": `${SITE.url}${PRODUCTS.ztame.image}`,
+        "description": PRODUCTS.ztame.description,
+        "offers": {
+          "@type": "Offer",
+          "price": String(PRODUCTS.ztame.priceUsd),
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        }
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "ZScorch",
-        "url": "https://zarlinoaudio.com/plugins/zscorch",
-        "image": "https://zarlinoaudio.com/images/zscorch-ui.jpg",
-        "description": "Adaptive harmonic processor with multiband saturation across six topologies."
+        "url": `${SITE.url}${PRODUCTS.zscorch.slug}`,
+        "image": `${SITE.url}${PRODUCTS.zscorch.image}`,
+        "description": PRODUCTS.zscorch.description,
+        "offers": {
+          "@type": "Offer",
+          "price": String(PRODUCTS.zscorch.priceUsd),
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        }
       }
     ]
   })} />

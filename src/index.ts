@@ -637,15 +637,49 @@ async function handleAdminStats(request: Request, env: Env): Promise<Response> {
   });
 }
 
+/** POST /api/waitlist — product-specific email capture (see EmailCapture.tsx).
+ *  Stores `waitlist:<topic>:<email>` in KV. Swap this handler for a real email
+ *  provider (Mailchimp/Buttondown/etc.) once one is configured; the endpoint
+ *  contract stays the same. */
+async function handleWaitlist(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.ZARLINO_KV) {
+    return json({ ok: true }); // no-op when KV isn't bound; capture is best-effort
+  }
+
+  let body: { email?: unknown; topic?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase().slice(0, 200) : '';
+  if (!EMAIL_RE.test(email)) return json({ error: 'Enter a valid email address' }, 400);
+  const topic = (typeof body.topic === 'string' ? body.topic.trim().slice(0, 60) : 'general') || 'general';
+
+  await env.ZARLINO_KV.put(`waitlist:${topic}:${email}`, new Date().toISOString());
+  await incr(env.ZARLINO_KV, `waitlist:${topic}:total`);
+  const today = new Date().toISOString().slice(0, 10);
+  await incr(env.ZARLINO_KV, `waitlist:${today}`);
+
+  return json({ ok: true, topic });
+}
+
+/** POST /api/track — page-view beacon plus lightweight conversion events
+ *  (`download`, `demo`, `waitlist`, `buy`). Purpose: see where visitors leave
+ *  the funnel, not surveillance. */
 async function handleTrack(request: Request, env: Env): Promise<Response> {
   if (request.method === 'OPTIONS') return json({ ok: true });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (!env.ZARLINO_KV) return new Response(null, { status: 204 });
 
   let path = '/';
+  let event = '';
   try {
-    const body = (await request.json()) as { path?: unknown };
+    const body = (await request.json()) as { path?: unknown; event?: unknown };
     if (typeof body.path === 'string') path = body.path.slice(0, 200);
+    if (typeof body.event === 'string') event = body.event.slice(0, 40);
   } catch {
     /* keep default path */
   }
@@ -654,6 +688,12 @@ async function handleTrack(request: Request, env: Env): Promise<Response> {
   await incr(env.ZARLINO_KV, 'views:total');
   await incr(env.ZARLINO_KV, `views:${today}`);
   await incr(env.ZARLINO_KV, `views:${today}:${path}`);
+
+  if (event) {
+    await incr(env.ZARLINO_KV, `events:${event}:total`);
+    await incr(env.ZARLINO_KV, `events:${event}:${today}`);
+    await incr(env.ZARLINO_KV, `events:${event}:${today}:${path}`);
+  }
   return new Response(null, { status: 204 });
 }
 
@@ -1064,6 +1104,9 @@ export default {
     }
     if (url.pathname === '/api/feedback') {
       return handleFeedback(request, env);
+    }
+    if (url.pathname === '/api/waitlist') {
+      return handleWaitlist(request, env);
     }
     if (url.pathname === '/api/track') {
       return handleTrack(request, env);

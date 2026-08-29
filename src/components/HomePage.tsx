@@ -4,6 +4,7 @@ import ProductShowcase from '../sections/ProductShowcase';
 import FeatureGrid from '../sections/FeatureGrid';
 import PluginLineup from '../sections/PluginLineup';
 import CTABanner from '../sections/CTABanner';
+import BundleSection from './BundleSection';
 
 /**
  * Homepage sections. Entrance reveals are pure CSS (`.za-reveal`), and
@@ -18,6 +19,7 @@ const HomePage = () => {
       <ProductShowcase />
       <FeatureGrid />
       <PluginLineup />
+      <BundleSection />
       <CTABanner />
     </main>
   );

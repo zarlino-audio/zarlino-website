@@ -1,41 +1,17 @@
 import AddToCartButton from '../components/AddToCartButton';
+import { PRODUCTS } from '../config/products';
 
-const plugins: {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  price: number;
-  image: string;
-  badge: string;
-  priceLabel: string;
-  usdLabel: string;
-}[] = [
-  {
-    id: 'ztame',
-    name: 'ZTame',
-    category: 'Resonance Suppressor',
-    description:
-      'High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.',
-    price: 750,
-    image: '/images/ztame-ui.png',
-    badge: 'v1.0',
-    priceLabel: '₵750',
-    usdLabel: '$49',
-  },
-  {
-    id: 'zscorch',
-    name: 'ZScorch',
-    category: 'Harmonic Processor',
-    description:
-      'Adaptive harmonic processor with multiband saturation across six topologies — Tube, Tape, Germanium, Transistor, Diode, and Wavefold — driven by Lift, Character, and Mix macros.',
-    price: 1200,
-    image: '/images/zscorch-ui.jpg',
-    badge: 'v1.0',
-    priceLabel: '₵1,200',
-    usdLabel: '$79',
-  },
-];
+const plugins = [PRODUCTS.ztame, PRODUCTS.zscorch].map((p) => ({
+  id: p.id,
+  name: p.name,
+  category: p.category,
+  description: p.description,
+  price: p.priceGhs,
+  image: p.image,
+  badge: p.badge,
+  priceLabel: p.priceLabelGhs,
+  usdLabel: p.usdLabel,
+}));
 
 const PluginLineup = () => {
   return (

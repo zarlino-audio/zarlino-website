@@ -8,6 +8,18 @@ export interface ABDemo {
   b: string; // processed
 }
 
+/** Fire a lightweight `demo` conversion event (no-op if KV unbound). */
+function trackDemo() {
+  try {
+    const body = JSON.stringify({ path: window.location.pathname, event: 'demo' });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
+    } else {
+      fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true });
+    }
+  } catch { /* best-effort */ }
+}
+
 /** Embedded A/B comparison player — the plugin's own audio, dry (A) vs
  *  processed (B), with the exact preset disclosed under each pair. */
 const ABPlayer = ({ plugin, demos }: { plugin: string; demos: ABDemo[] }) => {
@@ -59,7 +71,7 @@ const ABPlayer = ({ plugin, demos }: { plugin: string; demos: ABDemo[] }) => {
             </span>
             <span className="font-['Inter'] text-[11px] text-[#475569]">source: {demo.preset}</span>
           </div>
-          <audio controls preload="none" src={demo.a} className="mt-3 w-full h-10" />
+          <audio controls preload="none" src={demo.a} onPlay={trackDemo} className="mt-3 w-full h-10" />
         </div>
         <div className="rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-4">
           <div className="flex items-center justify-between">
@@ -67,7 +79,7 @@ const ABPlayer = ({ plugin, demos }: { plugin: string; demos: ABDemo[] }) => {
               <Pause size={12} /> B — {plugin}: “{demo.preset}”
             </span>
           </div>
-          <audio controls preload="none" src={demo.b} className="mt-3 w-full h-10" />
+          <audio controls preload="none" src={demo.b} onPlay={trackDemo} className="mt-3 w-full h-10" />
         </div>
       </div>
 

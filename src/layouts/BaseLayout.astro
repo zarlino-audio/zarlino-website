@@ -116,5 +116,26 @@ const {
         } catch (e) {}
       })();
     </script>
+
+    <!-- Conversion-event beacon: any element with [data-event] (download /
+         demo / buy / waitlist) records the funnel step. No-op if KV unbound. -->
+    <script is:inline>
+      (function () {
+        document.addEventListener('click', function (e) {
+          var el = e.target && e.target.closest ? e.target.closest('[data-event]') : null;
+          if (!el) return;
+          var ev = el.getAttribute('data-event');
+          if (!ev) return;
+          try {
+            var body = JSON.stringify({ path: window.location.pathname, event: ev });
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
+            } else {
+              fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+            }
+          } catch (e2) {}
+        });
+      })();
+    </script>
   </body>
 </html>

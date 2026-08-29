@@ -1,7 +1,9 @@
+import EmailCapture from '../components/EmailCapture';
+
 /**
  * CTA banner — pure CSS background (the previous autoplaying 4.9 MB
  * hero-demo.mp4 was removed; it cost a full extra download on the homepage
- * for a 15%-opacity backdrop).
+ * for a 15%-opacity backdrop). Includes a general lead-capture form.
  */
 const CTABanner = () => {
   return (
@@ -35,6 +37,15 @@ const CTABanner = () => {
         >
           Explore the Collection
         </a>
+
+        <div className="za-reveal za-d3 mx-auto mt-10 max-w-[460px] text-left">
+          <EmailCapture
+            client:load
+            topic="Zarlino Audio"
+            cta="Get plugin updates and release notes — no spam."
+            success="Thanks — we will keep you posted on new Zarlino releases."
+          />
+        </div>
       </div>
     </section>
   );

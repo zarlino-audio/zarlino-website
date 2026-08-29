@@ -3,6 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Download } from 'lucide-react';
 import AddToCartButton from '../../components/AddToCartButton';
 import ABPlayer from '../../components/ABPlayer';
+import CompatibilitySection from '../../components/CompatibilitySection';
+import TestimonialSection from '../../components/TestimonialSection';
+import EmailCapture from '../../components/EmailCapture';
+import CrossSellSection from '../../components/CrossSellSection';
+import { PRODUCTS } from '../../config/products';
+const zscorch = PRODUCTS.zscorch;
 ---
 
 <BaseLayout
@@ -127,24 +133,37 @@ import ABPlayer from '../../components/ABPlayer';
         ZScorch
       </h1>
 
-      <!-- Tagline -->
+      <!-- Tagline (outcome-led) -->
       <p class="mt-4 font-['Inter'] text-[18px] text-[#94A3B8] leading-[1.7] max-w-[650px]">
-        An adaptive harmonic processor that adds warmth, edge, and glue through multiband saturation — with six distortion topologies, dynamic spectral tilt, and a high-frequency exciter, all shaped by three simple macros.
+        {zscorch.tagline}
       </p>
+
+      <!-- Problem / Outcome -->
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6">
+          <p class="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#64748B]">The problem</p>
+          <p class="mt-2 font-['Inter'] text-[15px] text-[#CBD5E1] leading-[1.7]">{zscorch.problem}</p>
+        </div>
+        <div class="rounded-xl border border-[rgba(0,212,255,0.18)] bg-[rgba(0,212,255,0.04)] p-6">
+          <p class="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF]">The outcome</p>
+          <p class="mt-2 font-['Inter'] text-[15px] text-[#CBD5E1] leading-[1.7]">{zscorch.outcome}</p>
+        </div>
+      </div>
 
       <!-- Pricing + CTA -->
       <div class="mt-8 flex items-center gap-4 flex-wrap">
-        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$79</span>
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">{zscorch.usdLabel}</span>
         <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
-          ₵1,200 · Windows VST3 · one-time purchase
+          {zscorch.priceLabelGhs} · {zscorch.platform} {zscorch.format} · one-time purchase
         </span>
-        <a href="#download" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
-          Free 14-Day Trial
+        <a href="#download" data-event="trial" class="inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-8 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300">
+          Free {zscorch.trialDays}-Day Trial
         </a>
         <AddToCartButton
           client:load
-          label="Buy ZScorch"
-          item={{ id: 'zscorch', name: 'ZScorch', price: 1200, image: '/images/zscorch-ui.jpg', category: 'Harmonic Processor' }}
+          event="buy"
+          label={`Buy ${zscorch.name}`}
+          item={{ id: zscorch.id, name: zscorch.name, price: zscorch.priceGhs, image: zscorch.image, category: zscorch.category }}
         />
       </div>
 
@@ -181,10 +200,21 @@ import ABPlayer from '../../components/ABPlayer';
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
           Grab the installer for the full standalone app, or the VST3 for your DAW. All builds are Windows 10 22H2+ (64-bit).
         </p>
+        <div class="mb-6 flex items-start gap-3 rounded-lg border border-[rgba(251,191,36,0.45)] bg-[rgba(251,191,36,0.08)] px-4 py-3 font-['Inter'] text-[14px] text-[#FDE68A] leading-[1.7]">
+          <span class="text-[#FBBF24] leading-none">&#9888;</span>
+          <span>
+            <strong class="text-[#FBBF24]">Disclosed pre-release - not code-signed.</strong>{' '}
+            This ZScorch 1.0.0 build has not yet been code-signed, so Windows SmartScreen will show an{' '}
+            <strong class="text-[#FBBF24]">"Unknown publisher"</strong> warning. To install, click{' '}
+            <strong class="text-[#FBBF24]">"More info"</strong> then{' '}
+            <strong class="text-[#FBBF24]">"Run anyway"</strong>.
+          </span>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
             href="/downloads/ZScorch-v1.0.0-Windows-Installer.exe"
             download
+            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 hover:bg-[rgba(0,212,255,0.08)] transition-colors duration-300"
           >
             <div>
@@ -199,6 +229,7 @@ import ABPlayer from '../../components/ABPlayer';
           <a
             href="/downloads/ZScorch-v1.0.0-Windows-VST3.zip"
             download
+            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -213,6 +244,7 @@ import ABPlayer from '../../components/ABPlayer';
           <a
             href="/downloads/ZScorch-v1.0.0-Windows-Standalone.zip"
             download
+            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -235,13 +267,14 @@ import ABPlayer from '../../components/ABPlayer';
         </p>
         <div class="flex items-center gap-6 flex-wrap rounded-2xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 md:p-8">
           <div>
-            <p class="font-['Space_Grotesk'] font-semibold text-[28px] text-white">$79</p>
-            <p class="font-['Inter'] text-[13px] text-[#94A3B8]">₵1,200 · one-time · perpetual license</p>
+            <p class="font-['Space_Grotesk'] font-semibold text-[28px] text-white">{zscorch.usdLabel}</p>
+            <p class="font-['Inter'] text-[13px] text-[#94A3B8]">{zscorch.priceLabelGhs} · one-time · perpetual license</p>
           </div>
           <AddToCartButton
             client:load
-            label="Buy ZScorch"
-            item={{ id: 'zscorch', name: 'ZScorch', price: 1200, image: '/images/zscorch-ui.jpg', category: 'Harmonic Processor' }}
+            event="buy"
+            label={`Buy ${zscorch.name}`}
+            item={{ id: zscorch.id, name: zscorch.name, price: zscorch.priceGhs, image: zscorch.image, category: zscorch.category }}
           />
         </div>
       </section>
@@ -336,6 +369,14 @@ import ABPlayer from '../../components/ABPlayer';
         </ul>
       </section>
 
+      <!-- Compatibility -->
+      <CompatibilitySection
+        client:load
+        platform={zscorch.platform}
+        format={zscorch.format}
+        osNote="Windows 10 22H2 or later (64-bit)"
+      />
+
       <!-- FAQ -->
       <section class="mt-12" id="faq">
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Frequently Asked Questions</h2>
@@ -384,20 +425,26 @@ import ABPlayer from '../../components/ABPlayer';
         </div>
       </section>
 
-      <!-- More from the Zarlino ecosystem -->
+      <!-- User feedback (renders only when genuine testimonials are configured) -->
+      <TestimonialSection />
+
+      <!-- Product-specific email capture -->
       <section class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-6">More from the Zarlino Audio lineup</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/plugins/ztame" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
-            <div class="flex items-center justify-between">
-              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZTame</h3>
-              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Resonance Suppressor</span>
-            </div>
-            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">High-resolution FFT-based dynamic resonance suppression for harsh frequencies and ringing — the Soothe 3 alternative for spectral dynamics.</p>
-            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
-          </a>
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-4">
+          Stay sharp with {zscorch.name}
+        </h2>
+        <div class="max-w-[520px]">
+          <EmailCapture
+            client:load
+            topic={zscorch.emailList.topic}
+            cta={zscorch.emailList.cta}
+            success={zscorch.emailList.success}
+          />
         </div>
       </section>
+
+      <!-- Cross-sell: the complementary plugin -->
+      <CrossSellSection current="zscorch" />
 
       <!-- Back to Plugins -->
       <div class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">

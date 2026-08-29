@@ -3,6 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Download } from 'lucide-react';
 import AddToCartButton from '../../components/AddToCartButton';
 import ABPlayer from '../../components/ABPlayer';
+import CompatibilitySection from '../../components/CompatibilitySection';
+import TestimonialSection from '../../components/TestimonialSection';
+import EmailCapture from '../../components/EmailCapture';
+import CrossSellSection from '../../components/CrossSellSection';
+import { PRODUCTS } from '../../config/products';
+const ztame = PRODUCTS.ztame;
 ---
 
 <BaseLayout
@@ -127,27 +133,40 @@ import ABPlayer from '../../components/ABPlayer';
         ZTame
       </h1>
 
-      <!-- Tagline -->
+      <!-- Tagline (outcome-led) -->
       <p class="mt-4 font-['Inter'] text-[18px] text-[#94A3B8] leading-[1.7] max-w-[650px]">
-        A high-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, built for mixing and mastering engineers who need surgical control over harsh frequencies.
+        {ztame.tagline}
       </p>
 
+      <!-- Problem / Outcome -->
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6">
+          <p class="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#64748B]">The problem</p>
+          <p class="mt-2 font-['Inter'] text-[15px] text-[#CBD5E1] leading-[1.7]">{ztame.problem}</p>
+        </div>
+        <div class="rounded-xl border border-[rgba(0,212,255,0.18)] bg-[rgba(0,212,255,0.04)] p-6">
+          <p class="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF]">The outcome</p>
+          <p class="mt-2 font-['Inter'] text-[15px] text-[#CBD5E1] leading-[1.7]">{ztame.outcome}</p>
+        </div>
+      </div>
+
       <!-- Release note -->
-      <p class="mt-4 font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[650px] border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.05)] rounded-lg px-4 py-3">
+      <p class="mt-6 font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[650px] border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.05)] rounded-lg px-4 py-3">
         <strong class="text-[#00D4FF]">v1.0 now available.</strong> Buy once, keep forever — Windows VST3, no subscriptions. Found an issue?{' '}
         <a href="/report" class="text-[#00D4FF] hover:underline">Report it here</a>.
       </p>
 
       <!-- Pricing + CTA -->
       <div class="mt-8 flex items-center gap-4 flex-wrap">
-        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$49</span>
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">{ztame.usdLabel}</span>
         <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
-          ₵750 · Windows VST3 · one-time purchase
+          {ztame.priceLabelGhs} · {ztame.platform} {ztame.format} · one-time purchase
         </span>
         <AddToCartButton
           client:load
-          label="Buy ZTame"
-          item={{ id: 'ztame', name: 'ZTame', price: 750, image: '/images/ztame-ui.png', category: 'Resonance Suppressor' }}
+          event="buy"
+          label={`Buy ${ztame.name}`}
+          item={{ id: ztame.id, name: ztame.name, price: ztame.priceGhs, image: ztame.image, category: ztame.category }}
         />
       </div>
 
@@ -185,10 +204,21 @@ import ABPlayer from '../../components/ABPlayer';
           Grab the installer for the full standalone app, or the VST3 for your DAW. This is
           ZTame 1.0.0. All builds are Windows 10 22H2+ (64-bit).
         </p>
+        <div class="mb-6 flex items-start gap-3 rounded-lg border border-[rgba(251,191,36,0.45)] bg-[rgba(251,191,36,0.08)] px-4 py-3 font-['Inter'] text-[14px] text-[#FDE68A] leading-[1.7]">
+          <span class="text-[#FBBF24] leading-none">&#9888;</span>
+          <span>
+            <strong class="text-[#FBBF24]">Disclosed pre-release - not code-signed.</strong>{' '}
+            This ZTame 1.0.0 build has not yet been code-signed, so Windows SmartScreen will show an{' '}
+            <strong class="text-[#FBBF24]">"Unknown publisher"</strong> warning. To install, click{' '}
+            <strong class="text-[#FBBF24]">"More info"</strong> then{' '}
+            <strong class="text-[#FBBF24]">"Run anyway"</strong>.
+          </span>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
             href="/downloads/ZTame-v1.0.0-Windows-Installer.exe"
             download
+            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 hover:bg-[rgba(0,212,255,0.08)] transition-colors duration-300"
           >
             <div>
@@ -203,6 +233,7 @@ import ABPlayer from '../../components/ABPlayer';
           <a
             href="/downloads/ZTame-v1.0.0-Windows-VST3.zip"
             download
+            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -217,6 +248,7 @@ import ABPlayer from '../../components/ABPlayer';
           <a
             href="/downloads/ZTame-v1.0.0-Windows-Standalone.zip"
             download
+            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -244,8 +276,9 @@ import ABPlayer from '../../components/ABPlayer';
           </div>
           <AddToCartButton
             client:load
-            label="Buy ZTame"
-            item={{ id: 'ztame', name: 'ZTame', price: 750, image: '/images/ztame-ui.png', category: 'Resonance Suppressor' }}
+            event="buy"
+            label={`Buy ${ztame.name}`}
+            item={{ id: ztame.id, name: ztame.name, price: ztame.priceGhs, image: ztame.image, category: ztame.category }}
           />
         </div>
       </section>
@@ -329,6 +362,39 @@ import ABPlayer from '../../components/ABPlayer';
         </div>
       </section>
 
+      <!-- ZTame vs Manual EQ (honest comparison) -->
+      <section class="mt-12">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">ZTame vs Manual EQ</h2>
+        <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] max-w-[700px] mb-6">
+          ZTame does not replace EQ — they are different workflows. EQ gives you deliberate, manual
+          control over any frequency. ZTame automates the identification and dynamic control of
+          problematic resonances.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6">
+            <h3 class="font-['Space_Grotesk'] font-semibold text-[18px] text-white mb-3">Manual EQ</h3>
+            <ul class="font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.8] space-y-2 list-disc list-inside">
+              <li>Full manual control over any frequency, at any time.</li>
+              <li>You locate the problem by ear and set a static cut.</li>
+              <li>A fixed cut is always applied — even when the resonance is not present.</li>
+              <li>Great for creative tone-shaping and broad correction.</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-[rgba(0,212,255,0.18)] bg-[rgba(0,212,255,0.04)] p-6">
+            <h3 class="font-['Space_Grotesk'] font-semibold text-[18px] text-white mb-3">ZTame</h3>
+            <ul class="font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.8] space-y-2 list-disc list-inside">
+              <li>Detects narrow, persistent spectral peaks automatically.</li>
+              <li>Reduces them dynamically — only while they are present.</li>
+              <li>Leaves surrounding frequencies untouched, preserving tone.</li>
+              <li>Ideal for repetitive cleanup of harsh resonances across a mix.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="mt-4 font-['Inter'] text-[13px] text-[#64748B] max-w-[700px]">
+          Most engineers use both: EQ for deliberate shaping, ZTame for dynamic resonance control.
+        </p>
+      </section>
+
       <!-- System Requirements -->
       <section class="mt-12">
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">System Requirements</h2>
@@ -342,6 +408,14 @@ import ABPlayer from '../../components/ABPlayer';
           <li>Latency: FFT analysis latency scales with oversampling — 2048 samples at 1×, 1024 + 2×24 at 2×, 512 + 3×24 at 4× (≈22 ms in 2× mode at 44.1 kHz). Dry/Wet is latency-aligned so parallel processing stays sample-accurate.</li>
         </ul>
       </section>
+
+      <!-- Compatibility -->
+      <CompatibilitySection
+        client:load
+        platform={ztame.platform}
+        format={ztame.format}
+        osNote="Windows 10 22H2 or later (64-bit)"
+      />
 
       <!-- FAQ -->
       <section class="mt-12">
@@ -386,20 +460,26 @@ import ABPlayer from '../../components/ABPlayer';
         </div>
       </section>
 
-      <!-- More from the Zarlino ecosystem -->
+      <!-- User feedback (renders only when genuine testimonials are configured) -->
+      <TestimonialSection />
+
+      <!-- Product-specific email capture -->
       <section class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-6">More from the Zarlino Audio lineup</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/plugins/zscorch" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
-            <div class="flex items-center justify-between">
-              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZScorch</h3>
-              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Adaptive Harmonic Processor</span>
-            </div>
-            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Multi-mode multiband harmonic saturation with Lift, Character, and Mix macros. Warm up, distort, and glue with six saturation topologies.</p>
-            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
-          </a>
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-4">
+          Stay sharp with {ztame.name}
+        </h2>
+        <div class="max-w-[520px]">
+          <EmailCapture
+            client:load
+            topic={ztame.emailList.topic}
+            cta={ztame.emailList.cta}
+            success={ztame.emailList.success}
+          />
         </div>
       </section>
+
+      <!-- Cross-sell: the complementary plugin -->
+      <CrossSellSection current="ztame" />
 
       <!-- Back to Plugins -->
       <div class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
