@@ -61,17 +61,17 @@ function pcmToMp3(mono, sampleRate) {
   return Buffer.concat(out);
 }
 
-// Mapping: source key -> { dry, proc, outA, outB }
+// Mapping: preset -> { dry, proc, outA, outB }
 const demos = {
   ztame: [
-    { dry: 'karra_dry.wav', proc: 'karra_proc.wav', outA: 'A_karra-lead-vocal_dry.mp3', outB: 'B_karra-lead-vocal_ztame.mp3' },
-    { dry: 'madonna_dry.wav', proc: 'madonna_proc.wav', outA: 'A_madonna-lead-vocal_dry.mp3', outB: 'B_madonna-lead-vocal_ztame.mp3' },
-    { dry: 'ella_dry.wav', proc: 'ella_proc.wav', outA: 'A_ella-lead-vocal_dry.mp3', outB: 'B_ella-lead-vocal_ztame.mp3' },
+    { dry: 'karra_dry.wav', proc: 'karra_proc.wav', outA: 'A_vocal-soothe_dry.mp3', outB: 'B_vocal-soothe_ztame.mp3' },
+    { dry: 'ella_dry.wav', proc: 'ella_proc.wav', outA: 'A_room-tamer_dry.mp3', outB: 'B_room-tamer_ztame.mp3' },
+    { dry: 'mix_dry.wav', proc: 'mix_proc.wav', outA: 'A_master-polish_dry.mp3', outB: 'B_master-polish_ztame.mp3' },
   ],
   zscorch: [
-    { dry: 'guitar_dry.wav', proc: 'guitar_proc.wav', outA: 'A_guitar-solo_dry.mp3', outB: 'B_guitar-solo_zscorch.mp3' },
-    { dry: 'chorus_dry.wav', proc: 'chorus_proc.wav', outA: 'A_chorus_dry.mp3', outB: 'B_chorus_zscorch.mp3' },
-    { dry: 'strings_dry.wav', proc: 'strings_proc.wav', outA: 'A_strings_dry.mp3', outB: 'B_strings_zscorch.mp3' },
+    { dry: 'guitar_dry.wav', proc: 'guitar_proc.wav', outA: 'A_tape-warm_dry.mp3', outB: 'B_tape-warm_zscorch.mp3' },
+    { dry: 'chorus_dry.wav', proc: 'chorus_proc.wav', outA: 'A_studio-drive_dry.mp3', outB: 'B_studio-drive_zscorch.mp3' },
+    { dry: 'crunch_dry.wav', proc: 'crunch_proc.wav', outA: 'A_aggressive-crunch_dry.mp3', outB: 'B_aggressive-crunch_zscorch.mp3' },
   ],
 };
 

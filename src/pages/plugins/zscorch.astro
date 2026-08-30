@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Download } from 'lucide-react';
 import AddToCartButton from '../../components/AddToCartButton';
 import ABPlayer from '../../components/ABPlayer';
+import { ZSCORCH_PRESETS } from '../../config/demos';
 import CompatibilitySection from '../../components/CompatibilitySection';
 import TestimonialSection from '../../components/TestimonialSection';
 import EmailCapture from '../../components/EmailCapture';
@@ -173,52 +174,8 @@ const zscorch = PRODUCTS.zscorch;
       </div>
 
       <!-- Hear it: A/B with disclosed presets -->
-      <section class="mt-14">
-        <ABPlayer
-          client:load
-          plugin="ZScorch"
-          sources={[
-            {
-              id: 'guitar',
-              name: 'Guitar Solo',
-              meta: 'Lead guitar stem, "Seamless — Menagerie" (FL Studio demo project)',
-              presets: [
-                {
-                  label: 'Tape Warm',
-                  disclosure: 'Tape saturation, LR4 split @ 120/900/4 kHz, per-band drive ~0.22, mix 80%, gentle highs, glue-like soft clip — adds weight without smearing the solo.',
-                  a: '/audio/ZScorch/A_guitar-solo_dry.mp3',
-                  b: '/audio/ZScorch/B_guitar-solo_zscorch.mp3',
-                },
-              ],
-            },
-            {
-              id: 'chorus',
-              name: 'Chorus',
-              meta: 'Chorus stem, "Astes — Bien Duro" (FL Studio demo project)',
-              presets: [
-                {
-                  label: 'Studio Drive',
-                  disclosure: 'Tube saturation, 4-band LR4 split @ 150/800/3.5 kHz, per-band drive ~0.38, mix 75%, master soft-clip — harmonic richness on the vocal stack.',
-                  a: '/audio/ZScorch/A_chorus_dry.mp3',
-                  b: '/audio/ZScorch/B_chorus_zscorch.mp3',
-                },
-              ],
-            },
-            {
-              id: 'strings',
-              name: 'Strings',
-              meta: 'Strings stem, "Sid De La Cruz — Secret Agent Rendezvous" (FL Studio demo project)',
-              presets: [
-                {
-                  label: 'Tape Warm',
-                  disclosure: 'Tape saturation, LR4 split @ 120/900/4 kHz, mix 80%, gentle highs, glue-like soft clip — warmth on quiet string pads.',
-                  a: '/audio/ZScorch/A_strings_dry.mp3',
-                  b: '/audio/ZScorch/B_strings_zscorch.mp3',
-                },
-              ],
-            },
-          ]}
-        />
+      <section class="mt-14" id="hear-the-difference">
+        <ABPlayer client:load plugin="ZScorch" presets={ZSCORCH_PRESETS} />
       </section>
 
       <!-- Download -->

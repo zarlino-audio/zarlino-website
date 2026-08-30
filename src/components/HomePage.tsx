@@ -1,6 +1,7 @@
 import Hero from '../sections/Hero';
 import TrustedBy from '../sections/TrustedBy';
 import ProductShowcase from '../sections/ProductShowcase';
+import HearTheDifference from '../sections/HearTheDifference';
 import FeatureGrid from '../sections/FeatureGrid';
 import PluginLineup from '../sections/PluginLineup';
 import CTABanner from '../sections/CTABanner';
@@ -17,6 +18,7 @@ const HomePage = () => {
       <Hero />
       <TrustedBy />
       <ProductShowcase />
+      <HearTheDifference />
       <FeatureGrid />
       <PluginLineup />
       <BundleSection />

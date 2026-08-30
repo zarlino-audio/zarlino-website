@@ -46,7 +46,7 @@ const Hero = () => {
           </a>
 
           <a
-            href="#showcase"
+            href="#hear-the-difference"
             className="inline-flex items-center gap-2 font-['Inter'] text-[16px] text-[#94A3B8] hover:text-white transition-colors duration-300 group"
           >
             <span className="flex items-center justify-center w-9 h-9 rounded-full border border-[rgba(255,255,255,0.2)] group-hover:border-white transition-colors">

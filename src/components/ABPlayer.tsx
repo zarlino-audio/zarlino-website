@@ -1,18 +1,12 @@
 import { useState } from 'react';
-import { Play, Pause, Volume2, Info, Disc3 } from 'lucide-react';
+import { Play, Pause, Volume2, Info } from 'lucide-react';
 
 export interface ABPreset {
   label: string;       // e.g. 'Vocal Soothe'
+  source: string;      // honest source note (track + FL Studio demo project)
   disclosure: string;  // disclosed settings
   a: string;           // dry / original
   b: string;           // processed
-}
-
-export interface ABSource {
-  id: string;
-  name: string;        // e.g. 'KARRA — Lead Vocal'
-  meta: string;        // e.g. 'FL Studio demo project stem'
-  presets: ABPreset[];
 }
 
 /** Fire a lightweight `demo` conversion event (no-op if KV unbound). */
@@ -27,21 +21,11 @@ function trackDemo() {
   } catch { /* best-effort */ }
 }
 
-/** Embedded A/B comparison player — real audio sources, the plugin's own
- *  processing (B) vs the untouched source (A). Users can pick which source
- *  to audition the plugin through. Presets are fully disclosed. */
-const ABPlayer = ({ plugin, sources }: { plugin: string; sources: ABSource[] }) => {
-  const [sourceIdx, setSourceIdx] = useState(0);
-  const [presetIdx, setPresetIdx] = useState(0);
-
-  const source = sources[sourceIdx];
-  const presets = source.presets;
-  const demo = presets[presetIdx] ?? presets[0];
-
-  const pickSource = (i: number) => {
-    setSourceIdx(i);
-    setPresetIdx(0);
-  };
+/** Embedded A/B comparison player — up to 3 disclosed presets, each with
+ *  real audio (untouched source A vs the plugin's own processing B). */
+const ABPlayer = ({ plugin, presets }: { plugin: string; presets: ABPreset[] }) => {
+  const [active, setActive] = useState(0);
+  const demo = presets[active] ?? presets[0];
 
   return (
     <div className="rounded-2xl border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.03)] p-6 md:p-8">
@@ -54,56 +38,35 @@ const ABPlayer = ({ plugin, sources }: { plugin: string; sources: ABSource[] }) 
             Hear {plugin} — A/B
           </h3>
           <p className="font-['Inter'] text-[13px] text-[#64748B]">
-            Real audio sources, before &amp; after. Presets are disclosed — no hidden processing.
+            Real audio, before &amp; after. Presets are disclosed — no hidden processing.
           </p>
         </div>
       </div>
 
-      {/* Source selector */}
-      {sources.length > 1 && (
+      {/* Preset selector (up to 3) */}
+      {presets.length > 1 && (
         <div className="mt-5">
           <p className="font-['Inter'] text-[11px] uppercase tracking-[0.12em] text-[#64748B] mb-2">
-            Choose a source to audition
+            Choose a preset to audition
           </p>
           <div className="flex flex-wrap gap-2">
-            {sources.map((s, i) => (
+            {presets.map((p, i) => (
               <button
-                key={s.id}
+                key={p.label}
                 type="button"
-                onClick={() => pickSource(i)}
-                aria-pressed={i === sourceIdx}
+                onClick={() => setActive(i)}
+                aria-pressed={i === active}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-['Inter'] text-[12px] transition-colors ${
-                  i === sourceIdx
+                  i === active
                     ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.1)] text-[#00D4FF]'
                     : 'border-[rgba(255,255,255,0.12)] text-[#94A3B8] hover:text-white'
                 }`}
               >
-                <Disc3 size={12} /> {s.name}
+                <Play size={11} /> {p.label}
               </button>
             ))}
           </div>
-          <p className="font-['Inter'] text-[11px] text-[#475569] mt-1.5">{source.meta}</p>
-        </div>
-      )}
-
-      {/* Preset selector */}
-      {presets.length > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {presets.map((p, i) => (
-            <button
-              key={p.label}
-              type="button"
-              onClick={() => setPresetIdx(i)}
-              aria-pressed={i === presetIdx}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-['Inter'] text-[12px] transition-colors ${
-                i === presetIdx
-                  ? 'border-[rgba(0,212,255,0.6)] bg-[rgba(0,212,255,0.1)] text-[#00D4FF]'
-                  : 'border-[rgba(255,255,255,0.12)] text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              <Play size={11} /> {p.label}
-            </button>
-          ))}
+          <p className="font-['Inter'] text-[11px] text-[#475569] mt-1.5">{demo.source}</p>
         </div>
       )}
 
@@ -114,7 +77,7 @@ const ABPlayer = ({ plugin, sources }: { plugin: string; sources: ABSource[] }) 
             <span className="inline-flex items-center gap-2 font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#94A3B8]">
               <Play size={12} /> A — Original
             </span>
-            <span className="font-['Inter'] text-[11px] text-[#475569]">source: {source.name}</span>
+            <span className="font-['Inter'] text-[11px] text-[#475569]">preset: {demo.label}</span>
           </div>
           <audio controls preload="none" src={demo.a} onPlay={trackDemo} className="mt-3 w-full h-10" />
         </div>
