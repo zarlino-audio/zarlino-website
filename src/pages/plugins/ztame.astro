@@ -180,18 +180,45 @@ const ztame = PRODUCTS.ztame;
         <ABPlayer
           client:load
           plugin="ZTame"
-          demos={[
+          sources={[
             {
-              preset: 'Vocal Soothe',
-              disclosure: 'FFT 2048 @50% overlap, peak-vs-floor detection, threshold ≈ 5.1 dB, max reduction 12 dB, Dry/Wet 90%.',
-              a: '/audio/ZTame/A_vocal-soothe_dry.mp3',
-              b: '/audio/ZTame/B_vocal-soothe_ztame.mp3',
+              id: 'karra',
+              name: 'KARRA — Lead Vocal',
+              meta: 'Lead vocal stem, "Bombs Away ft KARRA — Awake" (FL Studio demo project)',
+              presets: [
+                {
+                  label: 'Vocal Soothe',
+                  disclosure: 'FFT 2048 @50% overlap, peak-vs-floor detection, threshold ≈ 8.8 dB, selectivity ≈ 12.8 dB, max reduction ~7 dB, Dry/Wet 65% — tames sibilant and resonant peaks while keeping the performance.',
+                  a: '/audio/ZTame/A_karra-lead-vocal_dry.mp3',
+                  b: '/audio/ZTame/B_karra-lead-vocal_ztame.mp3',
+                },
+              ],
             },
             {
-              preset: 'Room Tamer',
-              disclosure: 'FFT 2048, threshold ≈ 7.6 dB, max reduction 9 dB, full wet — tames ringing resonances.',
-              a: '/audio/ZTame/A_room-tamer_dry.mp3',
-              b: '/audio/ZTame/B_room-tamer_ztame.mp3',
+              id: 'madonna',
+              name: 'Madonna — Lead Vocal',
+              meta: 'Lead vocal stem, "LollieVox & Lezina J — I’ll Be Your Madonna" (FL Studio demo project)',
+              presets: [
+                {
+                  label: 'Vocal Soothe',
+                  disclosure: 'FFT 2048 @50% overlap, peak-vs-floor detection, threshold ≈ 8.8 dB, selectivity ≈ 12.8 dB, max reduction ~7 dB, Dry/Wet 65% — smooths resonant harshness on a dense lead vocal.',
+                  a: '/audio/ZTame/A_madonna-lead-vocal_dry.mp3',
+                  b: '/audio/ZTame/B_madonna-lead-vocal_ztame.mp3',
+                },
+              ],
+            },
+            {
+              id: 'ella',
+              name: 'Ella — Lead Vocal',
+              meta: 'Lead vocal stem, "Edlan & Ella Noël — Song For You" (FL Studio demo project)',
+              presets: [
+                {
+                  label: 'Room Tamer',
+                  disclosure: 'FFT 2048 @50% overlap, peak-vs-floor detection, threshold ≈ 9.5 dB, max reduction ~5 dB, Dry/Wet 80% — reduces ringing room resonances around the vocal.',
+                  a: '/audio/ZTame/A_ella-lead-vocal_dry.mp3',
+                  b: '/audio/ZTame/B_ella-lead-vocal_ztame.mp3',
+                },
+              ],
             },
           ]}
         />
