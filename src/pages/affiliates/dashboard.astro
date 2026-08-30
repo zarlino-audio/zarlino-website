@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AffiliateDashboard from '../../components/AffiliateDashboard';
+
+const initialCode = Astro.url.searchParams.get('code') || '';
+---
+
+<BaseLayout
+  title="Affiliate Dashboard — Zarlino Audio"
+  description="Track your Zarlino Audio affiliate referrals, sales and commission."
+  canonicalURL="https://zarlinoaudio.com/affiliates/dashboard"
+  schemaType="website"
+>
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[960px] mx-auto">
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/" class="hover:text-white transition-colors">Zarlino Audio</a>
+        <span class="mx-2">/</span>
+        <a href="/affiliates" class="hover:text-white transition-colors">Affiliates</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">Dashboard</span>
+      </nav>
+
+      <AffiliateDashboard client:load initialCode={initialCode} />
+    </div>
+  </main>
+</BaseLayout>
