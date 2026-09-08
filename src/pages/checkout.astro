@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CheckoutResult from '../components/CheckoutResult';
+import { SALES_ENABLED } from '../config/sales';
 ---
 
 <BaseLayout
@@ -16,7 +17,51 @@ import CheckoutResult from '../components/CheckoutResult';
         <span class="mx-2">/</span>
         <span class="text-[#94A3B8]">Checkout</span>
       </nav>
-      <CheckoutResult client:load />
+
+      {
+        SALES_ENABLED ? (
+          <CheckoutResult client:load />
+        ) : (
+          // Sales are gated off (see src/config/sales.ts) until the first real
+          // release. Show an honest "coming soon" state — never a payment form.
+          <div class="rounded-2xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-10 md:p-14 text-center">
+            <span class="mx-auto inline-flex items-center justify-center w-16 h-16 rounded-full bg-[rgba(251,191,36,0.12)]">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </span>
+            <h1 class="mt-5 font-['Space_Grotesk'] font-semibold text-white text-[26px]">
+              Checkout isn’t open yet
+            </h1>
+            <p class="mx-auto mt-3 font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8] max-w-[520px]">
+              We’re not selling ZTame or ZScorch yet — checkout has been switched off until
+              the plugins officially ship. No payment form, no charges. Please check the
+              ZTame and ZScorch pages for the latest, and sign up there to hear the moment
+              sales open.
+            </p>
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="/plugins/ztame"
+                class="inline-flex items-center gap-2 rounded-lg bg-[#00D4FF] text-[#050505] px-6 py-3 font-['Inter'] font-medium text-[14px] hover:bg-[#33DDFF] transition-colors duration-300"
+              >
+                Go to ZTame
+              </a>
+              <a
+                href="/plugins/zscorch"
+                class="inline-flex items-center gap-2 rounded-lg bg-[#00D4FF] text-[#050505] px-6 py-3 font-['Inter'] font-medium text-[14px] hover:bg-[#33DDFF] transition-colors duration-300"
+              >
+                Go to ZScorch
+              </a>
+              <a
+                href="/"
+                class="inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(255,255,255,0.15)] px-6 py-3 font-['Inter'] text-[14px] text-[#94A3B8] hover:text-white hover:border-[rgba(255,255,255,0.3)] transition-colors"
+              >
+                Back to home
+              </a>
+            </div>
+          </div>
+        )
+      }
     </div>
   </main>
 </BaseLayout>

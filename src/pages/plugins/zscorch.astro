@@ -244,22 +244,27 @@ const zscorch = PRODUCTS.zscorch;
 
       <!-- Buy -->
       <section class="mt-14" id="buy">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Get ZScorch</h2>
+        <h2 class="font-['Space_Grotesk'] font-semibold text-white mb-2" style="font-size:28px">ZScorch - availability</h2>
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
-          ZScorch runs fully functional for 14 days as a free trial. After that, a license key is required.
-          Licenses are delivered instantly to your email after checkout.
+          ZScorch is not on sale yet - checkout is switched off until the plugin officially ships. It will retail at $79 (¢1,200) for a perpetual license, but Zarlino is not taking payment for it yet.
         </p>
-        <div class="flex items-center gap-6 flex-wrap rounded-2xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 md:p-8">
-          <div>
-            <p class="font-['Space_Grotesk'] font-semibold text-[28px] text-white">{zscorch.usdLabel}</p>
-            <p class="font-['Inter'] text-[13px] text-[#94A3B8]">{zscorch.priceLabelGhs} · one-time · perpetual license</p>
+        <div class="flex flex-col items-start gap-4 rounded-2xl border border-[rgba(251,191,36,0.3)] bg-[rgba(251,191,36,0.05)] p-6 md:p-8">
+          <p class="font-['Inter'] text-[15px] text-[#FBBF24] flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Not yet available - coming soon
+          </p>
+          <p class="font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[620px]">
+            No purchase button is shown while checkout is switched off ahead of real release. Meanwhile keep
+            using the free 14-day trial from the downloads above, browse the full spec below, or get in touch.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a href="#download" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#00D4FF] text-[#050505] px-6 py-3 font-['Inter'] font-medium text-[14px] hover:bg-[#33DDFF] transition-colors duration-300">
+              Download free 14-day trial
+            </a>
+            <a href="/report" class="inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(255,255,255,0.15)] px-6 py-3 font-['Inter'] text-[14px] text-[#94A3B8] hover:text-white hover:border-[rgba(255,255,255,0.3)] transition-colors">
+              Ask a question
+            </a>
           </div>
-          <AddToCartButton
-            client:load
-            event="buy"
-            label={`Buy ${zscorch.name}`}
-            item={{ id: zscorch.id, name: zscorch.name, price: zscorch.priceGhs, image: zscorch.image, category: zscorch.category }}
-          />
         </div>
       </section>
 

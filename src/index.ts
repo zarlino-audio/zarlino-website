@@ -14,6 +14,14 @@
  * The blob is then base64-encoded and pasted into ZTame's license dialog.
  */
 
+/**
+ * Purchase-path kill switch. Kept in sync with the Astro/React side via the
+ * single SALES_ENABLED flag in src/config/sales.ts. Flip that ONE value to
+ * re-enable checkout at release. While it is false these Paystack handlers
+ * refuse to start or verify any payment, so no money can move.
+ */
+import { SALES_ENABLED } from './config/sales';
+
 export interface Env {
   ASSETS: Fetcher;
   ZARLINO_LICENSE_PRIVATE_KEY?: string;
@@ -241,6 +249,12 @@ async function handlePaystackInitialize(request: Request, env: Env): Promise<Res
   if (request.method === 'OPTIONS') return json({ ok: true });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (!env.PAYSTACK_SECRET_KEY) return json({ error: 'Paystack is not configured' }, 500);
+  if (!SALES_ENABLED) {
+    return json(
+      { error: "Checkout is not available yet — ZTame and ZScorch aren't on sale yet. No payment can be started." },
+      403,
+    );
+  }
 
   let body: { email?: unknown; items?: unknown; ref?: unknown };
   try {
@@ -311,6 +325,12 @@ async function handlePaystackVerify(request: Request, env: Env): Promise<Respons
   if (request.method === 'OPTIONS') return json({ ok: true });
   if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
   if (!env.PAYSTACK_SECRET_KEY) return json({ error: 'Paystack is not configured' }, 500);
+  if (!SALES_ENABLED) {
+    return json(
+      { error: "Checkout is not available yet — ZTame and ZScorch aren't on sale yet." },
+      403,
+    );
+  }
 
   const url = new URL(request.url);
   const reference = (url.searchParams.get('reference') || '').trim();
