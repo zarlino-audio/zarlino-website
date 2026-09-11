@@ -14,7 +14,7 @@ const ztame = PRODUCTS.ztame;
 
 <BaseLayout
   title="ZTame — Dynamic Resonance Suppressor by Zarlino Audio"
-  description="ZTame is Zarlino Audio's high-resolution FFT-based automatic resonance suppressor. Per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring for mixing and mastering engineers. Windows VST3."
+  description="ZTame is Zarlino Audio's high-resolution FFT-based automatic resonance suppressor. Per-peak dynamic notch filtering, selectivity gating, a draggable focus band, sidechain detection, and solo monitoring for mixing and mastering engineers. Windows VST3."
   canonicalURL="https://zarlinoaudio.com/plugins/ztame"
   schemaType="product"
 >
@@ -25,7 +25,7 @@ const ztame = PRODUCTS.ztame;
     "name": "ZTame",
     "applicationCategory": "MusicApplication",
     "operatingSystem": "Windows 10 22H2 or later",
-    "description": "High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, split-band operation, and solo monitoring.",
+    "description": "High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, a draggable focus band, sidechain detection, and solo monitoring.",
     "offers": {
       "@type": "Offer",
       "price": "49.00",
@@ -71,7 +71,7 @@ const ztame = PRODUCTS.ztame;
         "name": "Can ZTame process mono audio?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. ZTame version 1.0.0 is a stereo-only processor. Its FFT engine, spectral detection, and Mid/Side modes require a stereo (2-channel) bus. Use it on stereo tracks and buses; insert a stereo-capable upmixer or process at the stereo bus level for mono sources."
+          "text": "ZTame 1.1 runs on mono or stereo buses. The resonance engine itself is per-channel; Mid/Side mode needs a stereo bus, and the optional sidechain input needs the host to route an auxiliary input to it (VST3 sidechain)."
         }
       },
       {
@@ -87,7 +87,7 @@ const ztame = PRODUCTS.ztame;
         "name": "How does ZTame compare to Soothe 3?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "ZTame is a Soothe 3 alternative in the same category of dynamic resonance suppressors and spectral dynamics processors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with selectivity gating, split-band crossover detection, latency-aligned Dry/Wet control, and Mid/Side processing mode at a competitive price point of $49."
+          "text": "ZTame is a Soothe 3 alternative in the same category of dynamic resonance suppressors and spectral dynamics processors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with selectivity gating, focus-band targeting you can drag directly on the spectrum, sidechain detection, latency-aligned Dry/Wet control, and Mid/Side processing mode at a competitive price point of $49."
         }
       },
       {
@@ -283,7 +283,7 @@ const ztame = PRODUCTS.ztame;
             Insert ZTame on vocals to tame harsh sibilance without over-compressing. Place it on a drum bus to knock down ringing cymbal frequencies. Use it on a master bus to clean up room resonances before they reach your limiter. The per-peak detection engine works continuously, adapting to the material as it plays.
           </p>
           <p>
-            <strong>ZTame vs. dynamic resonance suppressors like Soothe 3:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with selectivity gating (how narrowly a peak must be defined before reduction engages), a configurable split-band crossover for independent low/high detection behavior, latency-aligned Dry/Wet blending, and built-in Mid/Side processing — all without requiring a separate subscription or iLok dongle.
+            <strong>ZTame vs. dynamic resonance suppressors like Soothe 3:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with selectivity gating (how narrowly a peak must be defined before reduction engages), a draggable focus band that confines suppression to the frequency range you choose, external sidechain detection, latency-aligned Dry/Wet blending, and built-in Mid/Side processing — all without requiring a separate subscription or iLok dongle.
           </p>
         </div>
       </section>
@@ -306,7 +306,7 @@ const ztame = PRODUCTS.ztame;
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Configurable split-band crossover for independent low/high detection
+            Draggable focus band — aim and size the range you want tamed, right on the spectrum
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
@@ -314,7 +314,7 @@ const ztame = PRODUCTS.ztame;
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            1x, 2x, and 4x oversampling for alias-free processing
+            Fast (1024) and Precise (2048) analysis modes — 23 ms or 46 ms latency, your choice
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
@@ -342,12 +342,13 @@ const ztame = PRODUCTS.ztame;
           <p><strong class="text-[#CBD5E1]">Sensitivity</strong> — Threshold for spectral peak detection. Raise until the gain reduction meter moves on harsh resonances.</p>
           <p><strong class="text-[#CBD5E1]">Range</strong> — Maximum dynamic reduction applied to detected peaks (in dB).</p>
           <p><strong class="text-[#CBD5E1]">Selectivity</strong> — How narrowly a spectral peak must be defined before reduction engages. Higher values require sharper, more isolated peaks.</p>
-          <p><strong class="text-[#CBD5E1]">Crossover</strong> — Splits the frequency spectrum into low and high bands with independent detection behavior.</p>
+          <p><strong class="text-[#CBD5E1]">Focus band</strong> — A draggable band drawn over the spectrum. Drag it to move the range, drag its edges to size it; suppression only happens inside.</p>
+          <p><strong class="text-[#CBD5E1]">Sidechain</strong> — Detect resonances from an external sidechain input instead of the track itself, then tame them on the main path.</p>
           <p><strong class="text-[#CBD5E1]">Attack / Release</strong> — How quickly reduction engages and recovers after a peak subsides.</p>
           <p><strong class="text-[#CBD5E1]">Listen</strong> — Outputs only the suppressed difference signal for precise auditioning.</p>
           <p><strong class="text-[#CBD5E1]">Dry/Wet</strong> — Parallel blend of latency-aligned dry and processed signals.</p>
-          <p><strong class="text-[#CBD5E1]">Oversampling</strong> — Off, 2x, or 4x. Higher modes reduce aliasing at the cost of additional CPU.</p>
-          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo, M/S Blend, Mid Only, or Side Only. Mid/Side modes encode L/R into Mid/Side, process, then decode back to L/R; isolation modes process only the Mid or only the Side channel.</p>
+          <p><strong class="text-[#CBD5E1]">Resolution</strong> — Fast (1024-point frames, 23 ms latency) or Precise (2048-point frames, 46 ms). Lower latency costs low-frequency detail.</p>
+          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo or Mid/Side. Mid/Side encodes L/R into Mid/Side, processes, then decodes back to L/R.</p>
         </div>
       </section>
 
@@ -394,7 +395,7 @@ const ztame = PRODUCTS.ztame;
           <li>44.1 kHz – 192 kHz audio interface or session</li>
           <li>Format: VST3 only (AU and AAX not available in v1.0.0)</li>
           <li>Channels: Stereo only (no mono or multi-channel support in v1.0.0)</li>
-          <li>Latency: FFT analysis latency scales with oversampling — 2048 samples at 1×, 1024 + 2×24 at 2×, 512 + 3×24 at 4× (≈22 ms in 2× mode at 44.1 kHz). Dry/Wet is latency-aligned so parallel processing stays sample-accurate.</li>
+          <li>Latency: one FFT frame — 2048 samples (46 ms at 44.1 kHz) in Precise mode, 1024 samples (23 ms) in Fast mode. Dry/Wet, Listen and Bypass are all latency-aligned, so parallel processing stays sample-accurate.</li>
         </ul>
       </section>
 
@@ -416,11 +417,11 @@ const ztame = PRODUCTS.ztame;
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">How does ZTame compare to Soothe 3?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe 3, DSEQ3, and similar spectral dynamics processors. ZTame offers selectivity gating, split-band crossover detection, latency-aligned Dry/Wet, and Mid/Side processing at a competitive $49 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe 3, DSEQ3, and similar spectral dynamics processors. ZTame offers selectivity gating, focus-band targeting you can drag on the spectrum, sidechain detection, latency-aligned Dry/Wet, and Mid/Side processing at a competitive $49 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Can I use ZTame on mono tracks?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is a stereo-only processor. Its FFT engine, spectral detection, and Mid/Side modes require a stereo bus, so it is intended for stereo tracks and buses. If you need mono processing, use it on a stereo bus instead.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame 1.1 runs on mono or stereo buses. Mid/Side mode needs a stereo bus, and the optional sidechain input needs your host to route an auxiliary input to it (VST3 sidechain).</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
@@ -428,7 +429,7 @@ const ztame = PRODUCTS.ztame;
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">What if ZTame uses too much CPU?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Select Off or 2x oversampling (instead of 4x) and increase your audio buffer size. The FFT analysis engine scales with oversampling level and buffer size.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Switch Resolution to Fast (1024-point frames, 23 ms) and increase your audio buffer size. The spectrum display and metering are free when the editor is closed.</p>
           </div>
         </div>
       </section>
@@ -440,8 +441,8 @@ const ztame = PRODUCTS.ztame;
           <h3 class="text-[16px] font-semibold text-white mb-2">1.0.0 — Initial Release</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>Dynamic spectral resonance suppression with FFT-based peak detection</li>
-            <li>Stereo and Mid/Side processing modes (Stereo, M/S Blend, Mid Only, Side Only)</li>
-            <li>1x, 2x, and 4x oversampling</li>
+            <li>Stereo and Mid/Side processing modes</li>
+            <li>Fast and Precise analysis modes (1024 / 2048-point frames)</li>
             <li>Latency-aligned Dry/Wet control and Listen mode</li>
             <li>Six factory presets: Vocal Harshness Tamer, De-Boom, Guitar Resonance Smooth, Cymbal Ring Killer, Master Polish, Podcast Clarity</li>
             <li>Real-time spectrum display and gain reduction metering</li>
