@@ -1,0 +1,156 @@
+name: Post-Deploy Gate (1101 acceptance A1-A4)
+
+# Path-agnostic 1101 acceptance set wired as the POST-DEPLOY regression gate.
+# Replaces #12's survivor list (#12 queried only / and /plugins/ - two 200s -
+# and falsely PASSED while /about, /contact, /shop, /sitemap.xml still 500).
+#
+# Triggers
+#   - workflow_run: fires after "Deploy to Cloudflare Workers" completes, so the
+#     probe runs against the freshly deployed artifact.
+#   - schedule: nightly safety sweep (catches drift with NO deploy).
+#   - workflow_dispatch: manual, with an optional BASE_URL override.
+#
+# A4 (provenance precondition) means the gate reports BLOCKED / exit 2 whenever
+# the latest SUCCESSFUL "Deploy to Cloudflare Workers" on main is not strictly
+# after 2026-09-08T11:23:35Z. NO DEPLOY => NO FIX: a green subset on an unchanged
+# artifact is a FLAP and is never certified as PASS.
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Cloudflare Workers"]
+    types: [completed]
+  schedule:
+    # 03:17 UTC nightly (off-peak, well after any deploy window)
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL to probe (default https://zarlinoaudio.com)"
+        required: false
+        default: "https://zarlinoaudio.com"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: post-deploy-gate-${{ github.event.workflow_run.head_branch || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: A1-A4 acceptance gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # BASE_URL may be overridden by workflow_dispatch input; otherwise the
+      # gate defaults to https://zarlinoaudio.com.
+      BASE_URL: ${{ github.event.inputs.base_url || 'https://zarlinoaudio.com' }}
+      # short settle delay so the freshly deployed artifact is served before probing
+      SETTLE_MS: "8000"
+      REQUEST_TIMEOUT_MS: "15000"
+      # A4 provenance precondition floor (NO DEPLOY => NO FIX)
+      PROVENANCE_FLOOR: "2026-09-08T11:23:35Z"
+      GATE_WORKFLOW: "Deploy to Cloudflare Workers"
+      GATE_WORKFLOW_BRANCH: "main"
+      GATE_REPO: ${{ github.repository }}
+      # Flap rule: a path may only change status after 3 identical sweeps
+      FLAP_CONSECUTIVE_N: "3"
+      # Unauthenticated GitHub API is rate-limited (60/hr); use the run token.
+      GATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # check out the branch that the triggering deploy run built, falling
+          # back to the default branch for schedule/manual runs
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Settle delay (let the edge propagate the deploy)
+        run: sleep 8
+
+      # ---------------------------------------------------------------------
+      # THE GATE. Exit codes:
+      #   0 = PASS      1 = FAIL (A1/A2/A3 or flap insufficient)
+      #   2 = BLOCKED   (A4 provenance precondition not met: no fresh deploy)
+      # We capture the code so we can ALWAYS upload the acceptance record, then
+      # re-exit with it - the job must fail loudly on FAIL and BLOCKED.
+      # ---------------------------------------------------------------------
+      - name: Run post-deploy gate (A1-A4)
+        id: gate
+        shell: bash
+        run: |
+          set +e
+          node scripts/post-deploy-gate.mjs 2>&1 | tee gate-output.txt
+          code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "Gate exit code: $code"
+          set -e
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Post-Deploy Gate (1101 acceptance A1-A4)"
+            echo ""
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| BASE_URL | \`${{ env.BASE_URL }}\` |"
+            echo "| exit code | \`${{ steps.gate.outputs.exit_code }}\` |"
+            echo "| overall | see acceptance record artifact |"
+            echo ""
+            echo '```'
+            tail -n 30 gate-output.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------------------------------------------------------------
+      # ACCEPTANCE RECORD + FLAP STATE — the citable artifacts.
+      # ---------------------------------------------------------------------
+      - name: Upload acceptance record + flap state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-deploy-gate-acceptance
+          if-no-files-found: warn
+          retention-days: 90
+          path: |
+            scripts/.post-deploy-gate-acceptance.json
+            scripts/.post-deploy-gate-state.json
+            gate-output.txt
+
+      - name: Upload raw gate output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-deploy-gate-output
+          if-no-files-found: warn
+          retention-days: 30
+          path: gate-output.txt
+
+      # Fail the workflow unless the gate genuinely PASSed (exit 0).
+      - name: Enforce gate verdict
+        shell: bash
+        run: |
+          code="${{ steps.gate.outputs.exit_code }}"
+          if [ "$code" = "0" ]; then
+            echo "Gate PASSED (exit 0)."
+            exit 0
+          fi
+          if [ "$code" = "2" ]; then
+            echo "::error::Gate BLOCKED (exit 2): NO DEPLOY => NO FIX. The latest successful"
+            echo "::error::'Deploy to Cloudflare Workers' on main is not after the provenance"
+            echo "::error::floor. A green subset on an unchanged artifact is a FLAP, not a fix."
+            exit 2
+          fi
+          echo "::error::Gate FAILED (exit $code): one or more A1/A2/A3 assertions failed,"
+          echo "::error::or a required path is INSUFFICIENT/FLAP (n < 3)."
+          exit "$code"

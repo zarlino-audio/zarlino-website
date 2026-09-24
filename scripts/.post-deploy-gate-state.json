@@ -1,0 +1,7 @@
+{
+  "schema": "post-deploy-gate-state/1",
+  "note": "Committed seed. The gate updates this file on every run: per-path sweep streaks keyed by the deploy SHA it verified against. A path may only change status (green->red or red->green) after >=3 consecutive identical sweeps on the SAME deploy SHA.",
+  "flapConsecutiveN": 3,
+  "paths": {},
+  "sweeps": []
+}

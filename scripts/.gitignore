@@ -1,0 +1,3 @@
+# Post-deploy gate runtime artifacts (regenerated each run / uploaded in CI)
+scripts/.post-deploy-gate-acceptance.json
+scripts/gate-output.txt
