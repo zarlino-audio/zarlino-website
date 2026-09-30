@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zarlino Instance Setup — turn any Windows machine into a runtime</title>
+<meta name="robots" content="noindex,nofollow" />
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#050505; color:#E2E8F0; font:16px/1.6 Inter, system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 64px 24px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  .sub { color:#64748B; margin-bottom: 32px; }
+  a.btn { display:inline-flex; align-items:center; gap:10px; background:#00D4FF; color:#050505; font-weight:600;
+          padding:14px 22px; border-radius:12px; text-decoration:none; }
+  a.btn:hover { background:#33DDFF; }
+  .card { border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:16px; padding:24px; margin-top:28px; }
+  code { background:rgba(255,255,255,.07); padding:2px 6px; border-radius:6px; }
+  ol li { margin: 6px 0; }
+  .muted { color:#94A3B8; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Zarlino Instance Setup</h1>
+  <p class="sub">Turns any Windows 10/11 machine into a Zarlino runtime instance — no SDKs, no admin needed for the core path.</p>
+
+  <a class="btn" href="/instance/ZarlinoInstanceSetup.exe" download>⤓ Download ZarlinoInstanceSetup.exe <span class="muted" style="color:#083344">(7 KB)</span></a>
+
+  <div class="card">
+    <ol>
+      <li>Run <code>ZarlinoInstanceSetup.exe</code> on the machine.</li>
+      <li>It fetches the <em>current</em> provisioner from this site (never stale) and checks git/node.</li>
+      <li>You type the two secrets when prompted — <strong>nothing is ever printed or sent anywhere else</strong>.</li>
+      <li>It clones the OS repo, installs dependencies, registers this machine in the org registry and installs an auto-start launcher.</li>
+    </ol>
+    <p class="muted">Preview without changing anything: <code>ZarlinoInstanceSetup.exe -CheckOnly</code>.<br/>
+    Custom instance id: <code>ZarlinoInstanceSetup.exe -AgentId ws_studio_02 -CloneWorkspace</code>.</p>
+    <p class="muted">Provisioner source (same file the EXE downloads): <a href="/instance/zarlino-instance-setup.ps1" style="color:#00D4FF">zarlino-instance-setup.ps1</a></p>
+  </div>
+
+  <div class="card">
+    <p class="muted">Verify the instance afterwards: <a href="https://os.zarlinoaudio.com" style="color:#00D4FF">os.zarlinoaudio.com</a> → org registry shows the new instance as ACTIVE.</p>
+  </div>
+</main>
+</body>
+</html>
