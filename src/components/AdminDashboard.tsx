@@ -108,17 +108,17 @@ const TOKEN_KEY = 'zarlino_admin_token';
 
 /** Live Executive OS console (Cloudflare Workers). First visit forces founder
  *  username/password setup, then signs in. */
-const EXEC_OS_URL = 'https://zarlino-executive-os.zarlino001.workers.dev';
+const EXEC_OS_URL = 'https://os.zarlinoaudio.com';
 
 const fetchStats = async (token: string): Promise<Stats> => {
-  const res = await fetch(`/api/admin/stats?token=${encodeURIComponent(token)}`);
+  const res = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to load stats');
   return data as Stats;
 };
 
 const fetchAffiliateReport = async (token: string): Promise<AffReport> => {
-  const res = await fetch(`/api/affiliates/report?token=${encodeURIComponent(token)}`);
+  const res = await fetch('/api/affiliates/report', { headers: { Authorization: `Bearer ${token}` } });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to load affiliate report');
   return data as AffReport;
@@ -178,8 +178,11 @@ const SectionCard = ({
 );
 
 const AdminDashboard = () => {
-  const [token, setToken] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [setupRequired, setSetupRequired] = useState(false);
   const [storedToken, setStoredToken] = useState<string | null>(null);
+  const [sessionFailed, setSessionFailed] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [aff, setAff] = useState<AffReport | null>(null);
   const [affLoading, setAffLoading] = useState(false);
@@ -191,6 +194,11 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     setStoredToken(localStorage.getItem(TOKEN_KEY));
+    // First-visit detection: is a founder login configured yet?
+    fetch('/api/admin/status')
+      .then((r) => r.json())
+      .then((d) => setSetupRequired(d.setupRequired === true))
+      .catch(() => {});
   }, []);
 
   const loadAffiliate = useCallback(async (t: string) => {
@@ -211,9 +219,9 @@ const AdminDashboard = () => {
     setBusyId(id);
     setAffError('');
     try {
-      const res = await fetch(`/api/affiliates/${action}?token=${encodeURIComponent(storedToken)}`, {
+      const res = await fetch(`/api/affiliates/${action}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${storedToken}` },
         body: JSON.stringify({ id }),
       });
       const data = await res.json();
@@ -231,9 +239,9 @@ const AdminDashboard = () => {
     setBusyId(`rm:${code}`);
     setAffError('');
     try {
-      const res = await fetch(`/api/affiliates/remove?token=${encodeURIComponent(storedToken)}`, {
+      const res = await fetch(`/api/affiliates/remove`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${storedToken}` },
         body: JSON.stringify({ code }),
       });
       const data = await res.json();
@@ -249,6 +257,7 @@ const AdminDashboard = () => {
   const load = useCallback(async (t: string) => {
     setLoading(true);
     setError('');
+    setSessionFailed(false);
     try {
       const data = await fetchStats(t);
       // Probe each page from the browser (HEAD to the edge). Keep the
@@ -262,32 +271,59 @@ const AdminDashboard = () => {
       setStats((prev) => (prev ? { ...prev, site: probed } : prev));
       await loadAffiliate(t);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load stats');
+      const msg = e instanceof Error ? e.message : 'Failed to load stats';
+      // A dead/expired session must not auto-retry forever: drop it.
+      if (/unauthorized|not set up|session|401/i.test(msg)) {
+        localStorage.removeItem(TOKEN_KEY);
+        setStoredToken(null);
+        setSessionFailed(true);
+      }
+      setError(msg);
       setStats(null);
     } finally {
       setLoading(false);
     }
   }, [loadAffiliate]);
 
-  // Auto-login if a token is already stored.
+  // Auto-login if a session is already stored (and did not just fail).
   useEffect(() => {
-    if (storedToken && !stats && !loading) {
+    if (storedToken && !stats && !loading && !sessionFailed) {
       load(storedToken);
     }
-  }, [storedToken, stats, loading, load]);
+  }, [storedToken, stats, loading, sessionFailed, load]);
 
   const logout = () => {
+    // Stateless sessions: dropping the token client-side ends the session.
+    void fetch('/api/admin/logout', { method: 'POST' }).catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     setStoredToken(null);
     setStats(null);
-    setToken('');
+    setUsername('');
+    setPassword('');
+    setSessionFailed(false);
     setError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token.trim()) return;
-    load(token.trim());
+    if (!username.trim() || !password) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(setupRequired ? '/api/admin/setup' : '/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.token) throw new Error(data.error || 'Sign-in failed');
+      setPassword('');
+      setSetupRequired(false);
+      await load(String(data.token));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed');
+      setLoading(false);
+    }
   };
 
   if (!storedToken || !stats) {
@@ -302,22 +338,34 @@ const AdminDashboard = () => {
               Zarlino Admin
             </h2>
             <p className="font-['Inter'] text-[13px] text-[#64748B]">
-              Private dashboard · authorized access only
+              {setupRequired ? 'First visit — create your admin username & password' : 'Private dashboard · authorized access only'}
             </p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
-          <label htmlFor="admin-token" className="font-['Inter'] text-[13px] text-[#94A3B8]">
-            Access token
+          <label htmlFor="admin-user" className="font-['Inter'] text-[13px] text-[#94A3B8]">
+            Username
           </label>
           <input
-            id="admin-token"
+            id="admin-user"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Khritical"
+            autoComplete="username"
+            className="w-full rounded-lg bg-[#050505] border border-[rgba(255,255,255,0.12)] px-4 py-3 font-['Inter'] text-[15px] text-white placeholder:text-[#475569] focus:outline-none focus:border-[#00D4FF] transition-colors"
+          />
+          <label htmlFor="admin-pass" className="font-['Inter'] text-[13px] text-[#94A3B8]">
+            Password
+          </label>
+          <input
+            id="admin-pass"
             type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Paste your admin token"
-            autoComplete="off"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={setupRequired ? 'Choose a password (min 8 chars)' : 'Your password'}
+            autoComplete={setupRequired ? 'new-password' : 'current-password'}
             className="w-full rounded-lg bg-[#050505] border border-[rgba(255,255,255,0.12)] px-4 py-3 font-['Inter'] text-[15px] text-white placeholder:text-[#475569] focus:outline-none focus:border-[#00D4FF] transition-colors"
           />
           {error && (
@@ -328,7 +376,7 @@ const AdminDashboard = () => {
           )}
           <button
             type="submit"
-            disabled={loading || !token.trim()}
+            disabled={loading || !username.trim() || !password}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#00D4FF] text-[#050505] px-6 py-3 font-['Inter'] font-medium text-[14px] hover:bg-[#33DDFF] disabled:opacity-60 transition-colors duration-300"
           >
             {loading ? (
@@ -337,7 +385,7 @@ const AdminDashboard = () => {
               </>
             ) : (
               <>
-                <KeyRound size={15} /> Unlock dashboard
+                <KeyRound size={15} /> {setupRequired ? 'Create admin login' : 'Sign in'}
               </>
             )}
           </button>
