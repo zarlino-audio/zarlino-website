@@ -23,7 +23,7 @@
 <body>
 <main>
   <h1>Zarlino Instance Setup</h1>
-  <p class="sub">Turns any Windows 10/11 machine into a Zarlino runtime instance — no SDKs, no admin needed for the core path.</p>
+  <p class="sub">Turns any Windows 10/11 machine into a full Zarlino runtime instance - task daemon + WhatsApp bridge host, with auto-start and end-to-end verification. No SDKs, no admin needed for the core path.</p>
 
   <a class="btn" href="/instance/ZarlinoInstanceSetup.exe" download>⤓ Download ZarlinoInstanceSetup.exe <span class="muted" style="color:#083344">(7 KB)</span></a>
 
@@ -31,16 +31,19 @@
     <ol>
       <li>Run <code>ZarlinoInstanceSetup.exe</code> on the machine.</li>
       <li>It fetches the <em>current</em> provisioner from this site (never stale) and checks git/node.</li>
-      <li>You type the two secrets when prompted — <strong>nothing is ever printed or sent anywhere else</strong>.</li>
-      <li>It clones the OS repo, installs dependencies, registers this machine in the org registry and installs an auto-start launcher.</li>
+      <li>You type the two secrets when prompted - <strong>nothing is ever printed or sent anywhere else</strong>.</li>
+      <li>It clones the OS repo, installs dependencies, sets up the task daemon <strong>and the WhatsApp bridge</strong> (auto-start + restart-loop).</li>
+      <li>It registers the machine in the org registry and verifies the daemon + bridge heartbeats end-to-end.</li>
     </ol>
     <p class="muted">Preview without changing anything: <code>ZarlinoInstanceSetup.exe -CheckOnly</code>.<br/>
-    Custom instance id: <code>ZarlinoInstanceSetup.exe -AgentId ws_studio_02 -CloneWorkspace</code>.</p>
+    Custom instance id: <code>ZarlinoInstanceSetup.exe -AgentId ws_studio_02 -CloneWorkspace</code>.<br/>
+    Move the WhatsApp session without a QR scan: <code>-BridgeSessionZip session.zip</code>. Daemon only: <code>-NoBridge</code>. Non-interactive: <code>-Yes</code>.</p>
     <p class="muted">Provisioner source (same file the EXE downloads): <a href="/instance/zarlino-instance-setup.ps1" style="color:#00D4FF">zarlino-instance-setup.ps1</a></p>
   </div>
 
   <div class="card">
-    <p class="muted">Verify the instance afterwards: <a href="https://os.zarlinoaudio.com" style="color:#00D4FF">os.zarlinoaudio.com</a> → org registry shows the new instance as ACTIVE.</p>
+    <p class="muted">Verify the instance afterwards: <a href="https://os.zarlinoaudio.com" style="color:#00D4FF">os.zarlinoaudio.com</a> - org registry shows the new instance as ACTIVE, and the doctor check <code>whatsapp.bridge</code> goes OK.</p>
+    <p class="muted">Once verified, retire the old host with <code>scripts\retire-this-machine.ps1</code> - full runbook: <code>docs/INSTANCE_AND_RETIREMENT.md</code> in the OS repo.</p>
   </div>
 </main>
 </body>
