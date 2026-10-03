@@ -15,11 +15,11 @@
  * and the Paystack + license plumbing) is left intact behind this flag — no
  * other code needs to change.
  *
- * Keep this value `false` while the plugins are still CONCEPT (no versioned
- * build is being sold yet). There is deliberately no hardcoded per-page flag;
- * every surface reads this one export.
+ * OPENED 2026-10-02 (Phase 0): ZTame and ZScorch are on sale. Keep this flag
+ * as the single kill-switch — flipping it to `false` + redeploy disables every
+ * purchase surface again (cart buttons, checkout page, Paystack handlers).
  */
-export const SALES_ENABLED = false;
+export const SALES_ENABLED = true;
 
 /**
  * Human-friendly copy shown wherever a purchase CTA would otherwise appear.

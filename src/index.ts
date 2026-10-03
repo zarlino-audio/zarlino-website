@@ -451,6 +451,18 @@ export default {
     if (url.pathname === '/api/admin/stats') {
       return handleAdminStats(request, env);
     }
+    // Server-side reachability probe for the Executive OS. The OS's own
+    // external monitor cannot fetch the OS custom domain from inside the OS
+    // worker (self-fetch rotates back to itself → 522), so it probes the OS
+    // THROUGH this worker instead. 200 = OS healthy, 502 = unreachable.
+    if (url.pathname === '/api/probe-exec-os') {
+      try {
+        const r = await fetch('https://os.zarlinoaudio.com/api/health', { redirect: 'follow' });
+        return new Response(r.ok ? 'probe-ok' : 'probe-fail', { status: r.ok ? 200 : 502 });
+      } catch {
+        return new Response('probe-fail', { status: 502 });
+      }
+    }
     const adminAuth = url.pathname.match(/^\/api\/admin\/(status|setup|login|logout|change-password)$/);
     if (adminAuth) {
       return handleAdminAuthRoute(adminAuth[1]!, request, env);

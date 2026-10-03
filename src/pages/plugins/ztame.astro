@@ -1,20 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { Download } from 'lucide-react';
 import AddToCartButton from '../../components/AddToCartButton';
-import ABPlayer from '../../components/ABPlayer';
-import CompatibilitySection from '../../components/CompatibilitySection';
-import TestimonialSection from '../../components/TestimonialSection';
-import EmailCapture from '../../components/EmailCapture';
-import CrossSellSection from '../../components/CrossSellSection';
-import { PRODUCTS } from '../../config/products';
-import { ZTAME_PRESETS } from '../../config/demos';
-const ztame = PRODUCTS.ztame;
+import { Download } from 'lucide-react';
 ---
 
 <BaseLayout
   title="ZTame — Dynamic Resonance Suppressor by Zarlino Audio"
-  description="ZTame is Zarlino Audio's high-resolution FFT-based automatic resonance suppressor. Per-peak dynamic notch filtering, selectivity gating, a draggable focus band, sidechain detection, and solo monitoring for mixing and mastering engineers. Windows VST3."
+  description="ZTame is Zarlino Audio's zero-latency automatic resonance suppressor. Per-band dynamic reduction with FFT-based peak detection, selectivity gating, a draggable focus band, Delta audition, and Mid/Side processing for mixing and mastering engineers. Windows VST3."
   canonicalURL="https://zarlinoaudio.com/plugins/ztame"
   schemaType="product"
 >
@@ -25,21 +17,21 @@ const ztame = PRODUCTS.ztame;
     "name": "ZTame",
     "applicationCategory": "MusicApplication",
     "operatingSystem": "Windows 10 22H2 or later",
-    "description": "High-resolution FFT-based automatic resonance suppressor with per-peak dynamic notch filtering, selectivity gating, a draggable focus band, sidechain detection, and solo monitoring.",
+    "description": "Zero-latency automatic resonance suppressor: per-band dynamic reduction with FFT-based peak detection, selectivity gating, draggable focus band, Delta audition, and Mid/Side processing.",
     "offers": {
       "@type": "Offer",
       "price": "49.00",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "description": "One-time purchase. $49 (₵750) for a perpetual license. A 14-day fully functional trial is built into the plugin.",
+      "description": "14-day fully functional trial, then a one-time $49 perpetual license. Windows VST3.",
       "url": "https://zarlinoaudio.com/plugins/ztame"
     },
     "author": {
       "@type": "Organization",
       "name": "Zarlino Audio"
     },
-    "version": "1.0.0",
-    "sku": "ZA-ZTAME-100"
+    "version": "1.2.0",
+    "sku": "ZA-ZTAME-120"
   })} />
 
   <!-- BreadcrumbList Schema -->
@@ -63,7 +55,7 @@ const ztame = PRODUCTS.ztame;
         "name": "Does ZTame support AU or AAX formats?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. ZTame version 1.0.0 is Windows VST3 only. AU and AAX support may be considered for future releases."
+          "text": "No. ZTame version 1.2.0 is Windows VST3 only. AU and AAX support may be considered for future releases."
         }
       },
       {
@@ -71,7 +63,7 @@ const ztame = PRODUCTS.ztame;
         "name": "Can ZTame process mono audio?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "ZTame 1.1 runs on mono or stereo buses. The resonance engine itself is per-channel; Mid/Side mode needs a stereo bus, and the optional sidechain input needs the host to route an auxiliary input to it (VST3 sidechain)."
+          "text": "The main processing path is mono or stereo; Mid/Side modes require a stereo bus. ZTame version 1.2.0 handles mono main input directly, and stereo material can be processed in Stereo, M/S Blend, Mid Only, or Side Only modes."
         }
       },
       {
@@ -87,7 +79,7 @@ const ztame = PRODUCTS.ztame;
         "name": "How does ZTame compare to Soothe 3?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "ZTame is a Soothe 3 alternative in the same category of dynamic resonance suppressors and spectral dynamics processors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with selectivity gating, focus-band targeting you can drag directly on the spectrum, sidechain detection, latency-aligned Dry/Wet control, and Mid/Side processing mode at a competitive price point of $49."
+          "text": "ZTame is a Soothe 3 alternative in the same category of dynamic resonance suppressors. Like its peers, ZTame detects narrow, persistent spectral peaks and applies dynamic reduction. ZTame differentiates with zero latency (no PDC shift, safe on any bus), a draggable focus band, Delta audition of exactly what is removed, bit-transparent idle processing, and Mid/Side processing modes at $49."
         }
       },
       {
@@ -103,7 +95,7 @@ const ztame = PRODUCTS.ztame;
         "name": "Is there a free trial for ZTame?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. ZTame includes a 14-day fully functional trial. After the trial, a perpetual license costs $49 (₵750) — a one-time purchase with no subscriptions, dongles, or iLok."
+          "text": "Yes. ZTame includes a 14-day fully functional trial. After the trial, a one-time purchase of $49 buys a perpetual license — no subscription."
         }
       }
     ]
@@ -124,8 +116,8 @@ const ztame = PRODUCTS.ztame;
         <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-3 py-1">
           Resonance Suppressor
         </span>
-        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.35)] rounded-full px-3 py-1">
-          v1.0
+        <span class="inline-block font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#FBBF24] border border-[rgba(251,191,36,0.35)] rounded-full px-3 py-1">
+          Public Beta
         </span>
       </div>
 
@@ -134,75 +126,44 @@ const ztame = PRODUCTS.ztame;
         ZTame
       </h1>
 
-      <!-- Tagline (outcome-led) -->
+      <!-- Tagline -->
       <p class="mt-4 font-['Inter'] text-[18px] text-[#94A3B8] leading-[1.7] max-w-[650px]">
-        {ztame.tagline}
+        A zero-latency automatic resonance suppressor: it finds narrow, persistent spectral peaks and pulls them down with per-band dynamic reduction — leaving the tonal mass around them intact.
       </p>
 
-      <!-- Problem / Outcome -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6">
-          <p class="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#64748B]">The problem</p>
-          <p class="mt-2 font-['Inter'] text-[15px] text-[#CBD5E1] leading-[1.7]">{ztame.problem}</p>
-        </div>
-        <div class="rounded-xl border border-[rgba(0,212,255,0.18)] bg-[rgba(0,212,255,0.04)] p-6">
-          <p class="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF]">The outcome</p>
-          <p class="mt-2 font-['Inter'] text-[15px] text-[#CBD5E1] leading-[1.7]">{ztame.outcome}</p>
-        </div>
-      </div>
-
-      <!-- Release note -->
-      <p class="mt-4 font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[650px] border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.05)] rounded-lg px-4 py-3">
-        <strong class="text-[#00D4FF]">Free 14-day trial available.</strong> Checkout is not open yet - ZTame goes on sale at its official release (coming soon). Found an issue?{' '}
+      <!-- BETA notice -->
+      <p class="mt-4 font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[650px] border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.05)] rounded-lg px-4 py-3">
+        <strong class="text-[#FBBF24]">Public beta — on sale now.</strong> Try ZTame 1.2.0 free for
+        14 days; buy once and keep it forever. Found an issue?{' '}
         <a href="/report" class="text-[#00D4FF] hover:underline">Report it here</a>.
       </p>
 
       <!-- Pricing + CTA -->
-      <div class="mt-8 flex items-center gap-4 flex-wrap">
-        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">{ztame.usdLabel}</span>
+      <div class="mt-8 flex items-center gap-4 flex-wrap" id="buy">
+        <span class="font-['Space_Grotesk'] font-semibold text-[36px] text-white">$49</span>
         <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
-          {ztame.priceLabelGhs} · {ztame.platform} {ztame.format} · one-time purchase
+          one-time purchase &middot; perpetual license &middot; 14-day free trial
         </span>
-        <AddToCartButton
-          client:load
-          event="buy"
-          label={`Buy ${ztame.name}`}
-          item={{ id: ztame.id, name: ztame.name, price: ztame.priceGhs, image: ztame.image, category: ztame.category }}
-        />
+        <AddToCartButton item={{ id: 'ztame', name: 'ZTame', price: 750, image: '/images/ztame-ui-1.2.png', category: 'Resonance Suppressor' }} label="Buy ZTame — $49" client:load />
+        <a href="#download" class="font-['Inter'] text-[14px] text-[#00D4FF] hover:underline">or download the trial first</a>
       </div>
 
       <!-- Product Image -->
       <div class="mt-12 rounded-xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
-        <img src="/images/ztame-ui.png" alt="ZTame resonance suppressor plugin user interface showing spectral analysis and dynamic notch filtering controls" width="1440" height="900" class="w-full h-auto object-cover" loading="lazy" />
+        <img src="/images/ztame-ui-1.2.png" alt="ZTame resonance suppressor plugin user interface with spectrum display, draggable focus band and control panels" class="w-full h-auto object-cover" />
       </div>
-
-      <!-- Hear it: A/B with disclosed presets -->
-      <section class="mt-14" id="hear-the-difference">
-        <ABPlayer client:load plugin="ZTame" presets={ZTAME_PRESETS} />
-      </section>
 
       <!-- Download -->
       <section class="mt-14" id="download">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Download ZTame 1.0.0</h2>
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Download ZTame 1.2.0</h2>
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
-          Grab the installer for the full standalone app, or the VST3 for your DAW. This is
-          ZTame 1.0.0. All builds are Windows 10 22H2+ (64-bit).
+          Grab the installer for the full standalone app, or the VST3 for your DAW. This is a public beta build of
+          ZTame 1.2.0. All builds are Windows 10 22H2+ (64-bit).
         </p>
-        <div class="mb-6 flex items-start gap-3 rounded-lg border border-[rgba(251,191,36,0.45)] bg-[rgba(251,191,36,0.08)] px-4 py-3 font-['Inter'] text-[14px] text-[#FDE68A] leading-[1.7]">
-          <span class="text-[#FBBF24] leading-none">&#9888;</span>
-          <span>
-            <strong class="text-[#FBBF24]">Disclosed pre-release - not code-signed.</strong>{' '}
-            This ZTame 1.0.0 build has not yet been code-signed, so Windows SmartScreen will show an{' '}
-            <strong class="text-[#FBBF24]">"Unknown publisher"</strong> warning. To install, click{' '}
-            <strong class="text-[#FBBF24]">"More info"</strong> then{' '}
-            <strong class="text-[#FBBF24]">"Run anyway"</strong>.
-          </span>
-        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
-            href="/downloads/ZTame-v1.0.0-Windows-Installer.exe"
+            href="/downloads/ZTame-v1.2.0-Windows-Installer.exe"
             download
-            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 hover:bg-[rgba(0,212,255,0.08)] transition-colors duration-300"
           >
             <div>
@@ -215,9 +176,8 @@ const ztame = PRODUCTS.ztame;
           </a>
 
           <a
-            href="/downloads/ZTame-v1.0.0-Windows-VST3.zip"
+            href="/downloads/ZTame-v1.2.0-Windows-VST3.zip"
             download
-            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -230,9 +190,8 @@ const ztame = PRODUCTS.ztame;
           </a>
 
           <a
-            href="/downloads/ZTame-v1.0.0-Windows-Standalone.zip"
+            href="/downloads/ZTame-v1.2.0-Windows-Standalone.zip"
             download
-            data-event="download"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -246,30 +205,18 @@ const ztame = PRODUCTS.ztame;
         </div>
       </section>
 
-      <!-- Buy -->
-      <section class="mt-14" id="buy">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-white mb-2" style="font-size:28px">ZTame - availability</h2>
+      <!-- License -->
+      <section class="mt-14" id="license">
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Activate ZTame</h2>
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
-          ZTame is not on sale yet - checkout is switched off until the plugin officially ships. It will retail at $49 (¢750) for a perpetual license, but Zarlino is not taking payment for it yet.
+          ZTame runs fully functional for 14 days. After that, paste your license key into the plugin's
+          activation screen. Your key is shown on the checkout page right after payment — save it somewhere
+          safe. Lost your key?{' '}
+          <a href="mailto:support@zarlinoaudio.com" class="text-[#00D4FF] hover:underline">Email support</a>{' '}
+          and we'll re-issue it. See the{' '}
+          <a href="/legal/refunds" class="text-[#00D4FF] hover:underline">refund policy</a>{' '}
+          for the 14-day money-back window.
         </p>
-        <div class="flex flex-col items-start gap-4 rounded-2xl border border-[rgba(251,191,36,0.3)] bg-[rgba(251,191,36,0.05)] p-6 md:p-8">
-          <p class="font-['Inter'] text-[15px] text-[#FBBF24] flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Not yet available - coming soon
-          </p>
-          <p class="font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.7] max-w-[620px]">
-            No purchase button is shown while checkout is switched off ahead of real release. Meanwhile keep
-            using the free 14-day trial from the downloads above, browse the full spec below, or get in touch.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-3">
-            <a href="#download" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#00D4FF] text-[#050505] px-6 py-3 font-['Inter'] font-medium text-[14px] hover:bg-[#33DDFF] transition-colors duration-300">
-              Download free 14-day trial
-            </a>
-            <a href="/report" class="inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(255,255,255,0.15)] px-6 py-3 font-['Inter'] text-[14px] text-[#94A3B8] hover:text-white hover:border-[rgba(255,255,255,0.3)] transition-colors">
-              Ask a question
-            </a>
-          </div>
-        </div>
       </section>
 
       <!-- What It Does -->
@@ -277,13 +224,13 @@ const ztame = PRODUCTS.ztame;
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">What ZTame Does</h2>
         <div class="font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.8] space-y-4">
           <p>
-            ZTame detects narrow, persistent spectral peaks in your audio and applies dynamic notch filtering to reduce them — but only while they are present. Unlike broad EQ cuts that dull the entire signal, ZTame's FFT-based analysis identifies and targets specific resonances in real time, leaving the surrounding frequencies untouched.
+            ZTame detects narrow, persistent spectral peaks in your audio and pulls them down with per-band dynamic reduction — but only while they are present. The engine is causal end-to-end: nothing is delayed, nothing is pre-computed from future samples, and material that is not being reduced passes through sample-exactly.
           </p>
           <p>
             Insert ZTame on vocals to tame harsh sibilance without over-compressing. Place it on a drum bus to knock down ringing cymbal frequencies. Use it on a master bus to clean up room resonances before they reach your limiter. The per-peak detection engine works continuously, adapting to the material as it plays.
           </p>
           <p>
-            <strong>ZTame vs. dynamic resonance suppressors like Soothe 3:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with selectivity gating (how narrowly a peak must be defined before reduction engages), a draggable focus band that confines suppression to the frequency range you choose, external sidechain detection, latency-aligned Dry/Wet blending, and built-in Mid/Side processing — all without requiring a separate subscription or iLok dongle.
+            <strong>ZTame vs. dynamic resonance suppressors like Soothe 3:</strong> ZTame competes in the same category of spectral dynamics processors that have become essential tools in modern mixing. It distinguishes itself with zero latency (no PDC shift — safe on any bus), a draggable focus band, Delta audition of exactly what is removed, bit-transparent idle processing, and built-in Mid/Side modes — all without requiring a separate subscription or iLok dongle.
           </p>
         </div>
       </section>
@@ -294,11 +241,11 @@ const ztame = PRODUCTS.ztame;
         <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            FFT-based automatic spectral peak detection and dynamic reduction
+            Zero-latency engine — no delay, no PDC shift, safe on any bus
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Per-peak dynamic notch filtering — only active frequencies are reduced
+            Bit-transparent when idle: untouched material passes through sample-exactly
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
@@ -306,7 +253,7 @@ const ztame = PRODUCTS.ztame;
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Draggable focus band — aim and size the range you want tamed, right on the spectrum
+            Draggable focus band — restrict suppression to exactly the region you choose
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
@@ -314,15 +261,15 @@ const ztame = PRODUCTS.ztame;
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Fast (1024) and Precise (2048) analysis modes — 23 ms or 46 ms latency, your choice
+            32 or 48 correction bands (Standard / Precise)
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Listen mode — audition only the removed signal for precision tuning
+            Delta (Listen) audition — hear exactly what is being removed
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Latency-aligned Dry/Wet control for parallel processing
+            Dry/Wet, Bypass, Stereo Link, and an optional sidechain detection bus
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
@@ -330,7 +277,7 @@ const ztame = PRODUCTS.ztame;
           </li>
           <li class="flex items-start gap-3 font-['Inter'] text-[15px] text-[#CBD5E1]">
             <span class="text-[#00D4FF] mt-1">&#10003;</span>
-            Six factory presets: Vocal Harshness Tamer, De-Boom, Guitar Resonance Smooth, Cymbal Ring Killer, Master Polish, and Podcast Clarity
+            Seven factory programs: Init, Vocal Soothe, Room Tamer, Drum Ring, Master Polish, De-Harsh, Extreme Ring
           </li>
         </ul>
       </section>
@@ -342,47 +289,13 @@ const ztame = PRODUCTS.ztame;
           <p><strong class="text-[#CBD5E1]">Sensitivity</strong> — Threshold for spectral peak detection. Raise until the gain reduction meter moves on harsh resonances.</p>
           <p><strong class="text-[#CBD5E1]">Range</strong> — Maximum dynamic reduction applied to detected peaks (in dB).</p>
           <p><strong class="text-[#CBD5E1]">Selectivity</strong> — How narrowly a spectral peak must be defined before reduction engages. Higher values require sharper, more isolated peaks.</p>
-          <p><strong class="text-[#CBD5E1]">Focus band</strong> — A draggable band drawn over the spectrum. Drag it to move the range, drag its edges to size it; suppression only happens inside.</p>
-          <p><strong class="text-[#CBD5E1]">Sidechain</strong> — Detect resonances from an external sidechain input instead of the track itself, then tame them on the main path.</p>
+          <p><strong class="text-[#CBD5E1]">Focus Low / High</strong> — Restrict suppression to a frequency region with soft skirts. Drag the band directly in the spectrum display.</p>
           <p><strong class="text-[#CBD5E1]">Attack / Release</strong> — How quickly reduction engages and recovers after a peak subsides.</p>
-          <p><strong class="text-[#CBD5E1]">Listen</strong> — Outputs only the suppressed difference signal for precise auditioning.</p>
-          <p><strong class="text-[#CBD5E1]">Dry/Wet</strong> — Parallel blend of latency-aligned dry and processed signals.</p>
-          <p><strong class="text-[#CBD5E1]">Resolution</strong> — Fast (1024-point frames, 23 ms latency) or Precise (2048-point frames, 46 ms). Lower latency costs low-frequency detail.</p>
-          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo or Mid/Side. Mid/Side encodes L/R into Mid/Side, processes, then decodes back to L/R.</p>
+          <p><strong class="text-[#CBD5E1]">Delta (Listen)</strong> — Outputs only the removed material (+6 dB monitor) for precise auditioning.</p>
+          <p><strong class="text-[#CBD5E1]">Mix</strong> — Parallel blend of dry and processed signals. Both paths are sample-aligned, so the mix cannot comb.</p>
+          <p><strong class="text-[#CBD5E1]">Bands</strong> — Standard (32 bands, lowest CPU) or Precise (48 bands, finer centres). Both run at zero latency.</p>
+          <p><strong class="text-[#CBD5E1]">Mode</strong> — Stereo, M/S Blend, Mid Only, or Side Only. Mid/Side modes encode L/R into Mid/Side, process, then decode back to L/R; isolation modes process only the Mid or only the Side channel.</p>
         </div>
-      </section>
-
-      <!-- ZTame vs Manual EQ (honest comparison) -->
-      <section class="mt-12">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">ZTame vs Manual EQ</h2>
-        <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] max-w-[700px] mb-6">
-          ZTame does not replace EQ — they are different workflows. EQ gives you deliberate, manual
-          control over any frequency. ZTame automates the identification and dynamic control of
-          problematic resonances.
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6">
-            <h3 class="font-['Space_Grotesk'] font-semibold text-[18px] text-white mb-3">Manual EQ</h3>
-            <ul class="font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.8] space-y-2 list-disc list-inside">
-              <li>Full manual control over any frequency, at any time.</li>
-              <li>You locate the problem by ear and set a static cut.</li>
-              <li>A fixed cut is always applied — even when the resonance is not present.</li>
-              <li>Great for creative tone-shaping and broad correction.</li>
-            </ul>
-          </div>
-          <div class="rounded-xl border border-[rgba(0,212,255,0.18)] bg-[rgba(0,212,255,0.04)] p-6">
-            <h3 class="font-['Space_Grotesk'] font-semibold text-[18px] text-white mb-3">ZTame</h3>
-            <ul class="font-['Inter'] text-[14px] text-[#94A3B8] leading-[1.8] space-y-2 list-disc list-inside">
-              <li>Detects narrow, persistent spectral peaks automatically.</li>
-              <li>Reduces them dynamically — only while they are present.</li>
-              <li>Leaves surrounding frequencies untouched, preserving tone.</li>
-              <li>Ideal for repetitive cleanup of harsh resonances across a mix.</li>
-            </ul>
-          </div>
-        </div>
-        <p class="mt-4 font-['Inter'] text-[13px] text-[#64748B] max-w-[700px]">
-          Most engineers use both: EQ for deliberate shaping, ZTame for dynamic resonance control.
-        </p>
       </section>
 
       <!-- System Requirements -->
@@ -393,19 +306,11 @@ const ztame = PRODUCTS.ztame;
           <li>VST3-compatible 64-bit host (FL Studio, Ableton Live, Cubase, Reaper, Studio One, Bitwig)</li>
           <li>4 GB RAM minimum</li>
           <li>44.1 kHz – 192 kHz audio interface or session</li>
-          <li>Format: VST3 only (AU and AAX not available in v1.0.0)</li>
-          <li>Channels: Stereo only (no mono or multi-channel support in v1.0.0)</li>
-          <li>Latency: one FFT frame — 2048 samples (46 ms at 44.1 kHz) in Precise mode, 1024 samples (23 ms) in Fast mode. Dry/Wet, Listen and Bypass are all latency-aligned, so parallel processing stays sample-accurate.</li>
+          <li>Format: VST3 only (AU and AAX not available in v1.2.0)</li>
+          <li>Channels: mono or stereo main path (Mid/Side modes require stereo)</li>
+          <li>Latency: 0 samples — the engine is causal end-to-end, so there is no PDC offset and no comb filtering on parallel buses.</li>
         </ul>
       </section>
-
-      <!-- Compatibility -->
-      <CompatibilitySection
-        client:load
-        platform={ztame.platform}
-        format={ztame.format}
-        osNote="Windows 10 22H2 or later (64-bit)"
-      />
 
       <!-- FAQ -->
       <section class="mt-12">
@@ -413,23 +318,23 @@ const ztame = PRODUCTS.ztame;
         <div class="space-y-6 font-['Inter']">
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Does ZTame support AU or AAX formats?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.0.0 is Windows VST3 only. AU (macOS) and AAX (Pro Tools) support may be considered for future releases based on customer demand.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">No. ZTame version 1.2.0 is Windows VST3 only. AU (macOS) and AAX (Pro Tools) support may be considered for future releases based on customer demand.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">How does ZTame compare to Soothe 3?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe 3, DSEQ3, and similar spectral dynamics processors. ZTame offers selectivity gating, focus-band targeting you can drag on the spectrum, sidechain detection, latency-aligned Dry/Wet, and Mid/Side processing at a competitive $49 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame is a dynamic resonance suppressor in the same category as Soothe 3, DSEQ3, and similar spectral dynamics processors. ZTame offers zero latency (no PDC shift), a draggable focus band, Delta audition, bit-transparent idle processing, and Mid/Side modes at a competitive $49 price point with no subscription required. The right choice depends on your workflow — we recommend trying both to see which detection behavior fits your material.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Can I use ZTame on mono tracks?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">ZTame 1.1 runs on mono or stereo buses. Mid/Side mode needs a stereo bus, and the optional sidechain input needs your host to route an auxiliary input to it (VST3 sidechain).</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">The main path is mono or stereo; Mid/Side modes require a stereo bus. ZTame version 1.2.0 handles mono main input directly, and stereo material can be processed as Stereo, M/S Blend, Mid Only, or Side Only.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">Is there a free trial?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame includes a 14-day fully functional trial. After the trial, a perpetual license costs $49 (₵750) — a one-time purchase with no subscriptions, dongles, or iLok.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Yes. ZTame includes a 14-day fully functional trial. After that, a one-time purchase of <strong class="text-[#CBD5E1]">$49</strong> buys a perpetual license — yours forever, no subscription.</p>
           </div>
           <div>
             <h3 class="text-[16px] font-semibold text-white mb-1">What if ZTame uses too much CPU?</h3>
-            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">Switch Resolution to Fast (1024-point frames, 23 ms) and increase your audio buffer size. The spectrum display and metering are free when the editor is closed.</p>
+            <p class="text-[15px] text-[#94A3B8] leading-[1.7]">The engine is deliberately cheap when it has nothing to do: silence and "no resonance detected" blocks skip the correction path entirely, and bypass parks it. Try Standard (32 bands) instead of Precise (48), and increase your audio buffer size if your host runs very small buffers.</p>
           </div>
         </div>
       </section>
@@ -438,38 +343,43 @@ const ztame = PRODUCTS.ztame;
       <section class="mt-12">
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-4">Changelog</h2>
         <div class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.8]">
-          <h3 class="text-[16px] font-semibold text-white mb-2">1.0.0 — Initial Release</h3>
+          <h3 class="text-[16px] font-semibold text-white mb-2">1.2.0 — Zero-Latency Engine</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>0-sample latency on every path — no PDC offset, host bypass is a plain passthrough</li>
+            <li>Bit-exact passthrough when idle (depth 0 / nothing detected)</li>
+            <li>New correction engine: per-band dynamic bells replacing the STFT resynthesis path</li>
+            <li>Up to ~40% lower CPU on active material, ~3x lower when idle, ~18x lower on silence</li>
+            <li>Seven factory programs, sidechain detection bus, Delta audition, Mid/Side modes</li>
+          </ul>
+          <h3 class="text-[16px] font-semibold text-white mb-2 mt-5">1.1.0 — Engine Rewrite</h3>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Fixed STFT reconstruction (window/normalisation/bin-index defects)</li>
+            <li>Declared latency, sidechain bus, draggable focus band, live removed-energy display</li>
+            <li>35-suite automated test battery</li>
+          </ul>
+          <h3 class="text-[16px] font-semibold text-white mb-2 mt-5">1.0.0 — Initial Release</h3>
           <ul class="list-disc list-inside space-y-1">
             <li>Dynamic spectral resonance suppression with FFT-based peak detection</li>
-            <li>Stereo and Mid/Side processing modes</li>
-            <li>Fast and Precise analysis modes (1024 / 2048-point frames)</li>
-            <li>Latency-aligned Dry/Wet control and Listen mode</li>
-            <li>Six factory presets: Vocal Harshness Tamer, De-Boom, Guitar Resonance Smooth, Cymbal Ring Killer, Master Polish, Podcast Clarity</li>
-            <li>Real-time spectrum display and gain reduction metering</li>
+            <li>Stereo and Mid/Side processing modes (Stereo, M/S Blend, Mid Only, Side Only)</li>
+            <li>Listen mode and real-time spectrum display with gain reduction metering</li>
           </ul>
         </div>
       </section>
 
-      <!-- User feedback (renders only when genuine testimonials are configured) -->
-      <TestimonialSection />
-
-      <!-- Product-specific email capture -->
+      <!-- More from the Zarlino ecosystem -->
       <section class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
-        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-4">
-          Stay sharp with {ztame.name}
-        </h2>
-        <div class="max-w-[520px]">
-          <EmailCapture
-            client:load
-            topic={ztame.emailList.topic}
-            cta={ztame.emailList.cta}
-            success={ztame.emailList.success}
-          />
+        <h2 class="font-['Space_Grotesk'] font-semibold text-[24px] text-white mb-6">More from the Zarlino Audio lineup</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="/plugins/zscorch" class="group rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-6 hover:border-[rgba(0,212,255,0.35)] hover:bg-[rgba(0,212,255,0.05)] transition-colors duration-300">
+            <div class="flex items-center justify-between">
+              <h3 class="font-['Space_Grotesk'] font-semibold text-white text-[18px]">ZScorch</h3>
+              <span class="font-['IBM_Plex_Mono'] text-[10px] uppercase tracking-[0.1em] text-[#00D4FF] border border-[rgba(0,212,255,0.3)] rounded-full px-2 py-0.5">Adaptive Harmonic Processor</span>
+            </div>
+            <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Multi-mode multiband harmonic saturation with Lift, Character, and Mix macros. Warm up, distort, and glue with six saturation topologies.</p>
+            <span class="mt-4 inline-block font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:underline">Learn more →</span>
+          </a>
         </div>
       </section>
-
-      <!-- Cross-sell: the complementary plugin -->
-      <CrossSellSection current="ztame" />
 
       <!-- Back to Plugins -->
       <div class="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">

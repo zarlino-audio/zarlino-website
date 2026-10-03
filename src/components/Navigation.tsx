@@ -29,13 +29,14 @@ const Navigation = () => {
           : 'bg-transparent'
       }`}
     >
-      {/* Announcement banner */}
-      <div className="h-9 flex items-center justify-center gap-2 px-4 bg-[#0A0A0A] border-b border-[rgba(0,212,255,0.18)]">
-        <span className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#00D4FF]">
-          Now Available
+      {/* Public BETA banner */}
+      <div className="h-9 flex items-center justify-center gap-2 px-4 bg-[#0A0A0A] border-b border-[rgba(251,191,36,0.18)]">
+        <span className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#FBBF24]">
+          Beta
         </span>
         <span className="font-['Inter'] text-[12px] text-[#94A3B8] truncate">
-          ZTame &amp; ZScorch v1.0 — Windows VST3. Buy once, keep forever.
+          ZTame & ZScorch are on sale — 14-day free trial, then{' '}
+          <span className="text-white">one-time purchase, yours forever</span>.
         </span>
         <a
           href="/report"

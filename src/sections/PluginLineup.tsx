@@ -1,17 +1,38 @@
-import AddToCartButton from '../components/AddToCartButton';
-import { PRODUCTS } from '../config/products';
+import { SALES_ENABLED } from '../config/sales';
 
-const plugins = [PRODUCTS.ztame, PRODUCTS.zscorch].map((p) => ({
-  id: p.id,
-  name: p.name,
-  category: p.category,
-  description: p.description,
-  price: p.priceGhs,
-  image: p.image,
-  badge: p.badge,
-  priceLabel: p.priceLabelGhs,
-  usdLabel: p.usdLabel,
-}));
+const plugins: {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  image: string;
+  badge: string;
+  priceLabel: string;
+}[] = [
+  {
+    id: 'ztame',
+    name: 'ZTame',
+    category: 'Resonance Suppressor',
+    description:
+      'Zero-latency automatic resonance suppressor — per-band dynamic reduction with FFT-based peak detection, selectivity gating, a draggable focus band, Delta audition, and Mid/Side processing.',
+    price: 49,
+    image: '/images/ztame-ui-1.2.png',
+    badge: 'Public Beta',
+    priceLabel: 'FREE',
+  },
+  {
+    id: 'zscorch',
+    name: 'ZScorch',
+    category: 'Harmonic Processor',
+    description:
+      'Adaptive harmonic processor with multiband saturation across six topologies — Tube, Tape, Germanium, Transistor, Diode, and Wavefold — driven by Lift, Character, and Mix macros.',
+    price: 79,
+    image: '/images/zscorch-ui.jpg',
+    badge: 'Public Beta',
+    priceLabel: 'FREE',
+  },
+];
 
 const PluginLineup = () => {
   return (
@@ -21,7 +42,7 @@ const PluginLineup = () => {
     >
       <div className="max-w-[1200px] mx-auto">
         {/* Header */}
-        <div className="section-header za-reveal">
+        <div className="section-header">
           <span className="font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#00D4FF]">
             THE COLLECTION
           </span>
@@ -39,10 +60,10 @@ const PluginLineup = () => {
 
         {/* Grid */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {plugins.map((plugin, i) => (
+          {plugins.map((plugin) => (
             <div
               key={plugin.id}
-              className={`plugin-card za-reveal za-d${(i % 4) + 1} group bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)] hover:border-[rgba(255,255,255,0.1)] transition-all duration-[400ms] ease-out`}
+              className="plugin-card group bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)] hover:border-[rgba(255,255,255,0.1)] transition-all duration-[400ms] ease-out"
             >
               {/* Image (or branded placeholder when no screenshot exists) */}
               <div className="aspect-[16/10] overflow-hidden relative">
@@ -79,15 +100,13 @@ const PluginLineup = () => {
                   {plugin.description}
                 </p>
 
-                <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-baseline gap-2">
+                <div className={`mt-5 flex items-center ${SALES_ENABLED ? 'justify-between' : ''}`}>
+                  {/* SALES_ENABLED gate — flip src/config/sales.ts to re-enable in one line */}
+                  {SALES_ENABLED && (
                     <span className="font-['Space_Grotesk'] font-semibold text-[18px] text-white">
                       {plugin.priceLabel}
                     </span>
-                    <span className="font-['Inter'] text-[12px] text-[#64748B]">
-                      · {plugin.usdLabel}
-                    </span>
-                  </div>
+                  )}
                   <div className="flex items-center gap-4">
                     <a
                       href={`/plugins/${plugin.id}`}
@@ -95,9 +114,8 @@ const PluginLineup = () => {
                     >
                       Learn More
                     </a>
-                    <AddToCartButton
-                      item={{ id: plugin.id, name: plugin.name, price: plugin.price, image: plugin.image, category: plugin.category }}
-                    />
+                    {/* SALES_ENABLED gate — flip src/config/sales.ts to re-enable in one line */}
+                    {SALES_ENABLED && (<a href={`/plugins/${plugin.id}#buy`} className="font-['Inter'] font-medium text-[14px] text-[#00D4FF] hover:underline transition-all">{`Buy — ${plugin.priceLabel}`}</a>)}
                   </div>
                 </div>
               </div>

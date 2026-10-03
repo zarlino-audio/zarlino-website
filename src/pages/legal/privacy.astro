@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Privacy Policy — Zarlino Audio"
+  description="How Zarlino Audio collects, uses, and protects your information."
+  canonicalURL="https://zarlinoaudio.com/legal/privacy"
+  schemaType="website"
+>
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[820px] mx-auto">
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/" class="hover:text-white transition-colors">Zarlino Audio</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">Privacy Policy</span>
+      </nav>
+
+      <h1 class="font-['Space_Grotesk'] font-semibold text-white text-[clamp(32px,4.5vw,48px)] leading-[1.1] tracking-[-0.02em]">
+        Privacy Policy
+      </h1>
+      <p class="mt-3 font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#64748B]">
+        Version 1.0 · 2 October 2026
+      </p>
+
+      <div class="mt-10 font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.8] space-y-8">
+        <p>
+          This policy explains what information Zarlino Audio ("we", "us") collects when you use
+          zarlinoaudio.com, buy or license our software, or contact us — and what we do with it.
+        </p>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">1. Who we are</h2>
+          <p>
+            Zarlino Audio (Ghana) develops and sells audio software. You can reach us at
+            <a href="mailto:support@zarlinoaudio.com" class="text-[#00D4FF] hover:underline">support@zarlinoaudio.com</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">2. What we collect</h2>
+          <ul class="list-disc pl-6 space-y-2">
+            <li><strong class="text-[#CBD5E1]">Purchase details</strong> — the email address you enter at checkout and the items you bought. Card and payment details are handled by Paystack; we never see or store your card number.</li>
+            <li><strong class="text-[#CBD5E1]">Licence keys</strong> — the key issued to your email address, kept so we can re-issue it if you lose it.</li>
+            <li><strong class="text-[#CBD5E1]">Updates list</strong> — the email address you give when you ask to be notified about releases.</li>
+            <li><strong class="text-[#CBD5E1]">Feedback you send</strong> — bug reports and suggestions, including any email address you include. Bug reports are handled through a public issue tracker, so please don't include personal information you don't want to be public.</li>
+            <li><strong class="text-[#CBD5E1]">Technical data</strong> — basic request logs from our hosting provider (for example IP address and timestamps) used for security and aggregate visit counting.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">3. How we use it</h2>
+          <p>
+            To deliver your purchase and licence, provide support and re-issue keys, send the release
+            updates you asked for, keep the store secure and prevent abuse, and meet our legal and
+            accounting obligations. We use automated systems to help run the store and support
+            workflows; these are reviewed by us.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">4. Who we share it with</h2>
+          <ul class="list-disc pl-6 space-y-2">
+            <li><strong class="text-[#CBD5E1]">Cloudflare</strong> — hosting and storage for this website and our internal systems.</li>
+            <li><strong class="text-[#CBD5E1]">Paystack</strong> — payment processing; their own privacy policy applies to payment data.</li>
+            <li><strong class="text-[#CBD5E1]">GitHub</strong> — public bug reports and suggestions you submit may appear as public issues.</li>
+          </ul>
+          <p class="mt-2">We do not sell your personal information.</p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">5. Retention &amp; your rights</h2>
+          <p>
+            We keep purchase and licence records for as long as needed to deliver licences and meet
+            legal obligations; update-list addresses until you unsubscribe. You can ask us to access,
+            correct, or delete your personal information, or to stop using it for updates, by emailing
+            <a href="mailto:support@zarlinoaudio.com" class="text-[#00D4FF] hover:underline">support@zarlinoaudio.com</a>.
+            Nothing in this policy limits rights you have under applicable data-protection law.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">6. Changes</h2>
+          <p>If this policy changes materially we will update this page and the version date above.</p>
+        </section>
+
+        <p class="pt-4 border-t border-[rgba(255,255,255,0.06)] text-[13px] text-[#475569]">
+          Plain-language version 1.0 — pending legal review. We will publish an updated version once reviewed.
+        </p>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

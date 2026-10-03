@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Refund Policy — Zarlino Audio"
+  description="Zarlino Audio's 14-day money-back policy for plugin purchases."
+  canonicalURL="https://zarlinoaudio.com/legal/refunds"
+  schemaType="website"
+>
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[820px] mx-auto">
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/" class="hover:text-white transition-colors">Zarlino Audio</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">Refund Policy</span>
+      </nav>
+
+      <h1 class="font-['Space_Grotesk'] font-semibold text-white text-[clamp(32px,4.5vw,48px)] leading-[1.1] tracking-[-0.02em]">
+        Refund Policy
+      </h1>
+      <p class="mt-3 font-['IBM_Plex_Mono'] text-[12px] uppercase tracking-[0.1em] text-[#64748B]">
+        Version 1.0 · 2 October 2026
+      </p>
+
+      <div class="mt-10 font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.8] space-y-8">
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">14-day money back</h2>
+          <p>
+            If a Zarlino Audio plugin doesn't work for you, ask for a refund within <strong class="text-[#CBD5E1]">14 days of purchase</strong>
+            and we will refund the full amount to your original payment method.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">How to request one</h2>
+          <p>
+            Email{' '}
+            <a href="mailto:support@zarlinoaudio.com" class="text-[#00D4FF] hover:underline">support@zarlinoaudio.com</a>{' '}
+            from the address you used at checkout, with a line about what didn't work (it helps us fix
+            things). We aim to confirm within 2 business days.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">Processing</h2>
+          <p>
+            Refunds are sent back through Paystack to your original payment method, typically within
+            5–10 business days depending on your bank. After a refund, your licence for that product
+            ends — please delete the plugin or stop using the key.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-['Space_Grotesk'] font-semibold text-white text-[22px] mb-3">Fair use &amp; your rights</h2>
+          <p>
+            This policy is for genuine purchases by the person who bought the licence; we may decline
+            refunds in cases of clear abuse (for example, repeatedly buying and refunding the same
+            product). Nothing in this policy limits rights you have under applicable consumer law.
+          </p>
+        </section>
+
+        <p class="pt-4 border-t border-[rgba(255,255,255,0.06)] text-[13px] text-[#475569]">
+          Plain-language version 1.0 — pending legal review. We will publish an updated version once reviewed.
+        </p>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
