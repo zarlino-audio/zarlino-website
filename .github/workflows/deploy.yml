@@ -26,3 +26,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      # POST-DEPLOY REGRESSION GATE — GitHub issue #21, 10 assertions, exact
+      # status equality (=== 200 / === 404). Non-zero exit fails this job.
+      # This is deliberately NOT the weaker parent pair from #19 ("404 on an
+      # unknown path + 200 on every sitemap URL"): a gate built on #12's
+      # survivor list (/ and /plugins/) queries two 200s and falsely PASSES
+      # while /about, /contact and /sitemap.xml still return 500.
+      - name: Post-deploy regression gate (#21)
+        env:
+          BASE_URL: https://zarlinoaudio.com
+          SETTLE_MS: '5000'
+          REQUEST_TIMEOUT_MS: '15000'
+        run: node scripts/post-deploy-check.mjs

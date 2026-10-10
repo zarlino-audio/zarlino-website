@@ -1,0 +1,552 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { LISTINGS, waLink } from '../../config/vee';
+
+const wa = waLink("Hello Vee Properties — I'd like help finding a home in Accra.");
+
+const feature = LISTINGS[0]; // EL-1001
+
+const areas = [
+  { key: 'east-legon', label: 'East Legon' },
+  { key: 'cantonments', label: 'Cantonments' },
+  { key: 'airport', label: 'Airport Residential' },
+  { key: 'labone-osu', label: 'Labone & Osu' },
+  { key: 'tema-adenta', label: 'Adenta & Tema' },
+];
+
+const tickerItems = [
+  'East Legon',
+  'Cantonments',
+  'Airport Residential',
+  'Labone',
+  'Osu',
+  'Adenta',
+  'Tema',
+  'Greater Accra',
+];
+---
+
+<section class="vp-hero vp-grain" id="top">
+  <div class="vp-hero__bg" aria-hidden="true"></div>
+
+  <div class="vp-container vp-hero__grid">
+    <div class="vp-hero__copy">
+      <p class="vp-kicker">Accra · Ghana — Homes, apartments &amp; investments</p>
+      <h1 class="vp-h1">
+        The right address,<br />
+        <span class="vp-em">chosen properly.</span>
+      </h1>
+      <p class="vp-lede vp-hero__lede">
+        Vee Properties curates verified homes and apartments across Accra's strongest
+        neighbourhoods — with the numbers, the paperwork and the follow-through you deserve.
+      </p>
+
+      <div class="vp-hero__cta">
+        <a class="vp-btn vp-btn--gold" href="#listings">
+          Browse listings
+          <Icon name="arrow" size={17} />
+        </a>
+        <a
+          class="vp-btn vp-btn--ghost-light"
+          href={wa}
+          target="_blank"
+          rel="noopener"
+          data-event="wa-hero"
+        >
+          <Icon name="whatsapp" size={17} />
+          WhatsApp us
+        </a>
+      </div>
+
+      <ul class="vp-hero__trust">
+        <li><Icon name="clock" size={16} /> 15-min first response</li>
+        <li><Icon name="shieldCheck" size={16} /> Verified inventory only</li>
+        <li><Icon name="globe" size={16} /> Diaspora-friendly</li>
+      </ul>
+    </div>
+
+    <div class="vp-hero__feature vp-reveal">
+      <figure class="vp-feature-card">
+        <img
+          src={feature.img}
+          width="1200"
+          height="800"
+          alt="Modern residence with a pool in Accra at dusk"
+          fetchpriority="high"
+        />
+        <span class="vp-feature-card__badge">
+          <i class="vp-dot"></i>
+          {feature.status} now
+        </span>
+        <figcaption class="vp-feature-card__panel">
+          <div class="vp-feature-card__meta">
+            <p class="vp-feature-card__area">{feature.area} · {feature.kind}</p>
+            <h2 class="vp-feature-card__title">
+              {feature.title}, {feature.sqm} m²
+            </h2>
+          </div>
+          <p class="vp-feature-card__price">{feature.priceLabel}</p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="vp-container">
+    <form class="vp-search" id="vp-search" aria-label="Find a property">
+      <div class="vp-seg" role="group" aria-label="I want to">
+        <button type="button" class="vp-seg__btn is-active" data-intent="sale" aria-pressed="true">
+          Buy
+        </button>
+        <button type="button" class="vp-seg__btn" data-intent="rent" aria-pressed="false">
+          Rent
+        </button>
+      </div>
+
+      <label class="vp-field">
+        <span class="vp-field__label">Area</span>
+        <span class="vp-select">
+          <select id="vp-area" name="area">
+            <option value="">Any area</option>
+            {areas.map((a) => <option value={a.key}>{a.label}</option>)}
+          </select>
+          <Icon name="chevron" size={16} class="vp-select__icon" />
+        </span>
+      </label>
+
+      <label class="vp-field">
+        <span class="vp-field__label">Budget</span>
+        <span class="vp-select">
+          <select id="vp-budget" name="budget">
+            <option value="" data-min="" data-max="">Any budget</option>
+            <option value="0-100000" data-min="0" data-max="100000">Under $100k</option>
+            <option value="100000-200000" data-min="100000" data-max="200000">$100k – $200k</option>
+            <option value="200000-350000" data-min="200000" data-max="350000">$200k – $350k</option>
+            <option value="350000-" data-min="350000" data-max="">$350k and up</option>
+          </select>
+          <Icon name="chevron" size={16} class="vp-select__icon" />
+        </span>
+      </label>
+
+      <button class="vp-btn vp-btn--gold vp-search__submit" type="submit">
+        Show me homes
+        <Icon name="arrow" size={17} />
+      </button>
+    </form>
+  </div>
+
+  <div class="vp-ticker" aria-hidden="true">
+    <div class="vp-ticker__track">
+      {
+        [0, 1].map(() => (
+          <div class="vp-ticker__group">
+            {tickerItems.map((t) => (
+              <span class="vp-ticker__item">
+                {t}
+                <i class="vp-ticker__diamond" />
+              </span>
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .vp-hero {
+    position: relative;
+    background: linear-gradient(178deg, #090f0b 0%, #0d1d14 42%, #102219 100%);
+    color: var(--vp-cream);
+    padding: clamp(124px, 14vh, 168px) 0 0;
+    overflow: hidden;
+  }
+
+  .vp-hero__bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .vp-hero__bg::before,
+  .vp-hero__bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+  }
+
+  .vp-hero__bg::before {
+    width: 620px;
+    height: 620px;
+    top: -220px;
+    right: -140px;
+    background: radial-gradient(circle, rgba(46, 107, 78, 0.5), transparent 68%);
+  }
+
+  .vp-hero__bg::after {
+    width: 520px;
+    height: 520px;
+    bottom: -240px;
+    left: -160px;
+    background: radial-gradient(circle, rgba(198, 167, 94, 0.22), transparent 70%);
+  }
+
+  .vp-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+    gap: clamp(36px, 5vw, 76px);
+    align-items: center;
+    padding-bottom: clamp(40px, 5vw, 64px);
+  }
+
+  .vp-hero__copy {
+    display: grid;
+    gap: 22px;
+    justify-items: start;
+  }
+
+  .vp-hero__lede {
+    max-width: 54ch;
+  }
+
+  .vp-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 6px;
+  }
+
+  .vp-hero__trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 26px;
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 18px 0 0;
+    border-top: 1px solid rgba(228, 200, 127, 0.16);
+    width: 100%;
+  }
+
+  .vp-hero__trust li {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: rgba(245, 240, 230, 0.82);
+  }
+
+  .vp-hero__trust svg {
+    color: var(--vp-gold);
+  }
+
+  /* Feature card */
+  .vp-hero__feature {
+    position: relative;
+  }
+
+  .vp-hero__feature::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translate(18px, 18px);
+    border: 1px solid rgba(228, 200, 127, 0.38);
+    border-radius: 26px;
+    pointer-events: none;
+  }
+
+  .vp-feature-card {
+    position: relative;
+    border-radius: 26px;
+    overflow: hidden;
+    border: 1px solid rgba(228, 200, 127, 0.28);
+    box-shadow: 0 44px 90px -34px rgba(0, 0, 0, 0.85);
+  }
+
+  .vp-feature-card img {
+    width: 100%;
+    aspect-ratio: 4 / 4.35;
+    object-fit: cover;
+    object-position: center 62%;
+  }
+
+  .vp-feature-card__badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: rgba(9, 15, 11, 0.72);
+    border: 1px solid rgba(228, 200, 127, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .vp-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #53d97f;
+    box-shadow: 0 0 0 0 rgba(83, 217, 127, 0.65);
+    animation: vp-pulse 2.4s ease-out infinite;
+  }
+
+  @keyframes vp-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(83, 217, 127, 0.55);
+    }
+    70% {
+      box-shadow: 0 0 0 9px rgba(83, 217, 127, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(83, 217, 127, 0);
+    }
+  }
+
+  .vp-feature-card__panel {
+    position: absolute;
+    inset: auto 16px 16px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: rgba(9, 15, 11, 0.76);
+    border: 1px solid rgba(228, 200, 127, 0.26);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .vp-feature-card__area {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--vp-gold);
+    margin-bottom: 6px;
+  }
+
+  .vp-feature-card__title {
+    font-family: var(--vp-font-display);
+    font-size: clamp(1.05rem, 1.6vw, 1.32rem);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .vp-feature-card__price {
+    font-family: var(--vp-font-display);
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+    font-weight: 600;
+    color: var(--vp-gold);
+    white-space: nowrap;
+  }
+
+  /* Search panel */
+  .vp-search {
+    display: grid;
+    grid-template-columns: auto minmax(150px, 1fr) minmax(150px, 1fr) auto;
+    gap: 14px;
+    align-items: end;
+    padding: 16px;
+    border-radius: 22px;
+    background: rgba(245, 240, 230, 0.055);
+    border: 1px solid rgba(228, 200, 127, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9);
+  }
+
+  .vp-seg {
+    display: inline-flex;
+    padding: 5px;
+    border-radius: 999px;
+    background: rgba(9, 15, 11, 0.6);
+    border: 1px solid rgba(228, 200, 127, 0.2);
+    height: 52px;
+    align-items: center;
+  }
+
+  .vp-seg__btn {
+    padding: 10px 22px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(245, 240, 230, 0.75);
+    font-family: var(--vp-font-body);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  .vp-seg__btn.is-active {
+    background: linear-gradient(135deg, var(--vp-gold), var(--vp-brass));
+    color: #221a08;
+  }
+
+  .vp-field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .vp-field__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(245, 240, 230, 0.6);
+  }
+
+  .vp-select {
+    position: relative;
+    display: block;
+  }
+
+  .vp-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 52px;
+    padding: 0 42px 0 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(228, 200, 127, 0.22);
+    background: rgba(9, 15, 11, 0.62);
+    color: var(--vp-cream);
+    font-family: var(--vp-font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+  }
+
+  .vp-select select:hover,
+  .vp-select select:focus {
+    border-color: rgba(228, 200, 127, 0.5);
+  }
+
+  .vp-select select option {
+    background: #0d1d14;
+    color: var(--vp-cream);
+  }
+
+  .vp-select__icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--vp-gold);
+    pointer-events: none;
+  }
+
+  .vp-search__submit {
+    height: 52px;
+  }
+
+  /* Ticker */
+  .vp-ticker {
+    margin-top: clamp(36px, 5vw, 64px);
+    border-top: 1px solid rgba(228, 200, 127, 0.16);
+    padding: 20px 0 22px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  }
+
+  .vp-ticker__track {
+    display: flex;
+    width: max-content;
+    animation: vp-marquee 44s linear infinite;
+  }
+
+  .vp-ticker__track:hover {
+    animation-play-state: paused;
+  }
+
+  .vp-ticker__group {
+    display: flex;
+    align-items: center;
+  }
+
+  .vp-ticker__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 34px;
+    padding: 0 17px;
+    font-family: var(--vp-font-display);
+    font-size: 1.02rem;
+    font-style: italic;
+    color: rgba(245, 240, 230, 0.62);
+    white-space: nowrap;
+  }
+
+  .vp-ticker__diamond {
+    width: 6px;
+    height: 6px;
+    background: var(--vp-brass);
+    transform: rotate(45deg);
+    opacity: 0.75;
+  }
+
+  @keyframes vp-marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .vp-search {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .vp-seg {
+      grid-column: 1 / -1;
+      justify-content: center;
+      height: auto;
+    }
+
+    .vp-search__submit {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 940px) {
+    .vp-hero__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-hero__feature {
+      order: -1;
+      max-width: 560px;
+    }
+
+    .vp-feature-card img {
+      aspect-ratio: 4 / 3.4;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .vp-search {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-hero__feature::before {
+      transform: translate(10px, 10px);
+    }
+
+    .vp-feature-card__panel {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
+</style>

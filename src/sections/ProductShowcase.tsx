@@ -1,12 +1,13 @@
 import { Check } from 'lucide-react';
 import { PRODUCTS } from '../config/products';
+import { SALES_ENABLED } from '../config/sales';
 
 const ProductShowcase = () => {
   const product = PRODUCTS.ztame;
   const features = [
-    'High-resolution FFT-based automatic peak detection',
-    'Per-peak dynamic notch filtering — only active resonances are reduced',
-    'Selectivity gating, split-band operation, and solo monitoring',
+    'Zero-latency engine — causal end-to-end, no PDC shift',
+    'Per-band dynamic reduction — only active resonances are cut',
+    'Draggable focus band, selectivity gating, and Delta audition',
   ];
 
   return (
@@ -27,8 +28,8 @@ const ProductShowcase = () => {
             src={product.image}
             alt={`${product.name} Resonance Suppressor Plugin`}
             className="w-full h-auto object-cover"
-            width={1440}
-            height={900}
+            width={1000}
+            height={640}
             loading="lazy"
           />
         </div>
@@ -72,21 +73,27 @@ const ProductShowcase = () => {
             ))}
           </ul>
 
-          <div className="za-reveal za-d5 mt-8 flex items-baseline gap-4">
-            <span className="font-['Space_Grotesk'] font-semibold text-[32px] text-white">
-              {product.priceLabelGhs}
-            </span>
-            <span className="font-['Space_Grotesk'] text-[18px] text-[#64748B]">
-              {product.usdLabel} · {product.platform} {product.format}
-            </span>
-          </div>
+          {/* SALES_ENABLED gate — flip src/config/sales.ts to re-enable in one line */}
+          {SALES_ENABLED && (
+            <div className="za-reveal za-d5 mt-8 flex items-baseline gap-4">
+              <span className="font-['Space_Grotesk'] font-semibold text-[32px] text-white">
+                {product.priceLabelGhs}
+              </span>
+              <span className="font-['Space_Grotesk'] text-[18px] text-[#64748B]">
+                {product.usdLabel} · {product.platform} {product.format}
+              </span>
+            </div>
+          )}
 
-          <a
-            href={product.buyUrl}
-            className="za-reveal za-d6 mt-6 self-start inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-7 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300"
-          >
-            Buy {product.name}
-          </a>
+          {/* SALES_ENABLED gate — flip src/config/sales.ts to re-enable in one line */}
+          {SALES_ENABLED && (
+            <a
+              href={product.buyUrl}
+              className="za-reveal za-d6 mt-6 self-start inline-flex items-center bg-[#00D4FF] text-[#050505] rounded-lg px-7 py-[14px] font-['Inter'] font-medium text-[15px] hover:bg-[#33DDFF] transition-colors duration-300"
+            >
+              Buy {product.name}
+            </a>
+          )}
         </div>
       </div>
     </section>

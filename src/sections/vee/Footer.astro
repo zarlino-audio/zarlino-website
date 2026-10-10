@@ -1,0 +1,213 @@
+---
+import { CONTACT, NEIGHBOURHOODS, waLink } from '../../config/vee';
+
+const wa = waLink("Hello Vee Properties — I found you through your website.");
+const mail = `mailto:${CONTACT.email}`;
+const tel = `tel:${CONTACT.phoneDisplay.replace(/\s+/g, '')}`;
+const year = new Date().getFullYear();
+
+const explore = [
+  { href: '#listings', label: 'Listings' },
+  { href: '#neighbourhoods', label: 'Neighbourhoods' },
+  { href: '#services', label: 'Services' },
+  { href: '#standard', label: 'Why Vee' },
+  { href: '#faq', label: 'FAQ' },
+  { href: '#contact', label: 'Contact' },
+];
+---
+
+<footer class="vp-footer">
+  <div class="vp-container vp-footer__grid">
+    <div class="vp-footer__brand">
+      <a class="vp-footer__lockup" href="#top" aria-label="Vee Properties — back to top">
+        <svg viewBox="0 0 64 64" width="42" height="42" aria-hidden="true">
+          <rect width="64" height="64" rx="15" fill="#0B140F"></rect>
+          <path
+            d="M15 18 L32 47 L49 18"
+            fill="none"
+            stroke="#E4C87F"
+            stroke-width="7"
+            stroke-linecap="round"
+            stroke-linejoin="round"></path>
+          <path
+            d="M15 53 H49"
+            stroke="#C6A75E"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            opacity="0.8"></path>
+        </svg>
+        <span>
+          <strong>Vee Properties</strong>
+          <em>Real estate · Accra, Ghana</em>
+        </span>
+      </a>
+      <p class="vp-footer__blurb">
+        Verified homes, apartments and investment property across Accra's strongest
+        neighbourhoods — sold with the numbers, the paperwork and the follow-through.
+      </p>
+      <div class="vp-footer__badges">
+        <span class="vp-chip">15-min first response</span>
+        <span class="vp-chip">Verified inventory</span>
+        <span class="vp-chip">Diaspora-friendly</span>
+      </div>
+    </div>
+
+    <nav class="vp-footer__col" aria-label="Explore">
+      <h3>Explore</h3>
+      <ul>
+        {explore.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="vp-footer__col">
+      <h3>Areas we cover</h3>
+      <ul>
+        {
+          NEIGHBOURHOODS.map((n) => (
+            <li>
+              <a href="#neighbourhoods">{n.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="vp-footer__col">
+      <h3>Contact</h3>
+      <ul>
+        <li>
+          <a href={wa} target="_blank" rel="noopener" data-event="wa-footer">WhatsApp {CONTACT.phoneDisplay}</a>
+        </li>
+        <li><a href={tel}>Call {CONTACT.phoneDisplay}</a></li>
+        <li><a href={mail}>{CONTACT.email}</a></li>
+        <li><span>{CONTACT.hours}</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="vp-container vp-footer__bottom">
+    <p>© <span id="vp-year">{year}</span> Vee Properties · Accra, Ghana</p>
+    <p class="vp-footer__fine">
+      All property details are subject to availability and verification. Images are
+      representative.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .vp-footer {
+    background: #090f0b;
+    color: var(--vp-cream);
+    padding: clamp(52px, 7vw, 84px) 0 30px;
+    border-top: 1px solid rgba(228, 200, 127, 0.14);
+  }
+
+  .vp-footer__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+    gap: clamp(30px, 4vw, 56px);
+  }
+
+  .vp-footer__lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 13px;
+    margin-bottom: 18px;
+  }
+
+  .vp-footer__lockup strong {
+    display: block;
+    font-family: var(--vp-font-display);
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+
+  .vp-footer__lockup em {
+    display: block;
+    font-style: normal;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--vp-gold);
+    margin-top: 3px;
+  }
+
+  .vp-footer__blurb {
+    max-width: 38ch;
+    font-size: 0.92rem;
+    line-height: 1.68;
+    color: var(--vp-text-dark);
+    margin-bottom: 20px;
+  }
+
+  .vp-footer__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .vp-footer__badges .vp-chip {
+    font-size: 0.72rem;
+    padding: 6px 12px;
+  }
+
+  .vp-footer__col h3 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--vp-gold);
+    margin-bottom: 16px;
+  }
+
+  .vp-footer__col ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 11px;
+  }
+
+  .vp-footer__col a,
+  .vp-footer__col span {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: rgba(245, 240, 230, 0.78);
+    transition: color 0.25s ease;
+  }
+
+  .vp-footer__col a:hover {
+    color: var(--vp-gold);
+  }
+
+  .vp-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 24px;
+    margin-top: clamp(38px, 5vw, 60px);
+    padding-top: 22px;
+    border-top: 1px solid rgba(228, 200, 127, 0.12);
+    font-size: 0.82rem;
+    color: rgba(245, 240, 230, 0.62);
+  }
+
+  .vp-footer__fine {
+    font-size: 0.76rem;
+    opacity: 0.75;
+  }
+
+  @media (max-width: 1020px) {
+    .vp-footer__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 620px) {
+    .vp-footer__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

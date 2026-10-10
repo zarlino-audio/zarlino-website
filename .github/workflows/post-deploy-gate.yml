@@ -1,24 +1,28 @@
 name: Post-Deploy Gate (1101 acceptance A1-A4)
 
 # Path-agnostic 1101 acceptance set wired as the POST-DEPLOY regression gate.
-# Replaces #12's survivor list (#12 queried only / and /plugins/ - two 200s -
-# and falsely PASSED while /about, /contact, /shop, /sitemap.xml still 500).
+# REPLACES #12's falsified survivor list. #12 queried only / and /plugins/ - two
+# 200s - and falsely PASSED while /about, /contact, /shop and /sitemap.xml were
+# still returning 500 from the edge.
+#
+# The gate script is scripts/post-deploy-check.mjs. Exit codes:
+#   0 = PASS           A1-A4 hold AND every route identical in 3 sweeps
+#   1 = FAIL           one or more of A1/A2/A3 failed
+#   3 = BLOCKED        A4 unsatisfied (NO DEPLOY => NO FIX) - surfaced distinctly
+#   4 = NON_DETERMINATE a route differed between sweeps (serving flap)
 #
 # Triggers
-#   - workflow_run: fires after "Deploy to Cloudflare Workers" completes, so the
-#     probe runs against the freshly deployed artifact.
-#   - schedule: nightly safety sweep (catches drift with NO deploy).
+#   - workflow_run: fires only after "Deploy to Cloudflare Workers" completes
+#     SUCCESSFULLY on main, so probes run against the freshly deployed artifact.
+#   - schedule: nightly safety sweep (catches drift with NO deploy) - and such a
+#     run is expected to be BLOCKED unless a fresh deploy exists for A4.
 #   - workflow_dispatch: manual, with an optional BASE_URL override.
-#
-# A4 (provenance precondition) means the gate reports BLOCKED / exit 2 whenever
-# the latest SUCCESSFUL "Deploy to Cloudflare Workers" on main is not strictly
-# after 2026-09-08T11:23:35Z. NO DEPLOY => NO FIX: a green subset on an unchanged
-# artifact is a FLAP and is never certified as PASS.
 
 on:
   workflow_run:
     workflows: ["Deploy to Cloudflare Workers"]
     types: [completed]
+    branches: [main]
   schedule:
     # 03:17 UTC nightly (off-peak, well after any deploy window)
     - cron: "17 3 * * *"
@@ -40,23 +44,28 @@ concurrency:
 jobs:
   gate:
     name: A1-A4 acceptance gate
+    # Only run for a SUCCESSFUL triggering deploy. A failed deploy is not a fix.
+    if: >
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     env:
-      # BASE_URL may be overridden by workflow_dispatch input; otherwise the
-      # gate defaults to https://zarlinoaudio.com.
+      # BASE_URL may be overridden by workflow_dispatch input; the gate defaults
+      # to https://zarlinoaudio.com.
       BASE_URL: ${{ github.event.inputs.base_url || 'https://zarlinoaudio.com' }}
-      # short settle delay so the freshly deployed artifact is served before probing
-      SETTLE_MS: "8000"
       REQUEST_TIMEOUT_MS: "15000"
       # A4 provenance precondition floor (NO DEPLOY => NO FIX)
       PROVENANCE_FLOOR: "2026-09-08T11:23:35Z"
       GATE_WORKFLOW: "Deploy to Cloudflare Workers"
       GATE_WORKFLOW_BRANCH: "main"
+      GATE_WORKFLOW_FILE: "deploy.yml"
       GATE_REPO: ${{ github.repository }}
-      # Flap rule: a path may only change status after 3 identical sweeps
+      # Flap rule: a route may only be PASS/FAIL after 3 identical sweeps.
       FLAP_CONSECUTIVE_N: "3"
+      SWEEP_DELAY_MS: "5000"
       # Unauthenticated GitHub API is rate-limited (60/hr); use the run token.
       GATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -64,8 +73,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # check out the branch that the triggering deploy run built, falling
-          # back to the default branch for schedule/manual runs
+          # check out the branch that the triggering deploy built, falling back
+          # to the default branch for schedule/manual runs
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Set up Node
@@ -73,22 +82,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Settle delay (let the edge propagate the deploy)
-        run: sleep 8
-
-      # ---------------------------------------------------------------------
-      # THE GATE. Exit codes:
-      #   0 = PASS      1 = FAIL (A1/A2/A3 or flap insufficient)
-      #   2 = BLOCKED   (A4 provenance precondition not met: no fresh deploy)
-      # We capture the code so we can ALWAYS upload the acceptance record, then
-      # re-exit with it - the job must fail loudly on FAIL and BLOCKED.
-      # ---------------------------------------------------------------------
+      # -------------------------------------------------------------------
+      # THE GATE. Capture the exit code so we can ALWAYS upload the
+      # acceptance record, then re-exit with it so the job fails loudly on
+      # FAIL (1), BLOCKED (3) and NON_DETERMINATE (4).
+      # -------------------------------------------------------------------
       - name: Run post-deploy gate (A1-A4)
         id: gate
         shell: bash
         run: |
           set +e
-          node scripts/post-deploy-gate.mjs 2>&1 | tee gate-output.txt
+          node scripts/post-deploy-check.mjs 2>&1 | tee gate-output.txt
           code=${PIPESTATUS[0]}
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           echo "Gate exit code: $code"
@@ -108,30 +112,29 @@ jobs:
             echo "| overall | see acceptance record artifact |"
             echo ""
             echo '```'
-            tail -n 30 gate-output.txt || true
+            tail -n 40 gate-output.txt || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # ---------------------------------------------------------------------
-      # ACCEPTANCE RECORD + FLAP STATE — the citable artifacts.
-      # ---------------------------------------------------------------------
-      - name: Upload acceptance record + flap state
+      # -------------------------------------------------------------------
+      # ACCEPTANCE RECORD - the citable artifact for #19/#21/#30/#31.
+      # -------------------------------------------------------------------
+      - name: Upload acceptance record
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: post-deploy-gate-acceptance
+          name: post-deploy-check-acceptance
           if-no-files-found: warn
           retention-days: 90
           path: |
-            scripts/.post-deploy-gate-acceptance.json
-            scripts/.post-deploy-gate-state.json
+            scripts/.post-deploy-check-acceptance.json
             gate-output.txt
 
       - name: Upload raw gate output
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: post-deploy-gate-output
+          name: post-deploy-check-output
           if-no-files-found: warn
           retention-days: 30
           path: gate-output.txt
@@ -145,12 +148,17 @@ jobs:
             echo "Gate PASSED (exit 0)."
             exit 0
           fi
-          if [ "$code" = "2" ]; then
-            echo "::error::Gate BLOCKED (exit 2): NO DEPLOY => NO FIX. The latest successful"
-            echo "::error::'Deploy to Cloudflare Workers' on main is not after the provenance"
-            echo "::error::floor. A green subset on an unchanged artifact is a FLAP, not a fix."
-            exit 2
+          if [ "$code" = "3" ]; then
+            echo "::error::Gate BLOCKED (exit 3): NO DEPLOY => NO FIX. The latest"
+            echo "::error::successful 'Deploy to Cloudflare Workers' on main is not"
+            echo "::error::strictly after the provenance floor. A green subset on an"
+            echo "::error::unchanged artifact is a FLAP, not a fix."
+            exit 3
           fi
-          echo "::error::Gate FAILED (exit $code): one or more A1/A2/A3 assertions failed,"
-          echo "::error::or a required path is INSUFFICIENT/FLAP (n < 3)."
+          if [ "$code" = "4" ]; then
+            echo "::error::Gate NON_DETERMINATE (exit 4): a route differed between"
+            echo "::error::sweeps - serving flap. Never recorded as PASS."
+            exit 4
+          fi
+          echo "::error::Gate FAILED (exit $code): one or more A1/A2/A3 assertions failed."
           exit "$code"

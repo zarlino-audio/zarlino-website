@@ -1,0 +1,143 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { FAQS, waLink } from '../../config/vee';
+
+const wa = waLink("Hello Vee Properties — I have a question that isn't in your FAQ.");
+---
+
+<section class="vp-section vp-section--cream" id="faq">
+  <div class="vp-container vp-faq-grid">
+    <div class="vp-head vp-head--sticky vp-reveal">
+      <p class="vp-kicker vp-kicker--dark">Questions, answered</p>
+      <h2 class="vp-h2">The things buyers actually ask.</h2>
+      <p class="vp-lede">
+        Straight answers — including the ones about money and paperwork. Anything missing?
+        Ask us directly.
+      </p>
+      <a class="vp-btn vp-btn--ghost" href={wa} target="_blank" rel="noopener" data-event="wa-faq">
+        <Icon name="whatsapp" size={17} />
+        Ask your own question
+      </a>
+    </div>
+
+    <div class="vp-faq-list vp-reveal">
+      {
+        FAQS.map((f, i) => (
+          <details class="vp-faq" open={i === 0}>
+            <summary class="vp-faq__q">
+              <span>{f.q}</span>
+              <span class="vp-faq__icon" aria-hidden="true">
+                <Icon name="chevron" size={18} />
+              </span>
+            </summary>
+            <p class="vp-faq__a">{f.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .vp-faq-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: clamp(32px, 6vw, 84px);
+    align-items: start;
+  }
+
+  .vp-head--sticky {
+    position: sticky;
+    top: 110px;
+  }
+
+  .vp-head--sticky .vp-btn {
+    margin-top: 10px;
+    justify-self: start;
+  }
+
+  .vp-faq-list {
+    display: grid;
+  }
+
+  .vp-faq {
+    border-bottom: 1px solid var(--vp-line-strong);
+  }
+
+  .vp-faq:first-child {
+    border-top: 1px solid var(--vp-line-strong);
+  }
+
+  .vp-faq__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 2px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--vp-font-display);
+    font-size: clamp(1.05rem, 1.6vw, 1.22rem);
+    font-weight: 500;
+    line-height: 1.35;
+    transition: color 0.25s ease;
+  }
+
+  .vp-faq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .vp-faq__q:hover {
+    color: var(--vp-moss);
+  }
+
+  .vp-faq__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--vp-line-strong);
+    color: var(--vp-ink-soft);
+    transition: transform 0.35s ease, background-color 0.35s ease, color 0.35s ease,
+      border-color 0.35s ease;
+  }
+
+  .vp-faq[open] .vp-faq__icon {
+    transform: rotate(180deg);
+    background: var(--vp-ink);
+    border-color: var(--vp-ink);
+    color: var(--vp-gold);
+  }
+
+  .vp-faq__a {
+    padding: 0 52px 24px 2px;
+    font-size: 0.97rem;
+    line-height: 1.72;
+    color: var(--vp-ink-soft);
+    max-width: 62ch;
+    animation: vp-faq-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes vp-faq-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 940px) {
+    .vp-faq-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-head--sticky {
+      position: static;
+    }
+  }
+</style>

@@ -1,0 +1,297 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { waLink } from '../../config/vee';
+
+const wa = waLink("Hello Vee Properties — I'd like help with a property search.");
+const links = [
+  { href: '#listings', label: 'Listings' },
+  { href: '#neighbourhoods', label: 'Neighbourhoods' },
+  { href: '#services', label: 'Services' },
+  { href: '#standard', label: 'Why Vee' },
+  { href: '#faq', label: 'FAQ' },
+];
+---
+
+<a class="vp-skip" href="#listings">Skip to listings</a>
+
+<header class="vp-header" id="vp-header">
+  <div class="vp-container vp-header__inner">
+    <a class="vp-brand" href="#top" aria-label="Vee Properties — back to top">
+      <svg
+        class="vp-brand__mark"
+        viewBox="0 0 64 64"
+        width="38"
+        height="38"
+        aria-hidden="true"
+      >
+        <rect width="64" height="64" rx="15" fill="#0B140F"></rect>
+        <path
+          d="M15 18 L32 47 L49 18"
+          fill="none"
+          stroke="#E4C87F"
+          stroke-width="7"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+        <path
+          d="M15 53 H49"
+          stroke="#C6A75E"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          opacity="0.8"></path>
+      </svg>
+      <span class="vp-brand__text">
+        <span class="vp-brand__name">Vee Properties</span>
+        <span class="vp-brand__sub">Real estate · Accra</span>
+      </span>
+    </a>
+
+    <nav class="vp-nav" aria-label="Primary">
+      {links.map((l) => <a class="vp-nav__link" href={l.href}>{l.label}</a>)}
+    </nav>
+
+    <div class="vp-header__actions">
+      <a
+        class="vp-btn vp-btn--gold vp-btn--sm vp-header__cta"
+        href={wa}
+        target="_blank"
+        rel="noopener"
+        data-event="wa-header"
+      >
+        <Icon name="whatsapp" size={17} />
+        <span>WhatsApp us</span>
+      </a>
+      <button
+        class="vp-burger"
+        id="vp-burger"
+        type="button"
+        aria-expanded="false"
+        aria-controls="vp-mobile-menu"
+        aria-label="Open menu"
+      >
+        <span class="vp-burger__line"></span>
+        <span class="vp-burger__line"></span>
+        <span class="vp-burger__line"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="vp-mobile" id="vp-mobile-menu" hidden>
+    <nav class="vp-mobile__nav" aria-label="Mobile">
+      {links.map((l) => <a class="vp-mobile__link" href={l.href}>{l.label}</a>)}
+    </nav>
+    <a
+      class="vp-btn vp-btn--gold vp-mobile__cta"
+      href={wa}
+      target="_blank"
+      rel="noopener"
+      data-event="wa-mobile"
+    >
+      <Icon name="whatsapp" size={17} />
+      WhatsApp us
+    </a>
+  </div>
+</header>
+
+<style>
+  .vp-skip {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    z-index: 100;
+    padding: 10px 18px;
+    background: var(--vp-gold);
+    color: var(--vp-ink);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: top 0.2s ease;
+  }
+
+  .vp-skip:focus {
+    top: 12px;
+  }
+
+  .vp-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    padding: 14px 0;
+    color: var(--vp-cream);
+    transition: background-color 0.35s ease, box-shadow 0.35s ease, padding 0.35s ease,
+      border-color 0.35s ease, backdrop-filter 0.35s ease;
+    border-bottom: 1px solid transparent;
+  }
+
+  .vp-header.is-scrolled,
+  .vp-header.is-open {
+    padding: 10px 0;
+    background: rgba(11, 20, 15, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom-color: rgba(228, 200, 127, 0.16);
+    box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.8);
+  }
+
+  .vp-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .vp-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .vp-brand__mark {
+    border-radius: 10px;
+    box-shadow: 0 10px 24px -12px rgba(198, 167, 94, 0.6);
+  }
+
+  .vp-brand__text {
+    display: grid;
+    line-height: 1.15;
+  }
+
+  .vp-brand__name {
+    font-family: var(--vp-font-display);
+    font-size: 1.22rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .vp-brand__sub {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--vp-gold);
+    opacity: 0.9;
+  }
+
+  .vp-nav {
+    display: flex;
+    gap: 30px;
+  }
+
+  .vp-nav__link {
+    position: relative;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(245, 240, 230, 0.82);
+    padding: 6px 0;
+    transition: color 0.25s ease;
+  }
+
+  .vp-nav__link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 100%;
+    bottom: 0;
+    height: 1px;
+    background: var(--vp-gold);
+    transition: right 0.3s ease;
+  }
+
+  .vp-nav__link:hover {
+    color: var(--vp-cream);
+  }
+
+  .vp-nav__link:hover::after {
+    right: 0;
+  }
+
+  .vp-btn--sm {
+    padding: 12px 20px;
+    font-size: 0.88rem;
+  }
+
+  .vp-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Burger */
+  .vp-burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid rgba(228, 200, 127, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .vp-burger__line {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: var(--vp-cream);
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .vp-burger[aria-expanded='true'] .vp-burger__line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .vp-burger[aria-expanded='true'] .vp-burger__line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .vp-burger[aria-expanded='true'] .vp-burger__line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* Mobile menu */
+  .vp-mobile {
+    display: none;
+    padding: 18px var(--vp-gutter) 26px;
+    background: rgba(11, 20, 15, 0.97);
+    border-bottom: 1px solid rgba(228, 200, 127, 0.16);
+  }
+
+  .vp-mobile__nav {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 18px;
+  }
+
+  .vp-mobile__link {
+    font-family: var(--vp-font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    padding: 12px 2px;
+    border-bottom: 1px solid rgba(228, 200, 127, 0.1);
+  }
+
+  .vp-mobile__cta {
+    width: 100%;
+  }
+
+  @media (max-width: 940px) {
+    .vp-nav {
+      display: none;
+    }
+
+    .vp-burger {
+      display: flex;
+    }
+
+    .vp-header__cta {
+      display: none;
+    }
+
+    .vp-mobile:not([hidden]) {
+      display: block;
+    }
+  }
+</style>

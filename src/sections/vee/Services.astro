@@ -1,0 +1,124 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { SERVICES, waLink } from '../../config/vee';
+
+const wa = waLink("Hello Vee Properties — I'd like to talk about how you can help.");
+---
+
+<section class="vp-section vp-section--ivory" id="services">
+  <div class="vp-container">
+    <div class="vp-head vp-head--center vp-reveal">
+      <p class="vp-kicker vp-kicker--dark">What we do</p>
+      <h2 class="vp-h2">One team, from first question to final signature.</h2>
+      <p class="vp-lede">
+        Buying, selling, letting or investing — you get a single consultant who owns your
+        file end-to-end, backed by people who do this every day in Accra.
+      </p>
+    </div>
+
+    <div class="vp-services">
+      {
+        SERVICES.map((s, i) => (
+          <article class="vp-service vp-reveal" style={`--vp-delay: ${Math.min(i, 5) * 70}ms`}>
+            <span class="vp-service__icon">
+              <Icon name={s.icon} size={22} />
+            </span>
+            <h3 class="vp-service__title">{s.title}</h3>
+            <p class="vp-service__body">{s.body}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="vp-services__cta vp-reveal">
+      <p class="vp-services__line">Not sure which one you need? That's a two-minute conversation.</p>
+      <a class="vp-btn vp-btn--dark" href={wa} target="_blank" rel="noopener" data-event="wa-services">
+        <Icon name="whatsapp" size={17} />
+        Talk to a consultant
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .vp-services {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(292px, 1fr));
+    gap: 20px;
+  }
+
+  .vp-service {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    padding: 30px 26px 32px;
+    background: #fff;
+    border: 1px solid var(--vp-line);
+    border-radius: 20px;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease,
+      border-color 0.35s ease;
+  }
+
+  .vp-service::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 26px;
+    right: 26px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--vp-gold), transparent);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .vp-service:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--vp-shadow);
+    border-color: rgba(198, 167, 94, 0.45);
+  }
+
+  .vp-service:hover::before {
+    opacity: 1;
+  }
+
+  .vp-service__icon {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: linear-gradient(150deg, rgba(46, 107, 78, 0.12), rgba(198, 167, 94, 0.18));
+    border: 1px solid rgba(198, 167, 94, 0.3);
+    color: var(--vp-pine);
+  }
+
+  .vp-service__title {
+    font-family: var(--vp-font-display);
+    font-size: 1.22rem;
+    font-weight: 500;
+  }
+
+  .vp-service__body {
+    font-size: 0.94rem;
+    line-height: 1.65;
+    color: var(--vp-ink-soft);
+  }
+
+  .vp-services__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 18px 26px;
+    margin-top: 44px;
+    text-align: center;
+  }
+
+  .vp-services__line {
+    font-family: var(--vp-font-display);
+    font-style: italic;
+    font-size: 1.08rem;
+    color: var(--vp-ink-soft);
+  }
+</style>

@@ -23,3 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Session scratch (probe / gate debug files)
+_*.txt
+_*.mjs
+probe*.txt
+*.bak
+_qa/
+.repro/

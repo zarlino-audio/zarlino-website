@@ -1,0 +1,372 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { CONTACT, waLink } from '../../config/vee';
+
+const wa = waLink("Hello Vee Properties — I'd like to start a property search.");
+const tel = `tel:${CONTACT.phoneDisplay.replace(/\s+/g, '')}`;
+const mail = `mailto:${CONTACT.email}?subject=${encodeURIComponent('Property enquiry — Vee Properties')}`;
+---
+
+<section class="vp-section vp-section--dark vp-grain" id="contact">
+  <div class="vp-container vp-contact">
+    <div class="vp-contact__copy">
+      <p class="vp-kicker">Start the conversation</p>
+      <h2 class="vp-h2">Tell us what you're looking for.</h2>
+      <p class="vp-lede">
+        One message is enough — buy or rent, budget, area, timeline. You'll get a human
+        reply and a curated shortlist, not a brochure.
+      </p>
+
+      <ul class="vp-contact__rows">
+        <li>
+          <a href={wa} target="_blank" rel="noopener" data-event="wa-contact">
+            <span class="vp-contact__ico"><Icon name="whatsapp" size={18} /></span>
+            <span>
+              <strong>WhatsApp</strong>
+              <em>{CONTACT.phoneDisplay}</em>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href={tel}>
+            <span class="vp-contact__ico"><Icon name="phone" size={18} /></span>
+            <span>
+              <strong>Call</strong>
+              <em>{CONTACT.phoneDisplay}</em>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href={mail}>
+            <span class="vp-contact__ico"><Icon name="mail" size={18} /></span>
+            <span>
+              <strong>Email</strong>
+              <em>{CONTACT.email}</em>
+            </span>
+          </a>
+        </li>
+        <li>
+          <span class="vp-contact__static">
+            <span class="vp-contact__ico"><Icon name="clock" size={18} /></span>
+            <span>
+              <strong>Hours</strong>
+              <em>{CONTACT.hours}</em>
+            </span>
+          </span>
+        </li>
+      </ul>
+
+      <p class="vp-contact__promise">
+        <Icon name="sparkle" size={17} />
+        {CONTACT.promise}
+      </p>
+    </div>
+
+    <div class="vp-contact__panel vp-reveal">
+      <form class="vp-form" id="vp-form" data-wa={CONTACT.whatsappIntl} novalidate>
+        <div class="vp-form__row">
+          <label class="vp-input">
+            <span>Your name</span>
+            <input type="text" name="name" autocomplete="name" required placeholder="Ama Owusu" />
+          </label>
+          <label class="vp-input">
+            <span>WhatsApp / phone</span>
+            <input
+              type="tel"
+              name="phone"
+              autocomplete="tel"
+              required
+              placeholder="+233 24 000 0000"
+            />
+          </label>
+        </div>
+
+        <div class="vp-form__row">
+          <label class="vp-input">
+            <span>I want to</span>
+            <select name="intent">
+              <option value="buy a home">Buy a home</option>
+              <option value="rent a home">Rent a home</option>
+              <option value="invest">Invest</option>
+              <option value="sell or let a property">Sell or let a property</option>
+            </select>
+          </label>
+          <label class="vp-input">
+            <span>Area of interest</span>
+            <select name="area">
+              <option value="any area">Any area</option>
+              <option value="East Legon">East Legon</option>
+              <option value="Cantonments">Cantonments</option>
+              <option value="Airport Residential">Airport Residential</option>
+              <option value="Labone or Osu">Labone or Osu</option>
+              <option value="Adenta or Tema">Adenta or Tema</option>
+              <option value="another area">Another area</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="vp-input">
+          <span>Budget</span>
+          <input type="text" name="budget" placeholder="e.g. $250,000 or $1,500/mo" />
+        </label>
+
+        <label class="vp-input">
+          <span>What are you looking for? <i>(optional)</i></span>
+          <textarea
+            name="message"
+            rows="3"
+            placeholder="Bedrooms, must-haves, timeline, anything else we should know."
+          ></textarea>
+        </label>
+
+        <button class="vp-btn vp-btn--gold vp-form__submit" type="submit">
+          <Icon name="whatsapp" size={18} />
+          Continue on WhatsApp
+        </button>
+
+        <p class="vp-form__status" id="vp-form-status" hidden></p>
+
+        <p class="vp-form__alt">
+          Prefer email? <a href={mail} id="vp-form-mailto">Send it to {CONTACT.email}</a>
+        </p>
+        <p class="vp-form__note">
+          We reply within 15 minutes during working hours. Your details are never shared
+          or sold.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .vp-contact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
+    gap: clamp(36px, 5vw, 76px);
+    align-items: start;
+  }
+
+  .vp-contact__copy {
+    display: grid;
+    gap: 22px;
+    justify-items: start;
+  }
+
+  .vp-contact__rows {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .vp-contact__rows a,
+  .vp-contact__static {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(228, 200, 127, 0.16);
+    background: rgba(245, 240, 230, 0.04);
+    transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.25s ease;
+  }
+
+  .vp-contact__rows a:hover {
+    border-color: rgba(228, 200, 127, 0.44);
+    background: rgba(245, 240, 230, 0.07);
+    transform: translateX(3px);
+  }
+
+  .vp-contact__ico {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: 12px;
+    background: rgba(228, 200, 127, 0.12);
+    border: 1px solid rgba(228, 200, 127, 0.26);
+    color: var(--vp-gold);
+  }
+
+  .vp-contact__rows strong {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--vp-text-dark);
+    margin-bottom: 2px;
+  }
+
+  .vp-contact__rows em {
+    font-style: normal;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--vp-cream);
+  }
+
+  .vp-contact__promise {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 46ch;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: rgba(198, 167, 94, 0.1);
+    border: 1px solid rgba(198, 167, 94, 0.3);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(245, 240, 230, 0.9);
+  }
+
+  .vp-contact__promise svg {
+    color: var(--vp-gold);
+    flex: none;
+    margin-top: 2px;
+  }
+
+  /* Form */
+  .vp-form {
+    display: grid;
+    gap: 18px;
+    padding: clamp(24px, 3.4vw, 40px);
+    border-radius: 24px;
+    background: var(--vp-ivory);
+    border: 1px solid rgba(228, 200, 127, 0.3);
+    box-shadow: 0 44px 90px -44px rgba(0, 0, 0, 0.95);
+    color: var(--vp-ink);
+  }
+
+  .vp-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .vp-input {
+    display: grid;
+    gap: 7px;
+  }
+
+  .vp-input > span {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--vp-ink-soft);
+  }
+
+  .vp-input > span i {
+    font-style: normal;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+    text-transform: none;
+  }
+
+  .vp-input input,
+  .vp-input select,
+  .vp-input textarea {
+    width: 100%;
+    padding: 14px 16px;
+    font-family: var(--vp-font-body);
+    font-size: 0.96rem;
+    font-weight: 500;
+    color: var(--vp-ink);
+    background: #fff;
+    border: 1px solid var(--vp-line-strong);
+    border-radius: 13px;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .vp-input textarea {
+    resize: vertical;
+    min-height: 84px;
+  }
+
+  .vp-input select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232e6b4e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 42px;
+    cursor: pointer;
+  }
+
+  .vp-input input:focus,
+  .vp-input select:focus,
+  .vp-input textarea:focus {
+    outline: none;
+    border-color: var(--vp-moss);
+    box-shadow: 0 0 0 4px rgba(46, 107, 78, 0.14);
+  }
+
+  .vp-input input:invalid:not(:placeholder-shown),
+  .vp-input input.has-error {
+    border-color: #b4432f;
+  }
+
+  .vp-form__submit {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .vp-form__status {
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(46, 107, 78, 0.1);
+    border: 1px solid rgba(46, 107, 78, 0.3);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--vp-pine);
+  }
+
+  .vp-form__status a {
+    text-decoration: underline;
+    font-weight: 700;
+  }
+
+  .vp-form__alt {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--vp-ink-soft);
+    text-align: center;
+  }
+
+  .vp-form__alt a {
+    color: var(--vp-pine);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .vp-form__note {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--vp-ink-soft);
+    text-align: center;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 1020px) {
+    .vp-contact {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-contact__rows {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .vp-form__row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

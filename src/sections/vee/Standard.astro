@@ -1,0 +1,260 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { PRINCIPLES, STEPS } from '../../config/vee';
+---
+
+<section class="vp-section vp-section--dark vp-grain" id="standard">
+  <div class="vp-container">
+    <div class="vp-head vp-reveal">
+      <p class="vp-kicker">Why Vee</p>
+      <h2 class="vp-h2">The Vee Standard.</h2>
+      <p class="vp-lede">
+        Property in Ghana has a trust problem: inflated listings, phantom availability,
+        "call for price". We built this company to be the opposite of that — and wrote the
+        rules down.
+      </p>
+    </div>
+
+    <div class="vp-standard">
+      <div class="vp-standard__media vp-reveal">
+        <figure class="vp-standard__figure">
+          <img
+            src="/images/vee/interior-detail.jpg"
+            alt="Bright contemporary interior of an Accra residence"
+            loading="lazy"
+            width="1200"
+            height="800"
+          />
+        </figure>
+        <blockquote class="vp-standard__quote">
+          <p>"Numbers, not adjectives."</p>
+          <cite>How every Vee listing is written</cite>
+        </blockquote>
+      </div>
+
+      <ol class="vp-principles">
+        {
+          PRINCIPLES.map((p, i) => (
+            <li class="vp-principle vp-reveal" style={`--vp-delay: ${i * 80}ms`}>
+              <span class="vp-principle__num">{String(i + 1).padStart(2, '0')}</span>
+              <div class="vp-principle__text">
+                <h3 class="vp-principle__title">{p.title}</h3>
+                <p class="vp-principle__body">{p.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <div class="vp-process vp-reveal">
+      <div class="vp-process__head">
+        <p class="vp-kicker">How it works</p>
+        <h3 class="vp-h3 vp-process__title">Four steps. No run-around.</h3>
+      </div>
+      <ol class="vp-steps">
+        {
+          STEPS.map((s, i) => (
+            <li class="vp-step">
+              <span class="vp-step__dot">
+                <Icon name={['send', 'compass', 'calendar', 'key'][i] ?? 'check'} size={16} />
+              </span>
+              <h4 class="vp-step__title">{s.title}</h4>
+              <p class="vp-step__body">{s.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  .vp-standard {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+
+  .vp-standard__media {
+    position: relative;
+    padding-bottom: 72px;
+  }
+
+  .vp-standard__figure {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(228, 200, 127, 0.26);
+    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.9);
+  }
+
+  .vp-standard__figure img {
+    width: 100%;
+    aspect-ratio: 4 / 4.4;
+    object-fit: cover;
+  }
+
+  .vp-standard__quote {
+    position: absolute;
+    left: clamp(14px, 3vw, 28px);
+    right: clamp(14px, 3vw, 28px);
+    bottom: 0;
+    display: grid;
+    gap: 6px;
+    padding: 22px 26px;
+    border-radius: 18px;
+    background: rgba(9, 15, 11, 0.82);
+    border: 1px solid rgba(228, 200, 127, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .vp-standard__quote p {
+    font-family: var(--vp-font-display);
+    font-style: italic;
+    font-size: clamp(1.15rem, 1.8vw, 1.42rem);
+    color: var(--vp-gold);
+  }
+
+  .vp-standard__quote cite {
+    font-size: 0.78rem;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--vp-text-dark);
+  }
+
+  .vp-principles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+  }
+
+  .vp-principle {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 22px;
+    padding: 26px 0;
+    border-bottom: 1px solid rgba(228, 200, 127, 0.16);
+  }
+
+  .vp-principle:first-child {
+    padding-top: 4px;
+  }
+
+  .vp-principle__num {
+    font-family: var(--vp-font-display);
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--vp-gold);
+    opacity: 0.95;
+    line-height: 1.1;
+  }
+
+  .vp-principle__title {
+    font-family: var(--vp-font-display);
+    font-size: 1.28rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .vp-principle__body {
+    font-size: 0.96rem;
+    line-height: 1.68;
+    color: var(--vp-text-dark);
+    max-width: 56ch;
+  }
+
+  /* Process */
+  .vp-process {
+    margin-top: clamp(56px, 8vw, 96px);
+    padding-top: clamp(40px, 6vw, 64px);
+    border-top: 1px solid rgba(228, 200, 127, 0.16);
+  }
+
+  .vp-process__head {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 34px;
+  }
+
+  .vp-process__title {
+    color: var(--vp-cream);
+  }
+
+  .vp-steps {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: vp-step;
+  }
+
+  .vp-step {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding: 24px 20px 26px;
+    border-radius: 18px;
+    background: rgba(245, 240, 230, 0.045);
+    border: 1px solid rgba(228, 200, 127, 0.14);
+    transition: border-color 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
+  }
+
+  .vp-step:hover {
+    border-color: rgba(228, 200, 127, 0.4);
+    background: rgba(245, 240, 230, 0.07);
+    transform: translateY(-3px);
+  }
+
+  .vp-step__dot {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, var(--vp-gold), var(--vp-brass));
+    color: #221a08;
+    box-shadow: 0 14px 30px -14px rgba(198, 167, 94, 0.8);
+  }
+
+  .vp-step__title {
+    font-family: var(--vp-font-display);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--vp-cream);
+  }
+
+  .vp-step__body {
+    font-size: 0.88rem;
+    line-height: 1.62;
+    color: var(--vp-text-dark);
+  }
+
+  @media (max-width: 1020px) {
+    .vp-standard {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-standard__media {
+      max-width: 560px;
+      padding-bottom: 64px;
+    }
+
+    .vp-steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 620px) {
+    .vp-steps {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

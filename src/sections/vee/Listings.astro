@@ -1,0 +1,438 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { LISTINGS, waLink } from '../../config/vee';
+
+const wa = waLink(
+  "Hello Vee Properties — none of the current listings fit what I'm looking for. Could you help me find something else?",
+);
+
+function enquiry(l: (typeof LISTINGS)[number]) {
+  return waLink(
+    `Hello Vee Properties — I'm interested in the ${l.title} (${l.code}) in ${l.area} listed at ${l.priceLabel}. Is it still available, and can we arrange a viewing?`,
+  );
+}
+
+const saleCount = LISTINGS.filter((l) => l.intent === 'sale').length;
+const rentCount = LISTINGS.filter((l) => l.intent === 'rent').length;
+---
+
+<section class="vp-section vp-section--cream" id="listings">
+  <div class="vp-container">
+    <div class="vp-head vp-reveal">
+      <p class="vp-kicker vp-kicker--dark">Current inventory</p>
+      <h2 class="vp-h2">Homes worth your time — nothing else.</h2>
+      <p class="vp-lede">
+        Every home below is confirmed available before it goes up, with real prices in
+        dollars and square metres you can compare. When a home is reserved or sold, it
+        comes down the same day.
+      </p>
+    </div>
+
+    <div class="vp-listings__bar vp-reveal">
+      <div class="vp-filters" role="group" aria-label="Filter listings">
+        <button type="button" class="vp-filter is-active" data-filter="all" aria-pressed="true">
+          All homes
+        </button>
+        <button type="button" class="vp-filter" data-filter="sale" aria-pressed="false">
+          For sale
+          <span class="vp-filter__count">{saleCount}</span>
+        </button>
+        <button type="button" class="vp-filter" data-filter="rent" aria-pressed="false">
+          For rent
+          <span class="vp-filter__count">{rentCount}</span>
+        </button>
+      </div>
+      <p class="vp-listings__count" id="vp-listings-count" aria-live="polite">
+        Showing {LISTINGS.length} of {LISTINGS.length} homes
+      </p>
+    </div>
+
+    <div class="vp-listings" id="vp-listings">
+      {
+        LISTINGS.map((l, i) => (
+          <article
+            class="vp-listing vp-reveal"
+            style={`--vp-delay: ${Math.min(i, 5) * 70}ms`}
+            data-intent={l.intent}
+            data-area={l.areaKey}
+            data-price={l.price}
+          >
+            <div class="vp-listing__media">
+              <img src={l.img} alt={`${l.title} in ${l.area}`} loading="lazy" width="1200" height="800" />
+              <span class="vp-listing__kind">{l.kind}</span>
+              <span class:list={['vp-listing__status', l.status === 'New' && 'vp-listing__status--new']}>
+                {l.status === 'New' ? <Icon name="sparkle" size={13} /> : <i class="vp-dot vp-dot--sm" />}
+                {l.status}
+              </span>
+            </div>
+
+            <div class="vp-listing__body">
+              <div class="vp-listing__top">
+                <div>
+                  <h3 class="vp-listing__title">{l.title}</h3>
+                  <p class="vp-listing__area">
+                    <Icon name="pin" size={14} />
+                    {l.area}
+                  </p>
+                </div>
+                <p class="vp-listing__price">{l.priceLabel}</p>
+              </div>
+
+              <ul class="vp-listing__specs">
+                <li><Icon name="bed" size={16} /> {l.beds} bed</li>
+                <li><Icon name="bath" size={16} /> {l.baths} bath</li>
+                <li><Icon name="area" size={16} /> {l.sqm} m²</li>
+              </ul>
+
+              <ul class="vp-listing__tags">
+                {l.tags.slice(0, 3).map((t) => <li class="vp-chip">{t}</li>)}
+                {l.tags.length > 3 && <li class="vp-chip">+{l.tags.length - 3}</li>}
+              </ul>
+
+              <div class="vp-listing__actions">
+                <a
+                  class="vp-btn vp-btn--wa vp-listing__cta"
+                  href={enquiry(l)}
+                  target="_blank"
+                  rel="noopener"
+                  data-event="wa-listing"
+                >
+                  <Icon name="whatsapp" size={16} />
+                  Enquire
+                </a>
+                <span class="vp-listing__code">{l.code}</span>
+              </div>
+            </div>
+          </article>
+        ))
+      }
+
+      <div class="vp-empty" id="vp-empty" hidden>
+        <span class="vp-empty__icon"><Icon name="compass" size={26} /></span>
+        <h3 class="vp-h3">Nothing matches that search — yet.</h3>
+        <p class="vp-lede">
+          New homes come in every week. Tell us the brief on WhatsApp and we'll send a
+          shortlist the moment something fits.
+        </p>
+        <a class="vp-btn vp-btn--dark" href={wa} target="_blank" rel="noopener" data-event="wa-empty">
+          <Icon name="whatsapp" size={17} />
+          Send us the brief
+        </a>
+      </div>
+    </div>
+
+    <p class="vp-note vp-listings__note vp-reveal">
+      Inventory moves fast — ask for today's full availability list. Images are
+      representative; condition and documents are confirmed at viewing.
+    </p>
+  </div>
+</section>
+
+<style>
+  .vp-listings__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .vp-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .vp-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--vp-line-strong);
+    background: transparent;
+    color: var(--vp-ink);
+    font-family: var(--vp-font-body);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  .vp-filter:hover {
+    transform: translateY(-1px);
+    border-color: var(--vp-ink);
+  }
+
+  .vp-filter.is-active {
+    background: var(--vp-ink);
+    border-color: var(--vp-ink);
+    color: var(--vp-cream);
+  }
+
+  .vp-filter__count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(11, 20, 15, 0.1);
+  }
+
+  .vp-filter.is-active .vp-filter__count {
+    background: rgba(228, 200, 127, 0.22);
+    color: var(--vp-gold);
+  }
+
+  .vp-listings__count {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--vp-ink-soft);
+  }
+
+  .vp-listings {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 26px;
+  }
+
+  .vp-listing {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--vp-line);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease,
+      border-color 0.35s ease;
+  }
+
+  .vp-listing:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--vp-shadow);
+    border-color: rgba(198, 167, 94, 0.5);
+  }
+
+  .vp-listing.is-hidden {
+    display: none;
+  }
+
+  .vp-listing__media {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+  }
+
+  .vp-listing__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .vp-listing:hover .vp-listing__media img {
+    transform: scale(1.06);
+  }
+
+  .vp-listing__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(9, 15, 11, 0.28), transparent 38%);
+    pointer-events: none;
+  }
+
+  .vp-listing__kind {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 1;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(9, 15, 11, 0.72);
+    border: 1px solid rgba(245, 240, 230, 0.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--vp-cream);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .vp-listing__status {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(9, 15, 11, 0.72);
+    border: 1px solid rgba(228, 200, 127, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--vp-cream);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .vp-listing__status--new {
+    color: var(--vp-gold);
+  }
+
+  .vp-dot--sm {
+    width: 7px;
+    height: 7px;
+  }
+
+  .vp-listing__body {
+    display: grid;
+    gap: 15px;
+    padding: 20px 20px 22px;
+  }
+
+  .vp-listing__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .vp-listing__title {
+    font-family: var(--vp-font-display);
+    font-size: 1.18rem;
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .vp-listing__area {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--vp-ink-soft);
+  }
+
+  .vp-listing__area svg {
+    color: var(--vp-brass);
+  }
+
+  .vp-listing__price {
+    font-family: var(--vp-font-display);
+    font-size: 1.12rem;
+    font-weight: 600;
+    color: var(--vp-moss);
+    white-space: nowrap;
+  }
+
+  .vp-listing__specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    list-style: none;
+    margin: 0;
+    padding: 13px 0;
+    border-top: 1px solid var(--vp-line);
+    border-bottom: 1px solid var(--vp-line);
+  }
+
+  .vp-listing__specs li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--vp-ink-soft);
+  }
+
+  .vp-listing__specs svg {
+    color: var(--vp-brass);
+  }
+
+  .vp-listing__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .vp-listing__tags .vp-chip {
+    background: rgba(11, 20, 15, 0.035);
+    font-size: 0.74rem;
+    padding: 6px 12px;
+  }
+
+  .vp-listing__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 2px;
+  }
+
+  .vp-listing__cta {
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    background: rgba(37, 211, 102, 0.12);
+    border-color: rgba(37, 211, 102, 0.4);
+    color: #1c6b3c;
+  }
+
+  .vp-listing__cta:hover {
+    background: rgba(37, 211, 102, 0.18);
+    border-color: rgba(37, 211, 102, 0.6);
+  }
+
+  .vp-listing__code {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--vp-ink-soft);
+    opacity: 0.7;
+  }
+
+  /* Empty state */
+  .vp-empty[hidden] {
+    display: none;
+  }
+
+  .vp-empty {
+    grid-column: 1 / -1;
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    text-align: center;
+    padding: clamp(40px, 6vw, 72px) 24px;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px dashed var(--vp-line-strong);
+    border-radius: 20px;
+  }
+
+  .vp-empty__icon {
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: rgba(198, 167, 94, 0.16);
+    color: var(--vp-gold-deep);
+  }
+
+  .vp-empty .vp-lede {
+    max-width: 46ch;
+  }
+
+  .vp-listings__note {
+    margin-top: 30px;
+    text-align: center;
+  }
+</style>

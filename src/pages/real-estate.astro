@@ -1,0 +1,373 @@
+---
+import RealEstateLayout from '../layouts/RealEstateLayout.astro';
+import Header from '../sections/vee/Header.astro';
+import Hero from '../sections/vee/Hero.astro';
+import Listings from '../sections/vee/Listings.astro';
+import Neighbourhoods from '../sections/vee/Neighbourhoods.astro';
+import Services from '../sections/vee/Services.astro';
+import Standard from '../sections/vee/Standard.astro';
+import Faq from '../sections/vee/Faq.astro';
+import Contact from '../sections/vee/Contact.astro';
+import Footer from '../sections/vee/Footer.astro';
+import { CONTACT, FAQS } from '../config/vee';
+
+const title = 'Vee Properties — Buy, Rent & Invest in Accra, Ghana';
+const description =
+  "Verified homes and apartments across Accra's best neighbourhoods — East Legon, Cantonments, Airport Residential, Labone, Osu, Adenta and Tema. Real prices, honest advice, a human reply within 15 minutes.";
+
+const agentSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'RealEstateAgent',
+  name: 'Vee Properties',
+  description:
+    'Residential real estate agency in Accra, Ghana: buying, selling, letting and investment advisory with verified inventory.',
+  url: 'https://zarlinoaudio.com/real-estate',
+  telephone: CONTACT.phoneDisplay,
+  email: CONTACT.email,
+  priceRange: '$95,000 – $410,000',
+  openingHours: 'Mo-Su 08:00-20:00',
+  areaServed: [
+    { '@type': 'City', name: 'Accra' },
+    { '@type': 'Country', name: 'Ghana' },
+  ],
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Accra',
+    addressCountry: 'GH',
+  },
+  knowsLanguage: ['en'],
+  makesOffer: [
+    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Residential buying representation' } },
+    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rentals & letting' } },
+    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Property investment advisory' } },
+    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Diaspora concierge & remote buying' } },
+    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Property management' } },
+  ],
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Zarlino Audio',
+      item: 'https://zarlinoaudio.com/',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Vee Properties',
+      item: 'https://zarlinoaudio.com/real-estate',
+    },
+  ],
+};
+---
+
+<RealEstateLayout title={title} description={description} canonicalURL="https://zarlinoaudio.com/real-estate">
+  <script type="application/ld+json" set:html={JSON.stringify(agentSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+
+  <Header />
+  <main>
+    <Hero />
+    <Listings />
+    <Neighbourhoods />
+    <Services />
+    <Standard />
+    <Faq />
+    <Contact />
+  </main>
+  <Footer />
+</RealEstateLayout>
+
+<script>
+  (function () {
+    /* ---------------------------------------------------------- header state */
+    const header = document.getElementById('vp-header');
+    const burger = document.getElementById('vp-burger');
+    const menu = document.getElementById('vp-mobile-menu');
+
+    function onScroll() {
+      if (header) header.classList.toggle('is-scrolled', window.scrollY > 24);
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    function closeMenu() {
+      if (!burger || !menu) return;
+      burger.setAttribute('aria-expanded', 'false');
+      burger.setAttribute('aria-label', 'Open menu');
+      menu.hidden = true;
+      header && header.classList.remove('is-open');
+    }
+
+    if (burger && menu) {
+      burger.addEventListener('click', function () {
+        const open = burger.getAttribute('aria-expanded') === 'true';
+        burger.setAttribute('aria-expanded', String(!open));
+        burger.setAttribute('aria-label', open ? 'Open menu' : 'Close menu');
+        menu.hidden = open;
+        header && header.classList.toggle('is-open', !open);
+      });
+
+      menu.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', closeMenu);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeMenu();
+      });
+    }
+
+    /* -------------------------------------------------------- reveal on scroll */
+    const reveals = Array.prototype.slice.call(document.querySelectorAll('.vp-reveal'));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              io.unobserve(entry.target);
+            }
+          });
+        },
+        { rootMargin: '0px 0px -6% 0px', threshold: 0.06 },
+      );
+      reveals.forEach(function (el) {
+        io.observe(el);
+      });
+    } else {
+      reveals.forEach(function (el) {
+        el.classList.add('is-visible');
+      });
+    }
+
+    /* ------------------------------------------------------------ listings */
+    const cards = Array.prototype.slice.call(document.querySelectorAll('.vp-listing'));
+    const emptyState = document.getElementById('vp-empty');
+    const countEl = document.getElementById('vp-listings-count');
+    const chips = Array.prototype.slice.call(document.querySelectorAll('.vp-filter'));
+    const segs = Array.prototype.slice.call(document.querySelectorAll('.vp-seg__btn'));
+    const areaSelect = document.getElementById('vp-area');
+    const budgetSelect = document.getElementById('vp-budget');
+    const searchForm = document.getElementById('vp-search');
+    const total = cards.length;
+
+    const state = { intent: 'all', area: '', min: null, max: null };
+
+    const SALE_BUDGETS = [
+      { value: '', label: 'Any budget', min: '', max: '' },
+      { value: '0-100000', label: 'Under $100k', min: '0', max: '100000' },
+      { value: '100000-200000', label: '$100k – $200k', min: '100000', max: '200000' },
+      { value: '200000-350000', label: '$200k – $350k', min: '200000', max: '350000' },
+      { value: '350000-', label: '$350k and up', min: '350000', max: '' },
+    ];
+    const RENT_BUDGETS = [
+      { value: '', label: 'Any budget', min: '', max: '' },
+      { value: '0-1000', label: 'Under $1,000/mo', min: '0', max: '1000' },
+      { value: '1000-2000', label: '$1,000 – $2,000/mo', min: '1000', max: '2000' },
+      { value: '2000-', label: '$2,000/mo and up', min: '2000', max: '' },
+    ];
+
+    function fillBudgets(intent) {
+      if (!budgetSelect) return;
+      const list = intent === 'rent' ? RENT_BUDGETS : SALE_BUDGETS;
+      budgetSelect.innerHTML = list
+        .map(function (o) {
+          return (
+            '<option value="' +
+            o.value +
+            '" data-min="' +
+            o.min +
+            '" data-max="' +
+            o.max +
+            '">' +
+            o.label +
+            '</option>'
+          );
+        })
+        .join('');
+      budgetSelect.value = '';
+      state.min = null;
+      state.max = null;
+    }
+
+    function readBudget() {
+      if (!budgetSelect) return;
+      const opt = budgetSelect.options[budgetSelect.selectedIndex];
+      state.min = opt && opt.dataset.min ? Number(opt.dataset.min) : null;
+      state.max = opt && opt.dataset.max ? Number(opt.dataset.max) : null;
+    }
+
+    function applyFilters() {
+      let visible = 0;
+      cards.forEach(function (card) {
+        const price = Number(card.dataset.price);
+        let show = true;
+        if (state.intent !== 'all' && card.dataset.intent !== state.intent) show = false;
+        if (show && state.area && card.dataset.area !== state.area) show = false;
+        if (show && state.min !== null && price < state.min) show = false;
+        if (show && state.max !== null && price > state.max) show = false;
+        card.classList.toggle('is-hidden', !show);
+        if (show) visible += 1;
+      });
+      if (countEl) countEl.textContent = 'Showing ' + visible + ' of ' + total + ' homes';
+      if (emptyState) emptyState.hidden = visible !== 0;
+    }
+
+    function setIntent(intent) {
+      state.intent = intent;
+      chips.forEach(function (chip) {
+        const active = chip.dataset.filter === intent;
+        chip.classList.toggle('is-active', active);
+        chip.setAttribute('aria-pressed', String(active));
+      });
+      segs.forEach(function (seg) {
+        const active = seg.dataset.intent === intent;
+        seg.classList.toggle('is-active', active);
+        seg.setAttribute('aria-pressed', String(active));
+      });
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        setIntent(chip.dataset.filter || 'all');
+        applyFilters();
+      });
+    });
+
+    segs.forEach(function (seg) {
+      seg.addEventListener('click', function () {
+        const intent = seg.dataset.intent || 'sale';
+        fillBudgets(intent);
+        setIntent(intent);
+        applyFilters();
+      });
+    });
+
+    if (areaSelect) {
+      areaSelect.addEventListener('change', function () {
+        state.area = areaSelect.value;
+        applyFilters();
+      });
+    }
+
+    if (budgetSelect) {
+      budgetSelect.addEventListener('change', function () {
+        readBudget();
+        applyFilters();
+      });
+    }
+
+    if (searchForm) {
+      searchForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const activeSeg = segs.filter(function (s) {
+          return s.classList.contains('is-active');
+        })[0];
+        const intent = activeSeg ? activeSeg.dataset.intent : 'sale';
+        if (areaSelect) state.area = areaSelect.value;
+        readBudget();
+        setIntent(intent);
+        applyFilters();
+        const listings = document.getElementById('listings');
+        if (listings) listings.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    applyFilters();
+
+    /* --------------------------------------------------------- contact form */
+    const form = document.getElementById('vp-form');
+    if (form) {
+      const statusEl = document.getElementById('vp-form-status');
+      const mailtoEl = document.getElementById('vp-form-mailto');
+      const waNumber = form.getAttribute('data-wa') || '';
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const data = new FormData(form);
+        const name = String(data.get('name') || '').trim();
+        const phone = String(data.get('phone') || '').trim();
+        const intent = String(data.get('intent') || 'buy a home');
+        const area = String(data.get('area') || 'any area');
+        const budget = String(data.get('budget') || '').trim();
+        const message = String(data.get('message') || '').trim();
+
+        let invalid = false;
+        [
+          ['name', name],
+          ['phone', phone],
+        ].forEach(function (pair) {
+          const field = form.querySelector('[name="' + pair[0] + '"]');
+          if (field) {
+            const bad = !pair[1];
+            field.classList.toggle('has-error', bad);
+            if (bad) invalid = true;
+          }
+        });
+        if (invalid) {
+          if (statusEl) {
+            statusEl.textContent = 'Please add your name and a phone number so we can reply.';
+            statusEl.hidden = false;
+          }
+          return;
+        }
+
+        let text =
+          'Hello Vee Properties — my name is ' +
+          name +
+          ".\nI'd like to " +
+          intent +
+          ' in ' +
+          area +
+          ', budget: ' +
+          (budget || 'to be discussed') +
+          '.';
+        if (message) text += '\n' + message;
+        text += '\nYou can reach me on ' + phone + '.';
+
+        const waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(text);
+        window.open(waUrl, '_blank', 'noopener');
+
+        if (statusEl) {
+          statusEl.innerHTML =
+            'Opening WhatsApp&hellip; if nothing happened, <a href="' +
+            waUrl +
+            '" target="_blank" rel="noopener">tap here to send it</a>.';
+          statusEl.hidden = false;
+        }
+
+        if (mailtoEl) {
+          mailtoEl.setAttribute(
+            'href',
+            (mailtoEl.getAttribute('href') || 'mailto:').split('?')[0] +
+              '?subject=' +
+              encodeURIComponent('Property enquiry — ' + name) +
+              '&body=' +
+              encodeURIComponent(text),
+          );
+        }
+      });
+
+      form.querySelectorAll('input').forEach(function (input) {
+        input.addEventListener('input', function () {
+          input.classList.remove('has-error');
+        });
+      });
+    }
+  })();
+</script>

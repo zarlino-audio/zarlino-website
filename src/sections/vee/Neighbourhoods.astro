@@ -1,0 +1,192 @@
+---
+import Icon from '../../components/vee/Icon.astro';
+import { NEIGHBOURHOODS, waLink } from '../../config/vee';
+---
+
+<section class="vp-section vp-section--dark vp-grain" id="neighbourhoods">
+  <div class="vp-container">
+    <div class="vp-head vp-reveal">
+      <p class="vp-kicker">Neighbourhoods</p>
+      <h2 class="vp-h2">Know the street before you commit.</h2>
+      <p class="vp-lede">
+        Accra is not one market — it is twenty. Here is how we read the areas our clients
+        ask for most, with honest starting points to anchor your budget.
+      </p>
+    </div>
+
+    <div class="vp-nb-grid">
+      {
+        NEIGHBOURHOODS.map((n, i) => (
+          <article class="vp-nb vp-reveal" style={`--vp-delay: ${Math.min(i, 4) * 80}ms`}>
+            <a
+              class="vp-nb__inner"
+              href={waLink(
+                `Hello Vee Properties — I'd like to know what's available in ${n.name} right now.`,
+              )}
+              target="_blank"
+              rel="noopener"
+              data-event="wa-area"
+            >
+              <div class="vp-nb__media">
+                <img src={n.img} alt={`${n.name}, Accra`} loading="lazy" width="1200" height="800" />
+                <span class="vp-nb__from">{n.from}</span>
+              </div>
+              <div class="vp-nb__body">
+                <h3 class="vp-nb__name">{n.name}</h3>
+                <p class="vp-nb__blurb">{n.blurb}</p>
+                <span class="vp-nb__cta">
+                  Ask about {n.name}
+                  <Icon name="arrow" size={15} />
+                </span>
+              </div>
+            </a>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .vp-nb-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .vp-nb {
+    grid-column: span 2;
+  }
+
+  .vp-nb:nth-child(4) {
+    grid-column: 2 / span 2;
+  }
+
+  .vp-nb:nth-child(5) {
+    grid-column: 4 / span 2;
+  }
+
+  .vp-nb__inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(245, 240, 230, 0.04);
+    border: 1px solid rgba(228, 200, 127, 0.16);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease,
+      background-color 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .vp-nb__inner:hover {
+    transform: translateY(-5px);
+    border-color: rgba(228, 200, 127, 0.5);
+    background: rgba(245, 240, 230, 0.06);
+    box-shadow: 0 34px 70px -40px rgba(0, 0, 0, 0.9);
+  }
+
+  .vp-nb__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+
+  .vp-nb__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .vp-nb__inner:hover .vp-nb__media img {
+    transform: scale(1.07);
+  }
+
+  .vp-nb__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(9, 15, 11, 0.05), rgba(9, 15, 11, 0.55));
+    pointer-events: none;
+  }
+
+  .vp-nb__from {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 1;
+    padding: 8px 15px;
+    border-radius: 999px;
+    background: rgba(9, 15, 11, 0.74);
+    border: 1px solid rgba(228, 200, 127, 0.34);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--vp-gold);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .vp-nb__body {
+    display: grid;
+    gap: 10px;
+    padding: 20px 20px 22px;
+    align-content: start;
+  }
+
+  .vp-nb__name {
+    font-family: var(--vp-font-display);
+    font-size: 1.32rem;
+    font-weight: 500;
+  }
+
+  .vp-nb__blurb {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--vp-text-dark);
+  }
+
+  .vp-nb__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--vp-gold);
+  }
+
+  .vp-nb__cta svg {
+    transition: transform 0.3s ease;
+  }
+
+  .vp-nb__inner:hover .vp-nb__cta svg {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 1020px) {
+    .vp-nb-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vp-nb,
+    .vp-nb:nth-child(4),
+    .vp-nb:nth-child(5) {
+      grid-column: auto;
+    }
+
+    .vp-nb:nth-child(5) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .vp-nb-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-nb:nth-child(5) {
+      grid-column: auto;
+    }
+  }
+</style>

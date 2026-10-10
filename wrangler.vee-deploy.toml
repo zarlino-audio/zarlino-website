@@ -1,0 +1,23 @@
+# Temporary deploy config for the Vee Properties deploy.
+# Identical to wrangler.toml except the assets directory is a frozen build
+# (another process in this workspace keeps rebuilding ./dist, which would race).
+# Deploy with:  npx -y wrangler@4 deploy --config wrangler.vee-deploy.toml
+name = "zarlino-website"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[assets]
+directory = "./dist-vee-deploy"
+not_found_handling = "404-page"
+
+[vars]
+ADMIN_TOKEN = "PGRUxCidKulFTgLsIE3jJhON079BwD8t"
+PAYSTACK_PUBLIC_KEY = "pk_live_d2f7554900d64fa3ae9b334777c815e8b346f885"
+PAYSTACK_CURRENCY = "GHS"
+
+[[kv_namespaces]]
+binding = "ZARLINO_KV"
+id = "66bc47e33fe145f697cf1f80912f269e"
+
+[observability]
+enabled = true

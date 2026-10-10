@@ -16,7 +16,9 @@ https://zarlinoaudio.com
 
 ## Current offering
 
-- **ZTame** — high-resolution FFT-based automatic resonance suppressor (VST3/AU)
+- **ZTame** — automatic resonance suppressor (v1.2.0; Windows VST3 / Standalone)
+- **ZScorch** — multiband saturation / "scorch" processor (Windows VST3 / Standalone)
+- **Vee Properties** — standalone real-estate brand page at `/real-estate` (pre-launch; placeholder contact/listing data)
 
 ## Local development
 

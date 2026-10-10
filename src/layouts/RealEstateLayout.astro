@@ -1,0 +1,517 @@
+---
+/**
+ * Vee Properties — standalone layout.
+ * Deliberately independent from BaseLayout (no audio-site navigation/footer),
+ * so /real-estate reads as its own brand. Shares only the tracking beacons.
+ */
+export interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonicalURL?: string;
+}
+
+const {
+  title,
+  description,
+  ogImage = '/images/vee/og.png',
+  canonicalURL = 'https://zarlinoaudio.com/real-estate',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#0B140F" />
+    <meta name="generator" content="Astro" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/images/vee/favicon.svg" />
+
+    <!-- Primary Meta -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta
+      name="keywords"
+      content="Vee Properties, Accra real estate, houses for sale Accra, apartments East Legon, rent Accra, Ghana property, diaspora buying Ghana, Cantonments, Airport Residential, Osu"
+    />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={`https://zarlinoaudio.com${ogImage}`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Vee Properties" />
+    <meta property="og:locale" content="en_GH" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`https://zarlinoaudio.com${ogImage}`} />
+
+    <!-- Fonts: non-render-blocking (same pattern as the main site). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Manrope:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Manrope:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
+  </head>
+  <body class="vp-body">
+    <slot />
+
+    <!-- Page-view beacon (shared with the main site; no-op if KV is unbound) -->
+    <script is:inline>
+      (function () {
+        try {
+          var p = window.location.pathname;
+          if (p === '/admin' || p.startsWith('/api/')) return;
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/track', new Blob([JSON.stringify({ path: p })], { type: 'application/json' }));
+          } else {
+            fetch('/api/track', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: p }),
+              keepalive: true,
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Conversion-event beacon: [data-event] clicks (no-op if KV is unbound) -->
+    <script is:inline>
+      (function () {
+        document.addEventListener('click', function (e) {
+          var el = e.target && e.target.closest ? e.target.closest('[data-event]') : null;
+          if (!el) return;
+          var ev = el.getAttribute('data-event');
+          if (!ev) return;
+          try {
+            var body = JSON.stringify({ path: window.location.pathname, event: ev });
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
+            } else {
+              fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+            }
+          } catch (e2) {}
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  /* ==========================================================================
+     Vee Properties — brand design system
+     Deep forest + brass on warm ivory. Editorial serif display (Fraunces),
+     geometric body (Manrope). All classes prefixed .vp- to avoid collisions
+     with the main site's Tailwind-generated CSS.
+     ========================================================================== */
+
+  :root {
+    --vp-ink: #0b140f;
+    --vp-forest: #102219;
+    --vp-pine: #17392a;
+    --vp-moss: #2e6b4e;
+    --vp-leaf: #5ba97e;
+    --vp-brass: #c6a75e;
+    --vp-gold: #e4c87f;
+    --vp-gold-deep: #b8934a;
+    --vp-cream: #f5f0e6;
+    --vp-ivory: #fbf8f2;
+    --vp-sand: #e7ddc9;
+    --vp-ink-soft: #47564d;
+    --vp-line: rgba(11, 20, 15, 0.12);
+    --vp-line-strong: rgba(11, 20, 15, 0.22);
+    --vp-line-dark: rgba(228, 200, 127, 0.22);
+    --vp-text-dark: rgba(245, 240, 230, 0.78);
+    --vp-font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+    --vp-font-body: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --vp-shadow: 0 18px 50px -18px rgba(11, 20, 15, 0.28);
+    --vp-shadow-lg: 0 34px 80px -28px rgba(11, 20, 15, 0.45);
+    --vp-radius: 18px;
+    --vp-gutter: clamp(20px, 4vw, 40px);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body.vp-body {
+    margin: 0;
+    font-family: var(--vp-font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--vp-ink);
+    background: var(--vp-ivory);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body.vp-body img {
+    max-width: 100%;
+    display: block;
+  }
+
+  body.vp-body a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  body.vp-body ::selection {
+    background: var(--vp-gold);
+    color: var(--vp-ink);
+  }
+
+  body.vp-body :focus-visible {
+    outline: 2px solid var(--vp-brass);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  figure,
+  blockquote {
+    margin: 0;
+  }
+
+  section[id] {
+    scroll-margin-top: 88px;
+  }
+
+  /* ---- Layout primitives ------------------------------------------------ */
+
+  .vp-container {
+    width: min(1220px, 100% - var(--vp-gutter) * 2);
+    margin-inline: auto;
+  }
+
+  .vp-section {
+    padding: clamp(68px, 9vw, 128px) 0;
+    position: relative;
+  }
+
+  .vp-section--ivory {
+    background: var(--vp-ivory);
+  }
+
+  .vp-section--cream {
+    background: linear-gradient(180deg, var(--vp-ivory), var(--vp-cream));
+  }
+
+  .vp-section--dark {
+    background: var(--vp-forest);
+    color: var(--vp-cream);
+  }
+
+  /* Film-grain texture for dark sections */
+  .vp-grain {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .vp-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .vp-grain > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- Typography -------------------------------------------------------- */
+
+  .vp-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--vp-brass);
+  }
+
+  .vp-kicker::before {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.85;
+  }
+
+  .vp-kicker--dark {
+    color: var(--vp-moss);
+  }
+
+  .vp-h1 {
+    font-family: var(--vp-font-display);
+    font-weight: 500;
+    font-size: clamp(2.5rem, 5.6vw, 4.35rem);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  .vp-h2 {
+    font-family: var(--vp-font-display);
+    font-weight: 500;
+    font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+    line-height: 1.12;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  .vp-h3 {
+    font-family: var(--vp-font-display);
+    font-weight: 500;
+    font-size: clamp(1.25rem, 1.8vw, 1.6rem);
+    line-height: 1.2;
+  }
+
+  .vp-lede {
+    font-size: clamp(1.02rem, 1.35vw, 1.18rem);
+    line-height: 1.7;
+    color: var(--vp-ink-soft);
+    text-wrap: pretty;
+  }
+
+  .vp-section--dark .vp-lede {
+    color: var(--vp-text-dark);
+  }
+
+  .vp-em {
+    font-family: var(--vp-font-display);
+    font-style: italic;
+    color: var(--vp-gold);
+  }
+
+  /* Section heading block */
+  .vp-head {
+    max-width: 720px;
+    display: grid;
+    gap: 16px;
+    margin-bottom: clamp(36px, 5vw, 60px);
+  }
+
+  .vp-head--center {
+    margin-inline: auto;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .vp-head--center .vp-kicker::before {
+    display: none;
+  }
+
+  /* ---- Buttons ------------------------------------------------------------ */
+
+  .vp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 26px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: var(--vp-font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease,
+      border-color 0.25s ease, color 0.25s ease;
+    white-space: nowrap;
+  }
+
+  .vp-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .vp-btn:active {
+    transform: translateY(0);
+  }
+
+  .vp-btn svg {
+    flex: none;
+  }
+
+  .vp-btn--gold {
+    background: linear-gradient(135deg, var(--vp-gold), var(--vp-brass));
+    color: #221a08;
+    box-shadow: 0 14px 34px -14px rgba(198, 167, 94, 0.75);
+  }
+
+  .vp-btn--gold:hover {
+    box-shadow: 0 20px 44px -14px rgba(198, 167, 94, 0.9);
+  }
+
+  .vp-btn--dark {
+    background: var(--vp-ink);
+    color: var(--vp-cream);
+  }
+
+  .vp-btn--dark:hover {
+    background: var(--vp-pine);
+  }
+
+  .vp-btn--ghost {
+    background: transparent;
+    border-color: var(--vp-line-strong);
+    color: var(--vp-ink);
+  }
+
+  .vp-btn--ghost:hover {
+    border-color: var(--vp-ink);
+    background: rgba(11, 20, 15, 0.04);
+  }
+
+  .vp-btn--ghost-light {
+    background: rgba(245, 240, 230, 0.04);
+    border-color: var(--vp-line-dark);
+    color: var(--vp-cream);
+  }
+
+  .vp-btn--ghost-light:hover {
+    border-color: rgba(228, 200, 127, 0.55);
+    background: rgba(228, 200, 127, 0.08);
+  }
+
+  .vp-btn--wa {
+    background: rgba(37, 211, 102, 0.14);
+    border-color: rgba(37, 211, 102, 0.42);
+    color: #dff7e6;
+  }
+
+  .vp-btn--wa:hover {
+    background: rgba(37, 211, 102, 0.22);
+    border-color: rgba(37, 211, 102, 0.65);
+  }
+
+  .vp-section--dark .vp-btn--ghost {
+    border-color: var(--vp-line-dark);
+    color: var(--vp-cream);
+  }
+
+  .vp-section--dark .vp-btn--ghost:hover {
+    border-color: rgba(228, 200, 127, 0.55);
+    background: rgba(228, 200, 127, 0.08);
+  }
+
+  /* ---- Chips & tags -------------------------------------------------------- */
+
+  .vp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--vp-line);
+    background: rgba(255, 255, 255, 0.6);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--vp-ink-soft);
+  }
+
+  .vp-section--dark .vp-chip {
+    border-color: var(--vp-line-dark);
+    background: rgba(228, 200, 127, 0.06);
+    color: var(--vp-text-dark);
+  }
+
+  /* ---- Cards --------------------------------------------------------------- */
+
+  .vp-card {
+    background: #fff;
+    border: 1px solid var(--vp-line);
+    border-radius: var(--vp-radius);
+    box-shadow: 0 1px 0 rgba(11, 20, 15, 0.03);
+    overflow: hidden;
+  }
+
+  /* ---- Reveal on scroll ----------------------------------------------------- */
+
+  .vp-reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--vp-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .vp-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    .vp-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001s !important;
+    }
+  }
+
+  /* ---- Small print ----------------------------------------------------------- */
+
+  .vp-note {
+    font-size: 0.82rem;
+    color: var(--vp-ink-soft);
+    opacity: 0.85;
+  }
+
+  .vp-section--dark .vp-note {
+    color: var(--vp-text-dark);
+  }
+</style>
