@@ -1,0 +1,690 @@
+{
+  "gate": "post-deploy-check",
+  "revision": "4.0.0+contract",
+  "contract": {
+    "file": "routes/contract.json",
+    "schemaVersion": 1
+  },
+  "baseUrl": "http://127.0.0.1:9999",
+  "localMode": false,
+  "expectedSha": "whatever",
+  "expectedRunId": null,
+  "githubSha": null,
+  "githubRunId": null,
+  "productionSha": null,
+  "productionRunId": null,
+  "productionDeployedAt": null,
+  "runStartedAt": "2026-10-12T00:51:38.627Z",
+  "runFinishedAt": "2026-10-12T00:51:52.953Z",
+  "sweepTimestamps": [
+    "2026-10-12T00:51:41.653Z",
+    "2026-10-12T00:51:46.836Z",
+    "2026-10-12T00:51:52.796Z"
+  ],
+  "sweepCount": 3,
+  "sweepElapsedMs": 11287,
+  "identity": {
+    "status": "drift",
+    "reason": "production commit (unreadable) != intended whatever"
+  },
+  "overallStatus": "FAILED",
+  "exitCode": 1,
+  "entries": [
+    {
+      "cls": "required",
+      "path": "/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/plugins/ztame/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/plugins/zscorch/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/checkout/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/admin/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/affiliates/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/affiliate-report/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/report/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/legal/license/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/legal/privacy/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/legal/refunds/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/legal/terms/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/real-estate/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/instance/",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/robots.txt",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/sitemap-index.xml",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "required",
+      "path": "/sitemap-0.xml",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "redirect",
+      "path": "/plugins/ztame",
+      "method": "GET",
+      "expected": 307,
+      "expectedTo": "/plugins/ztame/",
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "redirect",
+      "path": "/plugins/zscorch",
+      "method": "GET",
+      "expected": 307,
+      "expectedTo": "/plugins/zscorch/",
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "redirect",
+      "path": "/checkout",
+      "method": "GET",
+      "expected": 307,
+      "expectedTo": "/checkout/",
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "redirect",
+      "path": "/admin",
+      "method": "GET",
+      "expected": 307,
+      "expectedTo": "/admin/",
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/about",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/contact",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/shop",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/store",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/pricing",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/plugins",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/downloads",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/sitemap.xml",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "absent",
+      "path": "/nonexistent-404-probe",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "api",
+      "path": "/api/health",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "api",
+      "path": "/api/ready",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "api",
+      "path": "/api/contract",
+      "method": "GET",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "api",
+      "path": "/api/license",
+      "method": "GET",
+      "expected": 405,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "api",
+      "path": "/api/unknown-probe",
+      "method": "GET",
+      "expected": 404,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "artifacts",
+      "path": "/downloads/ZTame-v1.2.0-Windows-Installer.exe",
+      "method": "HEAD",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "artifacts",
+      "path": "/downloads/ZTame-v1.2.0-Windows-VST3.zip",
+      "method": "HEAD",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "artifacts",
+      "path": "/downloads/ZTame-v1.2.0-Windows-Standalone.zip",
+      "method": "HEAD",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "artifacts",
+      "path": "/downloads/ZScorch-v1.0.0-Windows-Installer.exe",
+      "method": "HEAD",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "artifacts",
+      "path": "/downloads/ZScorch-v1.0.0-Windows-VST3.zip",
+      "method": "HEAD",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    },
+    {
+      "cls": "artifacts",
+      "path": "/downloads/ZScorch-v1.0.0-Windows-Standalone.zip",
+      "method": "HEAD",
+      "expected": 200,
+      "expectedTo": null,
+      "verdict": "FAIL",
+      "perSweepStatuses": [
+        "red",
+        "red",
+        "red"
+      ],
+      "lastStatus": null,
+      "lastContentType": "",
+      "lastError": "fetch failed"
+    }
+  ]
+}

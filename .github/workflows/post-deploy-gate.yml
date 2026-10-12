@@ -114,6 +114,7 @@ jobs:
 
       # ACCEPTANCE RECORD — the citable artifact: intended SHA, observed
       # production SHA, sweep timestamps, per-route results, verdict.
+      # (Not a dot-file: upload-artifact@v4 skips hidden files by default.)
       - name: Upload acceptance record
         if: always()
         uses: actions/upload-artifact@v4
@@ -122,7 +123,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
           path: |
-            scripts/.post-deploy-check-acceptance.json
+            scripts/post-deploy-check-acceptance.json
             gate-output.txt
 
       - name: Enforce verdict

@@ -56,8 +56,10 @@ const GATE_REVISION = '4.0.0+contract';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONTRACT_FILE = join(HERE, '..', 'routes', 'contract.json');
+// Deliberately NOT a dot-file: actions/upload-artifact@v4 excludes hidden
+// files by default, and the acceptance record MUST be uploaded as evidence.
 const ARTIFACT_FILE =
-  process.env.GATE_ARTIFACT_FILE || join(HERE, '.post-deploy-check-acceptance.json');
+  process.env.GATE_ARTIFACT_FILE || join(HERE, 'post-deploy-check-acceptance.json');
 
 const EXIT_VERIFIED = 0;
 const EXIT_FAILED = 1;
