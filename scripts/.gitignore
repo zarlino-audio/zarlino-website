@@ -1,3 +1,6 @@
-# Post-deploy acceptance gate runtime artifacts (regenerated each run; uploaded in CI)
+# Post-deploy acceptance gate runtime artifacts (regenerated each run; uploaded in CI).
+# `.post-deploy-check-acceptance.json` is the LEGACY dot-name (also covered, so it
+# can never be swept into a commit again).
 post-deploy-check-acceptance.json
+.post-deploy-check-acceptance.json
 gate-output.txt
