@@ -9,6 +9,18 @@
  *   POST /api/admin/{setup,login,logout,change-password} — founder auth
  *        (username/password + signed sessions; the old shared ADMIN_TOKEN was
  *        removed 2026-09-30 — see src/auth.ts)
+ *   GET  /api/health    — deployment identity (service, version, commit, deployedAt)
+ *   GET  /api/ready     — can this deployment perform minimum production operations?
+ *   GET  /api/contract  — the canonical route contract (routes/contract.json)
+ *
+ * FAILURE BOUNDARY (hard requirement): no ordinary request may escape this
+ * Worker as an uncaught exception. Cloudflare error 1101 (uncaught Worker
+ * exception) is never an acceptable response. Every request runs inside the
+ * top-level try/catch in the default export; unexpected exceptions become a
+ * controlled JSON 500 (for /api/*) or a plain-text 500. Page requests are
+ * normally served by the platform asset router before the Worker runs at all
+ * (see wrangler.toml [assets] run_worker_first), so unknown pages return the
+ * custom 404 page with an exact HTTP 404 — never a 1101.
  *
  * License blob format (must match tools/generate_license_keys.py):
  *   uint16 pluginIdLen | pluginId UTF-8 | uint16 emailLen | email UTF-8 |
@@ -17,15 +29,39 @@
  * The blob is then base64-encoded and pasted into ZTame's license dialog.
  */
 
+import { adminAuthorized, adminChangePassword, adminLogin, adminSetup, adminStatus } from './auth';
+import contractJson from '../routes/contract.json';
+
 export interface Env {
-  ASSETS: Fetcher;
+  ASSETS?: Fetcher;
   ZARLINO_LICENSE_PRIVATE_KEY?: string;
   GITHUB_TOKEN?: string;
   ZARLINO_KV?: KVNamespace;
   ADMIN_SESSION_KEY?: string;
+  /**
+   * Deploy provenance — set by CI at deploy time
+   * (`wrangler deploy --var DEPLOY_COMMIT:<sha> ...`). Together these identify
+   * exactly which build production is running; /api/health exposes them.
+   */
+  DEPLOY_COMMIT?: string;
+  DEPLOY_RUN_ID?: string;
+  DEPLOYED_AT?: string;
 }
 
-import { adminAuthorized, adminChangePassword, adminLogin, adminSetup, adminStatus } from './auth';
+/** Keep in sync with package.json version. Informational — the git commit is the identity. */
+const SERVICE_VERSION = '0.1.0';
+
+/** Shape of routes/contract.json (the one authoritative route contract). */
+interface RouteContract {
+  schemaVersion: number;
+  service: string;
+  required: Array<{ path: string; status: number; contentTypePrefix?: string[] }>;
+  redirect: Array<{ path: string; status: number; to: string }>;
+  absent: Array<{ path: string; status: number }>;
+  api: Array<{ path: string; status: number; method?: string; contentTypePrefix?: string[]; identity?: boolean }>;
+  artifacts: Array<{ path: string; status: number; method?: string }>;
+}
+const contract = contractJson as unknown as RouteContract;
 
 const FEEDBACK_REPO = 'zarlino-audio/zarlino-feedback';
 const SITE_REPO = 'zarlino-audio/zarlino-website';
@@ -105,7 +141,10 @@ async function handleLicense(request: Request, env: Env): Promise<Response> {
 
   const pem = env.ZARLINO_LICENSE_PRIVATE_KEY;
   if (!pem) {
-    return json({ error: 'License service is not configured' }, 500);
+    // Configuration fault, not an application exception: report 503 so the
+    // readiness endpoint and monitoring can distinguish "deployment not
+    // capable" from "request failed".
+    return json({ error: 'License service is not configured' }, 503);
   }
 
   let body: { email?: unknown; plugin?: unknown };
@@ -189,7 +228,7 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
   if (!token) {
     return json(
       { error: 'Feedback service is not configured. Email support@zarlinoaudio.com instead.' },
-      500,
+      503,
     );
   }
 
@@ -259,15 +298,73 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
 }
 
 /* ------------------------------------------------------------------ *
+ * Deployment identity and readiness
+ * ------------------------------------------------------------------ */
+
+/** GET /api/health — answer: "is this service alive, and WHICH build is it?" */
+async function handleHealth(env: Env): Promise<Response> {
+  return json({
+    service: 'zarlino-website',
+    status: 'ok',
+    version: SERVICE_VERSION,
+    commit: env.DEPLOY_COMMIT || 'unknown',
+    runId: env.DEPLOY_RUN_ID || null,
+    deployedAt: env.DEPLOYED_AT || null,
+    time: new Date().toISOString(),
+  });
+}
+
+/**
+ * GET /api/ready — answer: "can this deployment perform the minimum operations
+ * required for production?" Deliberately separate from /api/health: health is
+ * liveness + identity; readiness is capability. Required capabilities:
+ *   - staticAssets: the [assets] binding serves built pages/assets
+ *   - licenseSigning: the RSA key to issue licenses at checkout is configured
+ * Optional capabilities are reported for observability but do not gate ready.
+ */
+async function handleReady(request: Request, env: Env): Promise<Response> {
+  let staticAssets = false;
+  try {
+    if (env.ASSETS) {
+      const probeUrl = new URL(request.url);
+      probeUrl.pathname = '/robots.txt';
+      probeUrl.search = '';
+      const res = await env.ASSETS.fetch(new Request(probeUrl.toString(), { method: 'GET' }));
+      staticAssets = res.status === 200;
+    }
+  } catch {
+    staticAssets = false;
+  }
+
+  const licenseSigning =
+    typeof env.ZARLINO_LICENSE_PRIVATE_KEY === 'string' && env.ZARLINO_LICENSE_PRIVATE_KEY.length > 0;
+  const ready = staticAssets && licenseSigning;
+
+  return json(
+    {
+      service: 'zarlino-website',
+      status: ready ? 'ready' : 'degraded',
+      commit: env.DEPLOY_COMMIT || 'unknown',
+      required: { staticAssets, licenseSigning },
+      optional: {
+        kv: !!env.ZARLINO_KV,
+        feedbackToken: !!env.GITHUB_TOKEN,
+        adminSession: !!env.ADMIN_SESSION_KEY,
+      },
+      time: new Date().toISOString(),
+    },
+    ready ? 200 : 503,
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Admin dashboard + site monitoring
  * ------------------------------------------------------------------ */
 
-const SITE_PAGES = [
-  '/',
-  '/plugins/ztame',
-  '/plugins/zscorch',
-  '/report',
-];
+/** Monitored page list — derived from the ONE route contract, never re-listed. */
+const SITE_PAGES = contract.required
+  .filter((r) => r.contentTypePrefix?.includes('text/html'))
+  .map((r) => r.path);
 
 async function incr(kv: KVNamespace, key: string): Promise<void> {
   const cur = await kv.get(key);
@@ -436,42 +533,112 @@ async function handleTrack(request: Request, env: Env): Promise<Response> {
   return new Response(null, { status: 204 });
 }
 
+/**
+ * Structured, secret-free log line for an unhandled exception (§24 policy:
+ * never log authorization headers, tokens or key material). Returns the
+ * correlation ref echoed to the client for cross-referencing with `wrangler tail`.
+ */
+function logUnhandled(url: URL, request: Request, err: unknown): string {
+  const cfRay = request.headers.get('cf-ray') || '';
+  let ref = cfRay;
+  if (!ref) {
+    try {
+      ref = crypto.randomUUID();
+    } catch {
+      ref = 'no-ref';
+    }
+  }
+  const error_class = err instanceof Error && err.name ? err.name : 'Error';
+  console.error(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      service: 'zarlino-website',
+      event: 'unhandled_exception',
+      route: url.pathname,
+      method: request.method,
+      error_class,
+      ref,
+    }),
+  );
+  return ref;
+}
+
+async function handleRequest(request: Request, url: URL, env: Env): Promise<Response> {
+  if (url.pathname === '/api/license') {
+    return handleLicense(request, env);
+  }
+  if (url.pathname === '/api/feedback') {
+    return handleFeedback(request, env);
+  }
+  if (url.pathname === '/api/track') {
+    return handleTrack(request, env);
+  }
+  if (url.pathname === '/api/health') {
+    return handleHealth(env);
+  }
+  if (url.pathname === '/api/ready') {
+    return handleReady(request, env);
+  }
+  if (url.pathname === '/api/contract') {
+    return json(contract);
+  }
+  if (url.pathname === '/api/admin/stats') {
+    return handleAdminStats(request, env);
+  }
+  // Server-side reachability probe for the Executive OS. The OS's own
+  // external monitor cannot fetch the OS custom domain from inside the OS
+  // worker (self-fetch rotates back to itself → 522), so it probes the OS
+  // THROUGH this worker instead. 200 = OS healthy, 502 = unreachable.
+  if (url.pathname === '/api/probe-exec-os') {
+    try {
+      const r = await fetch('https://os.zarlinoaudio.com/api/health', { redirect: 'follow' });
+      return new Response(r.ok ? 'probe-ok' : 'probe-fail', { status: r.ok ? 200 : 502 });
+    } catch {
+      return new Response('probe-fail', { status: 502 });
+    }
+  }
+  const adminAuth = url.pathname.match(/^\/api\/admin\/(status|setup|login|logout|change-password)$/);
+  if (adminAuth) {
+    return handleAdminAuthRoute(adminAuth[1]!, request, env);
+  }
+  // Unknown /api/* paths must be a JSON 404 — never fall through to the
+  // static asset handler (POSTs there surfaced as 1101 worker exceptions).
+  if (url.pathname.startsWith('/api/')) {
+    return json({ error: 'Not found', path: url.pathname }, 404);
+  }
+  // Defensive fallback: non-API paths are handled by the platform asset router
+  // BEFORE this Worker runs (wrangler.toml [assets] run_worker_first = ["/api/*"]),
+  // so this branch is normally unreachable. If it is ever reached (routing
+  // misconfiguration), serve what the asset layer can and otherwise return a
+  // controlled 404 — never an uncaught exception.
+  if (env.ASSETS) {
+    try {
+      return await env.ASSETS.fetch(request);
+    } catch {
+      /* fall through to the controlled 404 below */
+    }
+  }
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'content-type': 'text/plain; charset=utf-8' },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === '/api/license') {
-      return handleLicense(request, env);
-    }
-    if (url.pathname === '/api/feedback') {
-      return handleFeedback(request, env);
-    }
-    if (url.pathname === '/api/track') {
-      return handleTrack(request, env);
-    }
-    if (url.pathname === '/api/admin/stats') {
-      return handleAdminStats(request, env);
-    }
-    // Server-side reachability probe for the Executive OS. The OS's own
-    // external monitor cannot fetch the OS custom domain from inside the OS
-    // worker (self-fetch rotates back to itself → 522), so it probes the OS
-    // THROUGH this worker instead. 200 = OS healthy, 502 = unreachable.
-    if (url.pathname === '/api/probe-exec-os') {
-      try {
-        const r = await fetch('https://os.zarlinoaudio.com/api/health', { redirect: 'follow' });
-        return new Response(r.ok ? 'probe-ok' : 'probe-fail', { status: r.ok ? 200 : 502 });
-      } catch {
-        return new Response('probe-fail', { status: 502 });
+    try {
+      return await handleRequest(request, url, env);
+    } catch (err) {
+      // TOP-LEVEL FAILURE BOUNDARY — Cloudflare 1101 is never acceptable.
+      const ref = logUnhandled(url, request, err);
+      if (url.pathname.startsWith('/api/')) {
+        return json({ error: 'Internal error', ref }, 500);
       }
+      return new Response('Internal Server Error', {
+        status: 500,
+        headers: { 'content-type': 'text/plain; charset=utf-8' },
+      });
     }
-    const adminAuth = url.pathname.match(/^\/api\/admin\/(status|setup|login|logout|change-password)$/);
-    if (adminAuth) {
-      return handleAdminAuthRoute(adminAuth[1]!, request, env);
-    }
-    // Unknown /api/* paths must be a JSON 404 — never fall through to the
-    // static asset handler (POSTs there surfaced as 1101 worker exceptions).
-    if (url.pathname.startsWith('/api/')) {
-      return json({ error: 'Not found', path: url.pathname }, 404);
-    }
-    return env.ASSETS.fetch(request);
   },
 };

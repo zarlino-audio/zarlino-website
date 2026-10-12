@@ -12,6 +12,11 @@ dist
 dist-ssr
 .astro
 *.local
+.wrangler
+.wrangler-dry-run
+
+# Local dev secrets (wrangler dev). Real secrets belong in Worker secrets.
+.dev.vars
 
 # Editor directories and files
 .vscode/*

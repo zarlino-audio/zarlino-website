@@ -1,22 +1,22 @@
-name: Post-Deploy Gate (1101 acceptance A1-A4)
+name: Post-Deploy Acceptance Gate
 
-# Path-agnostic 1101 acceptance set wired as the POST-DEPLOY regression gate.
-# REPLACES #12's falsified survivor list. #12 queried only / and /plugins/ - two
-# 200s - and falsely PASSED while /about, /contact, /shop and /sitemap.xml were
-# still returning 500 from the edge.
+# PRODUCTION VERIFICATION — the authoritative external acceptance of
+# https://zarlinoaudio.com. This is a SEPARATE workflow from the deploy on
+# purpose (see deploy.yml):
 #
-# The gate script is scripts/post-deploy-check.mjs. Exit codes:
-#   0 = PASS           A1-A4 hold AND every route identical in 3 sweeps
-#   1 = FAIL           one or more of A1/A2/A3 failed
-#   3 = BLOCKED        A4 unsatisfied (NO DEPLOY => NO FIX) - surfaced distinctly
-#   4 = NON_DETERMINATE a route differed between sweeps (serving flap)
+#   BUILD SUCCESS  != DEPLOY SUCCESS != PRODUCTION VERIFIED
 #
-# Triggers
-#   - workflow_run: fires only after "Deploy to Cloudflare Workers" completes
-#     SUCCESSFULLY on main, so probes run against the freshly deployed artifact.
-#   - schedule: nightly safety sweep (catches drift with NO deploy) - and such a
-#     run is expected to be BLOCKED unless a fresh deploy exists for A4.
-#   - workflow_dispatch: manual, with an optional BASE_URL override.
+#   - workflow_run: fires after "Deploy to Cloudflare Workers" COMPLETES
+#     SUCCESSFULLY on main, so probes run against the freshly deployed build.
+#     The triggering run's head_sha is the INTENDED production SHA; the gate
+#     requires /api/health on production to report exactly that commit, or the
+#     verdict is PRODUCTION_DRIFT (never a pass).
+#   - schedule: nightly safety sweep against current main (github.sha). Catches
+#     drift, serving flaps and outages with NO deploy involved.
+#   - workflow_dispatch: manual run; expected_sha defaults to the selected ref.
+#
+# Exit codes from scripts/post-deploy-check.mjs:
+#   0 VERIFIED · 1 FAILED · 3 DRIFT/UNKNOWN · 4 NON_DETERMINATE
 
 on:
   workflow_run:
@@ -32,49 +32,47 @@ on:
         description: "Base URL to probe (default https://zarlinoaudio.com)"
         required: false
         default: "https://zarlinoaudio.com"
+      expected_sha:
+        description: "Git SHA production must report (default: current ref)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
-  group: post-deploy-gate-${{ github.event.workflow_run.head_branch || 'manual' }}
+  group: post-deploy-acceptance
   cancel-in-progress: false
 
 jobs:
-  gate:
-    name: A1-A4 acceptance gate
-    # Only run for a SUCCESSFUL triggering deploy. A failed deploy is not a fix.
+  accept:
+    name: Production acceptance
+    # Only verify a deploy that actually completed successfully; a failed
+    # deploy is a deployment failure, not a production regression.
     if: >
       github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     env:
-      # BASE_URL may be overridden by workflow_dispatch input; the gate defaults
-      # to https://zarlinoaudio.com.
       BASE_URL: ${{ github.event.inputs.base_url || 'https://zarlinoaudio.com' }}
+      # Intended production identity:
+      #  - workflow_run: the commit the deploy built (head_sha)
+      #  - schedule/dispatch: the checked-out ref's SHA (github.sha = main HEAD)
+      EXPECTED_SHA: ${{ github.event.inputs.expected_sha || github.event.workflow_run.head_sha || github.sha }}
+      EXPECTED_RUN_ID: ${{ github.event.workflow_run.id || '' }}
       REQUEST_TIMEOUT_MS: "15000"
-      # A4 provenance precondition floor (NO DEPLOY => NO FIX)
-      PROVENANCE_FLOOR: "2026-09-08T11:23:35Z"
-      GATE_WORKFLOW: "Deploy to Cloudflare Workers"
-      GATE_WORKFLOW_BRANCH: "main"
-      GATE_WORKFLOW_FILE: "deploy.yml"
-      GATE_REPO: ${{ github.repository }}
+      IDENTITY_WAIT_MS: "60000"
       # Flap rule: a route may only be PASS/FAIL after 3 identical sweeps.
       FLAP_CONSECUTIVE_N: "3"
       SWEEP_DELAY_MS: "5000"
-      # Unauthenticated GitHub API is rate-limited (60/hr); use the run token.
-      GATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout
+      - name: Checkout (the deployed tree)
         uses: actions/checkout@v4
         with:
-          # check out the branch that the triggering deploy built, falling back
-          # to the default branch for schedule/manual runs
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Set up Node
@@ -82,12 +80,10 @@ jobs:
         with:
           node-version: 22
 
-      # -------------------------------------------------------------------
-      # THE GATE. Capture the exit code so we can ALWAYS upload the
-      # acceptance record, then re-exit with it so the job fails loudly on
-      # FAIL (1), BLOCKED (3) and NON_DETERMINATE (4).
-      # -------------------------------------------------------------------
-      - name: Run post-deploy gate (A1-A4)
+      # THE GATE. Capture the exit code so the acceptance record can ALWAYS be
+      # uploaded, then re-exit with it so the job fails loudly on any non-
+      # VERIFIED verdict.
+      - name: Run acceptance gate (contract + production identity)
         id: gate
         shell: bash
         run: |
@@ -103,62 +99,51 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## Post-Deploy Gate (1101 acceptance A1-A4)"
+            echo "## Post-Deploy Acceptance Gate"
             echo ""
             echo "| field | value |"
             echo "|---|---|"
             echo "| BASE_URL | \`${{ env.BASE_URL }}\` |"
+            echo "| expected SHA | \`${{ env.EXPECTED_SHA }}\` |"
             echo "| exit code | \`${{ steps.gate.outputs.exit_code }}\` |"
-            echo "| overall | see acceptance record artifact |"
             echo ""
             echo '```'
-            tail -n 40 gate-output.txt || true
+            tail -n 30 gate-output.txt || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # -------------------------------------------------------------------
-      # ACCEPTANCE RECORD - the citable artifact for #19/#21/#30/#31.
-      # -------------------------------------------------------------------
+      # ACCEPTANCE RECORD — the citable artifact: intended SHA, observed
+      # production SHA, sweep timestamps, per-route results, verdict.
       - name: Upload acceptance record
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: post-deploy-check-acceptance
+          name: post-deploy-acceptance
           if-no-files-found: warn
           retention-days: 90
           path: |
             scripts/.post-deploy-check-acceptance.json
             gate-output.txt
 
-      - name: Upload raw gate output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: post-deploy-check-output
-          if-no-files-found: warn
-          retention-days: 30
-          path: gate-output.txt
-
-      # Fail the workflow unless the gate genuinely PASSed (exit 0).
-      - name: Enforce gate verdict
+      - name: Enforce verdict
         shell: bash
         run: |
           code="${{ steps.gate.outputs.exit_code }}"
           if [ "$code" = "0" ]; then
-            echo "Gate PASSED (exit 0)."
+            echo "Acceptance VERIFIED (exit 0): production serves the contract and reports the intended SHA."
             exit 0
           fi
           if [ "$code" = "3" ]; then
-            echo "::error::Gate BLOCKED (exit 3): NO DEPLOY => NO FIX. The latest"
-            echo "::error::successful 'Deploy to Cloudflare Workers' on main is not"
-            echo "::error::strictly after the provenance floor. A green subset on an"
-            echo "::error::unchanged artifact is a FLAP, not a fix."
+            echo "::error::Gate verdict DRIFT/UNKNOWN (exit 3): production does not report the"
+            echo "::error::intended commit, or the intended commit was not provided. NO DEPLOY"
+            echo "::error::=> NO FIX: a green subset on an unchanged (or unidentified) artifact"
+            echo "::error::is never a pass."
             exit 3
           fi
           if [ "$code" = "4" ]; then
-            echo "::error::Gate NON_DETERMINATE (exit 4): a route differed between"
-            echo "::error::sweeps - serving flap. Never recorded as PASS."
+            echo "::error::Gate verdict NON_DETERMINATE (exit 4): observations diverged between"
+            echo "::error::sweeps — serving flap. Never recorded as VERIFIED."
             exit 4
           fi
-          echo "::error::Gate FAILED (exit $code): one or more A1/A2/A3 assertions failed."
+          echo "::error::Gate verdict FAILED (exit $code): one or more contract entries failed."
           exit "$code"

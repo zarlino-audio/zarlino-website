@@ -1,41 +1,55 @@
 name: Deploy to Cloudflare Workers
 
+# BUILD SUCCESS and DEPLOY UPLOAD are the only states this workflow owns.
+# It deliberately does NOT run the production acceptance gate: "wrangler
+# upload succeeded" means DEPLOYED, not VERIFIED, and a deploy must never
+# require its own success in order to pass its own verification (the old
+# in-workflow gate did exactly that and deadlocked every run — see
+# scripts/post-deploy-check.mjs header for the postmortem).
+#
+# Production verification (routes + production identity) is owned by
+# `.github/workflows/post-deploy-gate.yml`, which runs AFTER this workflow
+# completes successfully and probes the live deployment externally.
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-website-main
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Build Astro site
         run: npm run build
 
+      # Commit-provenance vars: /api/health reports these, and the acceptance
+      # gate requires production to report exactly the pushed SHA. A deploy
+      # without identity is not verifiable and will be classified DRIFT.
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-
-      # POST-DEPLOY REGRESSION GATE — GitHub issue #21, 10 assertions, exact
-      # status equality (=== 200 / === 404). Non-zero exit fails this job.
-      # This is deliberately NOT the weaker parent pair from #19 ("404 on an
-      # unknown path + 200 on every sitemap URL"): a gate built on #12's
-      # survivor list (/ and /plugins/) queries two 200s and falsely PASSES
-      # while /about, /contact and /sitemap.xml still return 500.
-      - name: Post-deploy regression gate (#21)
         env:
-          BASE_URL: https://zarlinoaudio.com
-          SETTLE_MS: '5000'
-          REQUEST_TIMEOUT_MS: '15000'
-        run: node scripts/post-deploy-check.mjs
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy \
+            --var DEPLOY_COMMIT:${GITHUB_SHA} \
+            --var DEPLOY_RUN_ID:${GITHUB_RUN_ID} \
+            --var DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)

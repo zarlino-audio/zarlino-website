@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "service": "zarlino-website",
+  "canonicalBaseUrl": "https://zarlinoaudio.com",
+  "source": "Derived from zarlino-website src/pages + public/ (Astro static output) and the Worker /api/* router (src/index.ts).",
+  "authority": "ONE authoritative route contract. The post-deploy acceptance gate (scripts/post-deploy-check.mjs), the Worker (/api/contract) and any monitoring MUST consume this file. Do not create parallel route lists; when the site architecture changes, change this file.",
+  "required": [
+    { "path": "/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/plugins/ztame/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/plugins/zscorch/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/checkout/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/admin/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/affiliates/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/affiliate-report/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/report/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/legal/license/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/legal/privacy/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/legal/refunds/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/legal/terms/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/real-estate/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/instance/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/robots.txt", "status": 200 },
+    { "path": "/sitemap-index.xml", "status": 200, "contentTypePrefix": ["application/xml", "text/xml"] },
+    { "path": "/sitemap-0.xml", "status": 200, "contentTypePrefix": ["application/xml", "text/xml"] }
+  ],
+  "redirect": [
+    { "path": "/plugins/ztame", "status": 307, "to": "/plugins/ztame/" },
+    { "path": "/plugins/zscorch", "status": 307, "to": "/plugins/zscorch/" },
+    { "path": "/checkout", "status": 307, "to": "/checkout/" },
+    { "path": "/admin", "status": 307, "to": "/admin/" }
+  ],
+  "absent": [
+    { "path": "/about", "status": 404 },
+    { "path": "/contact", "status": 404 },
+    { "path": "/shop", "status": 404 },
+    { "path": "/store", "status": 404 },
+    { "path": "/pricing", "status": 404 },
+    { "path": "/plugins", "status": 404 },
+    { "path": "/downloads", "status": 404 },
+    { "path": "/sitemap.xml", "status": 404 },
+    { "path": "/nonexistent-404-probe", "status": 404 }
+  ],
+  "api": [
+    { "path": "/api/health", "status": 200, "contentTypePrefix": ["application/json"], "identity": true },
+    { "path": "/api/ready", "status": 200, "contentTypePrefix": ["application/json"] },
+    { "path": "/api/contract", "status": 200, "contentTypePrefix": ["application/json"] },
+    { "path": "/api/license", "method": "GET", "status": 405, "contentTypePrefix": ["application/json"] },
+    { "path": "/api/unknown-probe", "status": 404, "contentTypePrefix": ["application/json"] }
+  ],
+  "artifacts": [
+    { "path": "/downloads/ZTame-v1.2.0-Windows-Installer.exe", "method": "HEAD", "status": 200 },
+    { "path": "/downloads/ZTame-v1.2.0-Windows-VST3.zip", "method": "HEAD", "status": 200 },
+    { "path": "/downloads/ZTame-v1.2.0-Windows-Standalone.zip", "method": "HEAD", "status": 200 },
+    { "path": "/downloads/ZScorch-v1.0.0-Windows-Installer.exe", "method": "HEAD", "status": 200 },
+    { "path": "/downloads/ZScorch-v1.0.0-Windows-VST3.zip", "method": "HEAD", "status": 200 },
+    { "path": "/downloads/ZScorch-v1.0.0-Windows-Standalone.zip", "method": "HEAD", "status": 200 }
+  ]
+}

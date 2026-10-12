@@ -1,110 +1,153 @@
 #!/usr/bin/env node
 /**
- * Zarlino Audio - POST-DEPLOY 1101 ACCEPTANCE GATE (path-agnostic A1-A4)
+ * Zarlino Audio — POST-DEPLOY ACCEPTANCE GATE (contract-driven)
  * =====================================================================
- * THE single, citable acceptance artifact for the Cloudflare 1101 outage.
- * REPLACES #12's falsified survivor list: #12 asserted only / and /plugins/
- * (two 200s) and FALSELY PASSED while /about, /contact and /shop still 500'd.
+ * THE authoritative external verification of https://zarlinoaudio.com.
  *
- * Sources (single source of truth - issue #30 §3 / #31 amendments A-D):
- *   #30  ADOPTED A1-A4 acceptance set
- *   #31  amendments A / B / C / D (B = provenance, C = flap)
- *   #21  spec (superseded 10-assertion set - weaker; see .#21-10-assert.bak)
- *   #19  spec (superseded parent pair)
+ * WHY THIS GATE EXISTS (history, 2026-10)
+ *   The site spent weeks answering Cloudflare 1101 (uncaught Worker exception)
+ *   on every path that was not a direct asset: /about, /contact, /shop,
+ *   /sitemap.xml and any unknown path. Earlier gates either queried a stale
+ *   route list from a superseded site architecture or wrapped a provenance
+ *   check that required the deploy workflow to ALREADY be successful — while
+ *   the same gate was the step that decided whether the deploy workflow was
+ *   successful. That circular condition made "successful deploy" unreachable
+ *   and production froze on an old artifact while every run reported failure.
  *
- * ASSERTIONS (exact status equality ONLY; assert(status < 500) is FORBIDDEN)
- *   A1 NEGATIVE  GET /nonexistent-404-probe MUST be EXACTLY 404.
- *                FAIL on any 2xx/3xx AND on any >= 500.
- *   A2 SITEMAP   GET /sitemap.xml MUST be EXACTLY 200 AND Content-Type MUST
- *                start with application/xml or text/xml. text/plain or an HTML
- *                fallback MUST FAIL (the "500 fixed into a 200 HTML page" trap).
- *   A3 REQUIRED  These TEN paths MUST ALL be EXACTLY 200 (one failure => whole
- *                set FAIL, non-zero exit):
- *                  /  /plugins  /plugins/  /checkout  /admin
- *                  /plugins/ztame  /plugins/zscorch  /about  /contact  /shop
- *   A4 PRECOND   NOT a probe. Latest SUCCESSFUL "Deploy to Cloudflare Workers"
- *                run on main must exist and run.created_at MUST be STRICTLY
- *                AFTER 2026-09-08T11:23:35Z, else BLOCKED (exit 3). NEVER PASS.
- *                NO DEPLOY => NO FIX.
+ * WHAT THIS GATE DOES NOW
+ *   - Consumes the ONE machine-readable route contract: routes/contract.json.
+ *     No route list is maintained here. Monitoring conforms to the product
+ *     architecture; the architecture does not bend to please monitoring.
+ *   - Asserts EXACT status equality only (=== 200 / === 404 / === 307 / === 405).
+ *     assert(status < 500) is FORBIDDEN and will throw if ever called.
+ *   - Verifies PRODUCTION IDENTITY: GET /api/health must report the git commit
+ *     that CI intended to deploy (EXPECTED_SHA from the workflow context).
+ *     Production SHA != intended SHA is PRODUCTION_DRIFT — never a pass.
+ *   - Runs the FULL sweep N=3 times (flap rule): a route may only be PASS/FAIL
+ *     if it classified identically in every sweep. Divergence => NON_DETERMINATE.
  *
- * FLAP RULE (issue #29 / #30 §3 / #31 C) - enforced in code
- *   Run the FULL sweep N=3 times (5s apart, bounded < 60s); classify each route
- *   per sweep; only a route IDENTICAL in all 3 sweeps may be PASS/FAIL. Any
- *   divergence => FLAP / NON_DETERMINATE, never PASS, non-zero exit. If A4 is
- *   unmet and A1/A2 read green, that green is FLAP => UNSATISFIED, not DONE.
+ * WHAT THIS GATE DOES *NOT* DO
+ *   - It does not require any previous deploy run to have succeeded, and it
+ *     does not query the GitHub API. Provenance is (a) the CI context that
+ *     invoked it (workflow_run head_sha / github.sha) and (b) the live
+ *     /api/health identity of the running deployment.
  *
- * PROVENANCE (issue #30 §3 / #31 B)
- *   The acceptance record embeds the deploy run id + SHA, the run created_at it
- *   was verified against, and the probe sweep timestamps; printed as JSON and
- *   written to a file for task evidence.
+ * USAGE   node scripts/post-deploy-check.mjs [BASE_URL]
+ * ENV     BASE_URL                 default https://zarlinoaudio.com
+ *         EXPECTED_SHA             intended production git SHA (CI provides)
+ *         EXPECTED_RUN_ID          intended deploy run id (informational)
+ *         SETTLE_MS                initial settle delay (default 0)
+ *         IDENTITY_WAIT_MS         max wait for production SHA to match (default 60000)
+ *         FLAP_CONSECUTIVE_N       sweeps required (default 3)
+ *         SWEEP_DELAY_MS           delay between sweeps (default 5000)
+ *         REQUEST_TIMEOUT_MS       per-request timeout (default 15000)
+ *         GATE_LOCAL               "1" = localhost mode (identity not asserted;
+ *                                  refused for non-localhost BASE_URL)
+ *         GATE_ARTIFACT_FILE       acceptance record path override
  *
- * USAGE: node scripts/post-deploy-check.mjs [BASE_URL]
- * EXIT : 0 PASS · 1 FAIL · 3 BLOCKED (A4) · 4 NON_DETERMINATE (flap)
- * Node 18+ global fetch only. No third-party deps. GET-only probes.
+ * EXIT    0 VERIFIED  ·  1 FAILED  ·  3 DRIFT / UNKNOWN  ·  4 NON_DETERMINATE
  */
-import { writeFileSync, mkdirSync } from 'node:fs';
+
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const GATE_REVISION = '3.0.0+#1101-acceptance-A1A4';
-
-/* ------------------------------------------------------------------ config */
-
-/** A3 - these ten paths must ALL be EXACTLY 200. */
-const REQUIRED_200 = [
-  '/',
-  '/plugins',
-  '/plugins/',
-  '/checkout',
-  '/admin',
-  '/plugins/ztame',
-  '/plugins/zscorch',
-  '/about',
-  '/contact',
-  '/shop',
-];
-
-/** A1 - this path must be EXACTLY 404. */
-const NEGATIVE_PATH = '/nonexistent-404-probe';
-
-/** A2 - this path must be EXACTLY 200 with an XML Content-Type. */
-const SITEMAP_PATH = '/sitemap.xml';
-
-/** A2 - the ONLY acceptable Content-Type prefixes (trap: text/plain|text/html). */
-const XML_CONTENT_TYPES = ['application/xml', 'text/xml'];
-
-const DEFAULT_BASE_URL = 'https://zarlinoaudio.com';
-const SETTLE_MS = Number(process.env.SETTLE_MS ?? 0);
-const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 15000);
-
-// Flap rule: N consecutive identical sweeps required; total bounded < 60s.
-const FLAP_CONSECUTIVE_N = Number(process.env.FLAP_CONSECUTIVE_N ?? 3);
-const SWEEP_DELAY_MS = Number(process.env.SWEEP_DELAY_MS ?? 5000);
-
-// A4 provenance
-const PROVENANCE_FLOOR = process.env.PROVENANCE_FLOOR || '2026-09-08T11:23:35Z';
-const GATE_WORKFLOW = process.env.GATE_WORKFLOW || 'Deploy to Cloudflare Workers';
-const GATE_WORKFLOW_BRANCH = process.env.GATE_WORKFLOW_BRANCH || 'main';
-const GATE_WORKFLOW_FILE = process.env.GATE_WORKFLOW_FILE || 'deploy.yml';
-const GATE_REPO =
-  process.env.GATE_REPO || process.env.GITHUB_REPOSITORY || 'zarlino-audio/zarlino-website';
-const GATE_TOKEN = process.env.GATE_TOKEN || process.env.GITHUB_TOKEN || '';
+const GATE_REVISION = '4.0.0+contract';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const CONTRACT_FILE = join(HERE, '..', 'routes', 'contract.json');
 const ARTIFACT_FILE =
   process.env.GATE_ARTIFACT_FILE || join(HERE, '.post-deploy-check-acceptance.json');
 
-/* Exit codes */
-const EXIT_PASS = 0;
-const EXIT_FAIL = 1;
-const EXIT_BLOCKED = 3;
+const EXIT_VERIFIED = 0;
+const EXIT_FAILED = 1;
+const EXIT_DRIFT = 3;
 const EXIT_NON_DETERMINATE = 4;
 
-/* ----------------------------------------------------------------- helpers */
+/* ------------------------------------------------------------------ config */
+
+const DEFAULT_BASE_URL = 'https://zarlinoaudio.com';
+const SETTLE_MS = Number(process.env.SETTLE_MS ?? 0);
+const IDENTITY_WAIT_MS = Number(process.env.IDENTITY_WAIT_MS ?? 60000);
+const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 15000);
+const FLAP_CONSECUTIVE_N = Number(process.env.FLAP_CONSECUTIVE_N ?? 3);
+const SWEEP_DELAY_MS = Number(process.env.SWEEP_DELAY_MS ?? 5000);
+
+const EXPECTED_SHA = (process.env.EXPECTED_SHA || '').trim();
+const EXPECTED_RUN_ID = (process.env.EXPECTED_RUN_ID || '').trim() || null;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const nowIso = () => new Date().toISOString();
 const log = (...a) => console.log(...a);
+
+function resolveBaseUrl() {
+  const arg = process.argv[2] && !process.argv[2].startsWith('-') ? process.argv[2] : null;
+  const raw = arg || process.env.BASE_URL || DEFAULT_BASE_URL;
+  try {
+    return new URL(raw).href.replace(/\/$/, '');
+  } catch {
+    console.error('FATAL: invalid base URL: ' + raw);
+    process.exit(EXIT_FAILED);
+  }
+}
+
+const BASE_URL = resolveBaseUrl();
+const IS_LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(new URL(BASE_URL).hostname);
+const LOCAL_MODE = process.env.GATE_LOCAL === '1' && IS_LOCAL_HOST;
+
+/* ---------------------------------------------------------------- contract */
+
+function loadContract() {
+  let raw;
+  try {
+    raw = JSON.parse(readFileSync(CONTRACT_FILE, 'utf8'));
+  } catch (err) {
+    console.error('FATAL: cannot read route contract at ' + CONTRACT_FILE + ': ' + err.message);
+    process.exit(EXIT_FAILED);
+  }
+  if (raw.schemaVersion !== 1 || raw.service !== 'zarlino-website') {
+    console.error('FATAL: unsupported contract schema (schemaVersion=' + raw.schemaVersion + ')');
+    process.exit(EXIT_FAILED);
+  }
+  const seen = new Set();
+  for (const cls of ['required', 'redirect', 'absent', 'api', 'artifacts']) {
+    if (!Array.isArray(raw[cls])) {
+      console.error('FATAL: contract missing array: ' + cls);
+      process.exit(EXIT_FAILED);
+    }
+    for (const e of raw[cls]) {
+      if (typeof e.path !== 'string' || !e.path.startsWith('/')) {
+        console.error('FATAL: invalid contract entry path in ' + cls + ': ' + JSON.stringify(e));
+        process.exit(EXIT_FAILED);
+      }
+      if (seen.has(e.path)) {
+        console.error('FATAL: duplicate contract path: ' + e.path);
+        process.exit(EXIT_FAILED);
+      }
+      seen.add(e.path);
+      if (typeof e.status !== 'number') {
+        console.error('FATAL: non-numeric expected status for ' + e.path);
+        process.exit(EXIT_FAILED);
+      }
+    }
+  }
+  return raw;
+}
+
+const contract = loadContract();
+
+/** Flatten the contract into probe entries with a class tag. */
+const ENTRIES = [
+  ...contract.required.map((e) => ({ cls: 'required', ...e })),
+  ...contract.redirect.map((e) => ({ cls: 'redirect', ...e })),
+  ...contract.absent.map((e) => ({ cls: 'absent', ...e })),
+  ...contract.api.map((e) => ({ cls: 'api', ...e })),
+  ...contract.artifacts.map((e) => ({ cls: 'artifacts', method: e.method || 'HEAD', ...e })),
+];
+
+const IDENTITY_ENTRY = ENTRIES.find((e) => e.cls === 'api' && e.identity === true) || null;
+
+/* -------------------------------------------------------------- assertions */
 
 /** Exact-equality assertion. Every assertion in this gate uses this. */
 function assertExact(actual, expected) {
@@ -112,34 +155,57 @@ function assertExact(actual, expected) {
 }
 
 /**
- * assert(status < 500) is FORBIDDEN by the #1101 acceptance set: it would let a
- * route that must be 200 silently become 404/3xx and still "pass". Present only
- * so this file documents the ban and any caller is audited at runtime.
+ * assert(status < 500) is FORBIDDEN: it would let a route that must be 200
+ * silently become 404/3xx and still "pass". Kept only so this file documents
+ * the ban and any caller is audited at runtime.
  */
 function assertUnder500() {
-  throw new Error('assert(status < 500) is FORBIDDEN by the #1101 acceptance set');
+  throw new Error('assert(status < 500) is FORBIDDEN by the acceptance standard');
+}
+
+/** Content-Type must START WITH one of the given prefixes (the HTML-fallback trap). */
+function contentTypeOk(probeResult, prefixes) {
+  if (!prefixes || prefixes.length === 0) return true;
+  const base = probeResult.contentTypeBase || '';
+  return prefixes.some((p) => base.startsWith(p));
 }
 
 /* -------------------------------------------------------------- HTTP layer */
 
-/** GET-only probe. Exact status capture; never a range comparison. */
-async function probe(baseUrl, path, timeoutMs = REQUEST_TIMEOUT_MS) {
-  const url = new URL(path, baseUrl).href;
+/** Probe with exact status capture. GET by default; HEAD for artifacts. */
+async function probe(path, method = 'GET', timeoutMs = REQUEST_TIMEOUT_MS) {
+  const url = new URL(path, BASE_URL).href;
   try {
     const res = await fetch(url, {
-      method: 'GET',
+      method,
       headers: { accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' },
-      redirect: 'follow',
+      redirect: 'manual',
       signal: AbortSignal.timeout(timeoutMs),
     });
-    const body = await res.text();
+    let body = '';
+    if (method !== 'HEAD') {
+      body = await res.text();
+    }
     const rawContentType = res.headers.get('content-type') || '';
+    let parsedJson = null;
+    let jsonError = null;
+    if (rawContentType.includes('application/json')) {
+      try {
+        parsedJson = JSON.parse(body);
+      } catch (err) {
+        jsonError = String((err && err.message) || err);
+      }
+    }
     return {
       url,
+      method,
       status: res.status, // EXACT number, never bucketed
+      location: res.headers.get('location') || null,
       contentType: rawContentType,
       contentTypeBase: rawContentType.split(';')[0].trim().toLowerCase(),
-      bytes: Buffer.byteLength(body, 'utf8'),
+      bytes: Buffer.byteLength(body || '', 'utf8'),
+      json: parsedJson,
+      jsonError,
       error: null,
     };
   } catch (err) {
@@ -149,10 +215,14 @@ async function probe(baseUrl, path, timeoutMs = REQUEST_TIMEOUT_MS) {
         : String((err && err.message) || err);
     return {
       url,
+      method,
       status: null,
+      location: null,
       contentType: '',
       contentTypeBase: '',
       bytes: 0,
+      json: null,
+      jsonError: null,
       error: message,
     };
   }
@@ -161,454 +231,257 @@ async function probe(baseUrl, path, timeoutMs = REQUEST_TIMEOUT_MS) {
 const statusLabel = (r) =>
   r.status === null ? 'NETWORK-ERROR(' + (r.error || '') + ')' : String(r.status);
 
-/** A2: Content-Type must START WITH application/xml or text/xml. */
-function isXmlContentType(r) {
-  const base = r.contentTypeBase || '';
-  return XML_CONTENT_TYPES.some((p) => base.startsWith(p));
-}
-
-/* ------------------------------------------------- A4 provenance (GitHub) */
-
-/**
- * Fetch the latest SUCCESSFUL run of GATE_WORKFLOW on GATE_WORKFLOW_BRANCH.
- * Uses the workflow-file endpoint (path-encoded) with status=success so the API
- * performs the filtering; we still defensively match name + conclusion.
- */
-async function fetchLatestSuccessfulDeploy() {
-  const api =
-    'https://api.github.com/repos/' +
-    GATE_REPO +
-    '/actions/workflows/' +
-    encodeURIComponent(GATE_WORKFLOW_FILE) +
-    '/runs?branch=' +
-    encodeURIComponent(GATE_WORKFLOW_BRANCH) +
-    '&status=success&per_page=20';
-
-  const headers = {
-    accept: 'application/vnd.github+json',
-    'user-agent': 'zarlino-post-deploy-check/' + GATE_REVISION,
-    'x-github-api-version': '2022-11-28',
-  };
-  if (GATE_TOKEN) headers.authorization = 'Bearer ' + GATE_TOKEN;
-
-  try {
-    const res = await fetch(api, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-    if (!res.ok) {
-      return {
-        ok: false,
-        error: 'GitHub API HTTP ' + res.status,
-        rateLimited: res.status === 403 || res.status === 429,
-        api,
-        run: null,
-      };
+/** Classify one contract observation against its requirement: green | red. */
+function classifyEntry(entry, r) {
+  if (!assertExact(r.status, entry.status)) return 'red';
+  if (entry.cls === 'required' || entry.cls === 'api') {
+    if (!contentTypeOk(r, entry.contentTypePrefix)) return 'red';
+    if (entry.cls === 'api' && (entry.contentTypePrefix || []).includes('application/json')) {
+      if (r.json === null) return 'red';
     }
-    const data = await res.json();
-    const runs = Array.isArray(data.workflow_runs) ? data.workflow_runs : [];
-    const matched = runs.filter(
-      (r) => r && r.name === GATE_WORKFLOW && r.conclusion === 'success'
-    );
-    return { ok: true, error: null, api, run: matched[0] || null, matched: matched.length };
-  } catch (err) {
-    return {
-      ok: false,
-      error: String((err && err.message) || err),
-      rateLimited: false,
-      api,
-      run: null,
-    };
   }
+  if (entry.cls === 'redirect') {
+    if (entry.to) {
+      const resolved = r.location ? new URL(r.location, BASE_URL).pathname : null;
+      if (resolved !== entry.to) return 'red';
+    }
+  }
+  return 'green';
 }
 
 /**
- * Evaluate A4. Returns a status of 'PASS' or 'BLOCKED'. It NEVER returns a
- * PASS-like result when the deploy is stale (created_at not strictly after the
- * floor) or missing: NO DEPLOY => NO FIX.
+ * FLAP RULE: a route may be reported PASS or FAIL only if it classified
+ * identically in EVERY sweep. Mixed => FLAP / NON_DETERMINATE — never PASS.
  */
-function evaluateProvenance(run) {
-  if (!run) {
-    return {
-      status: 'BLOCKED',
-      reason: 'no successful "' + GATE_WORKFLOW + '" run found on ' + GATE_WORKFLOW_BRANCH,
-      deploySha: null,
-      runAt: null,
-      runId: null,
-      created_at: null,
-      floor: PROVENANCE_FLOOR,
-      fresh: false,
-    };
-  }
-  const created = Date.parse(run.created_at);
-  const floor = Date.parse(PROVENANCE_FLOOR);
-  const after = Number.isFinite(created) && Number.isFinite(floor) && created > floor;
-  return {
-    status: after ? 'PASS' : 'BLOCKED',
-    reason: after
-      ? 'latest successful main deploy ' +
-        run.created_at +
-        ' is strictly after floor ' +
-        PROVENANCE_FLOOR
-      : 'latest successful main deploy ' +
-        (run.created_at || '(unknown)') +
-        ' is NOT strictly after floor ' +
-        PROVENANCE_FLOOR +
-        ' (stale artifact => NO DEPLOY => NO FIX)',
-    deploySha: run.head_sha || null,
-    runAt: run.created_at || null,
-    runId: run.id || null,
-    created_at: run.created_at || null,
-    floor: PROVENANCE_FLOOR,
-    fresh: after,
-  };
+function applyFlapRule(observations) {
+  const allGreen = observations.every((o) => o === 'green');
+  const allRed = observations.every((o) => o === 'red');
+  return { verdict: allGreen ? 'PASS' : allRed ? 'FAIL' : 'FLAP' };
 }
 
-/* ------------------------------------------------------ flap rule (in-run) */
-
-/**
- * Classify one route's observation for one sweep against its requirement.
- *  - 'green' : the route currently observes exactly its REQUIRED status
- *  - 'red'   : it does not (wrong status, or no response at all)
- * A2 additionally requires an XML Content-Type to be green.
- */
-function classifyRoute(route, r) {
-  if (route.assertion === 'A1') {
-    return assertExact(r.status, 404) ? 'green' : 'red';
-  }
-  if (route.assertion === 'A2') {
-    return assertExact(r.status, 200) && isXmlContentType(r) ? 'green' : 'red';
-  }
-  // A3
-  return assertExact(r.status, 200) ? 'green' : 'red';
-}
-
-/**
- * Apply the FLAP RULE across N sweeps.
- *
- * A route may be reported PASS or FAIL ONLY if it classified IDENTICALLY in
- * EVERY one of the N sweeps. If it classified differently in any sweep, verdict
- * is FLAP / NON_DETERMINATE - never PASS.
- *
- * Returns { verdict, observations:[...] } where verdict is one of:
- *   'PASS'  (all sweeps green)  · 'FAIL' (all sweeps red)
- *   'FLAP'  (mixed green/red across sweeps)
- */
-function applyFlapRule(route, perSweepObservations) {
-  const obs = perSweepObservations; // array of 'green'|'red', length N
-  const allGreen = obs.every((o) => o === 'green');
-  const allRed = obs.every((o) => o === 'red');
-  let verdict;
-  if (allGreen) verdict = 'PASS';
-  else if (allRed) verdict = 'FAIL';
-  else verdict = 'FLAP';
-  return { verdict, observations: obs, deterministic: allGreen || allRed };
-}
-
-/* ------------------------------------------------------------ route table */
-
-/** The full probe set, in assertion order. A4 is a precondition, not a probe. */
-const ROUTES = [
-  { assertion: 'A1', path: NEGATIVE_PATH, expected: 404, label: 'A1 NEGATIVE' },
-  { assertion: 'A2', path: SITEMAP_PATH, expected: 200, label: 'A2 SITEMAP' },
-  ...REQUIRED_200.map((p) => ({ assertion: 'A3', path: p, expected: 200, label: 'A3 REQUIRED-200' })),
-];
-
-/** Run ONE sweep of every route; returns Map<path, probeResult>. */
-async function runSweep(baseUrl) {
-  const results = new Map();
-  for (const route of ROUTES) {
-    // A2 needs the raw Content-Type; probe() captures it for every route.
-    const r = await probe(baseUrl, route.path);
-    results.set(route.path, r);
-  }
-  return results;
-}
-
-/**
- * Run the sweep N times (SWEEP_DELAY_MS apart) and flatten into per-route
- * observations. Bounded: N * (sweep time + delay) must stay < 60s.
- */
-async function runSweeps(baseUrl, n) {
-  const sweeps = [];
-  const startedAt = Date.now();
-  for (let i = 0; i < n; i++) {
-    const sweepStartedAt = nowIso();
-    const results = await runSweep(baseUrl);
-    sweeps.push({ index: i, at: sweepStartedAt, results });
-    if (i < n - 1 && SWEEP_DELAY_MS > 0) await sleep(SWEEP_DELAY_MS);
-  }
-  const elapsedMs = Date.now() - startedAt;
-  return { sweeps, elapsedMs };
-}
-
-/* ------------------------------------------------------------------- main */
-
-function resolveBaseUrl() {
-  const arg = process.argv[2] && !process.argv[2].startsWith('-') ? process.argv[2] : null;
-  const raw = arg || process.env.BASE_URL || DEFAULT_BASE_URL;
-  try {
-    return new URL(raw).href.replace(/\/$/, '');
-  } catch {
-    console.error('FATAL: invalid base URL: ' + raw);
-    process.exit(EXIT_FAIL);
-  }
-}
+/* -------------------------------------------------------------------- main */
 
 async function main() {
-  const baseUrl = resolveBaseUrl();
   const runStartedAt = nowIso();
-  const budgetStart = Date.now();
-
   log('=====================================================================');
-  log(' ZARLINO POST-DEPLOY 1101 ACCEPTANCE GATE  -  rev ' + GATE_REVISION);
+  log(' ZARLINO POST-DEPLOY ACCEPTANCE GATE  -  rev ' + GATE_REVISION);
   log('=====================================================================');
-  log(' base URL         : ' + baseUrl);
-  log(' started (UTC)    : ' + runStartedAt);
-  log(' provenance floor : ' + PROVENANCE_FLOOR + ' (run 34220441989)');
-  log(' flap rule        : ' + FLAP_CONSECUTIVE_N + ' consecutive identical sweeps');
-  log(' expected baseline: A1 FAIL, A2 FAIL, A3 FAIL, A4 BLOCKED => non-zero exit');
+  log(' base URL           : ' + BASE_URL);
+  log(' contract           : ' + CONTRACT_FILE + ' (schema v' + contract.schemaVersion + ')');
+  log(' expected SHA       : ' + (EXPECTED_SHA || '(none provided)'));
+  log(' expected run id    : ' + (EXPECTED_RUN_ID || '(none)'));
+  log(' identity required  : ' + (LOCAL_MODE ? 'NO (local mode)' : 'YES'));
+  log(' probe entries      : ' + ENTRIES.length + ' x ' + FLAP_CONSECUTIVE_N + ' sweeps');
+  log(' started (UTC)      : ' + runStartedAt);
   log('');
 
   if (SETTLE_MS > 0) await sleep(SETTLE_MS);
 
-  // ---- A4 precondition (fetched first: it is the provenance anchor) -------
-  log('-- A4 provenance precondition (NO DEPLOY => NO FIX) ------------------');
-  const fetched = await fetchLatestSuccessfulDeploy();
-  let a4;
-  if (!fetched.ok) {
-    a4 = evaluateProvenance(null);
-    a4.reason = 'could not query GitHub API: ' + fetched.error;
-    a4.error = fetched.error;
-    log('  [BLOCKED] A4 - ' + a4.reason);
+  // ---- identity settle: wait (bounded) for production to report EXPECTED_SHA
+  const identityRequired = !LOCAL_MODE;
+  const identityObservations = []; // commits observed in the settle window
+  if (identityRequired && EXPECTED_SHA && IDENTITY_ENTRY) {
+    const deadline = Date.now() + IDENTITY_WAIT_MS;
+    log('-- identity settle: waiting up to ' + IDENTITY_WAIT_MS + 'ms for /api/health commit === expected --');
+    for (;;) {
+      const r = await probe(IDENTITY_ENTRY.path);
+      const commit = r.json && typeof r.json.commit === 'string' ? r.json.commit : null;
+      if (commit) identityObservations.push(commit);
+      if (commit === EXPECTED_SHA) {
+        log('  [ok] production reports commit ' + commit);
+        break;
+      }
+      if (Date.now() >= deadline) {
+        log('  [WARN] production reports ' + (commit || statusLabel(r)) + ' — expected ' + EXPECTED_SHA +
+          ' (settle window expired; full sweeps follow)');
+        break;
+      }
+      await sleep(Math.min(5000, Math.max(1000, deadline - Date.now())));
+    }
+  } else if (identityRequired) {
+    log('-- identity settle skipped (no EXPECTED_SHA provided) — verdict cannot be VERIFIED --');
   } else {
-    a4 = evaluateProvenance(fetched.run);
-    log('  [' + (a4.status === 'PASS' ? 'PASS' : 'BLOCKED') + '] A4 - ' + a4.reason +
-      (a4.runId ? ' - run ' + a4.runId : '') +
-      (a4.deploySha ? ' - sha ' + String(a4.deploySha).slice(0, 10) : ''));
+    log('-- identity checks skipped (local mode) --');
   }
 
-  const deploySha = a4.deploySha || process.env.GATE_DEPLOY_SHA || process.env.GITHUB_SHA || null;
-
-  // ---- the sweeps --------------------------------------------------------
+  // ---- sweeps -------------------------------------------------------------
   log('');
-  log('-- sweeping ' + ROUTES.length + ' routes x ' + FLAP_CONSECUTIVE_N +
-    ' sweeps (' + SWEEP_DELAY_MS + 'ms apart) ------------------');
-  const { sweeps, elapsedMs } = await runSweeps(baseUrl, FLAP_CONSECUTIVE_N);
-
-  const sweepTimestamps = sweeps.map((s) => s.at);
-  log('  sweep timestamps: ' + sweepTimestamps.join(' , '));
-  log('  total sweep time : ' + elapsedMs + 'ms');
-  if (elapsedMs >= 60000) {
-    log('  [WARN] sweep budget exceeded 60s (' + elapsedMs + 'ms) - lower SWEEP_DELAY_MS');
+  log('-- sweeping ' + ENTRIES.length + ' contract entries x ' + FLAP_CONSECUTIVE_N +
+    ' sweeps (' + SWEEP_DELAY_MS + 'ms apart) --');
+  const sweeps = [];
+  const sweepStarted = Date.now();
+  for (let i = 0; i < FLAP_CONSECUTIVE_N; i++) {
+    const at = nowIso();
+    const results = new Map();
+    for (const entry of ENTRIES) {
+      results.set(entry.path, await probe(entry.path, entry.method || 'GET'));
+    }
+    sweeps.push({ index: i, at, results });
+    if (i < FLAP_CONSECUTIVE_N - 1 && SWEEP_DELAY_MS > 0) await sleep(SWEEP_DELAY_MS);
   }
+  const sweepElapsedMs = Date.now() - sweepStarted;
+  log('  sweep timestamps : ' + sweeps.map((s) => s.at).join(' , '));
+  log('  total sweep time : ' + sweepElapsedMs + 'ms');
 
-  // ---- per-route flap evaluation ----------------------------------------
-  const routeVerdicts = [];
-  for (const route of ROUTES) {
-    const perSweep = sweeps.map((s) => classifyRoute(route, s.results.get(route.path)));
-    const flap = applyFlapRule(route, perSweep);
-    const last = sweeps[sweeps.length - 1].results.get(route.path);
-    routeVerdicts.push({
-      assertion: route.assertion,
-      path: route.path,
-      expected: route.expected,
-      expectedContentType: route.assertion === 'A2' ? XML_CONTENT_TYPES : undefined,
-      perSweep,
-      verdict: flap.verdict,
-      deterministic: flap.deterministic,
+  // ---- per-entry flap evaluation -----------------------------------------
+  const verdicts = [];
+  for (const entry of ENTRIES) {
+    const observations = sweeps.map((s) => classifyEntry(entry, s.results.get(entry.path)));
+    const { verdict } = applyFlapRule(observations);
+    const last = sweeps[sweeps.length - 1].results.get(entry.path);
+    verdicts.push({
+      cls: entry.cls,
+      path: entry.path,
+      method: entry.method || 'GET',
+      expected: entry.status,
+      expectedTo: entry.to,
+      observations,
+      verdict,
       lastStatus: last.status,
+      lastLocation: last.location,
       lastContentType: last.contentType,
-      lastBytes: last.bytes,
       lastError: last.error,
     });
   }
 
-  const anyFlap = routeVerdicts.some((v) => v.verdict === 'FLAP');
-
-  const byAssertion = (id) => routeVerdicts.filter((v) => v.assertion === id);
-  const a1v = byAssertion('A1')[0];
-  const a2v = byAssertion('A2')[0];
-  const a3vs = byAssertion('A3');
-
-  const a1Ok = a1v.verdict === 'PASS';
-  const a2Ok = a2v.verdict === 'PASS';
-  const a3Ok = a3vs.every((v) => v.verdict === 'PASS');
-  const a4Ok = a4.status === 'PASS';
-
-  // ---- print per-route verdicts -----------------------------------------
-  log('');
-  log('-- per-route verdicts (only identical-in-all-' + FLAP_CONSECUTIVE_N +
-    ' routes are PASS/FAIL) ----');
-  for (const v of routeVerdicts) {
-    const statuses = v.perSweep.map((o) => (o === 'green' ? 'G' : 'R')).join('');
-    const tag =
-      v.verdict === 'PASS' ? 'PASS' : v.verdict === 'FAIL' ? 'FAIL' : 'FLAP/NON_DETERMINATE';
-    log('   ' + v.assertion + ' ' + v.path.padEnd(26) +
-      ' sweeps=' + statuses +
-      ' observed=' + v.perSweep.join(',') +
+  for (const v of verdicts) {
+    const tags = v.observations.map((o) => (o === 'green' ? 'G' : 'R')).join('');
+    const tag = v.verdict === 'PASS' ? 'PASS' : v.verdict === 'FAIL' ? 'FAIL' : 'FLAP/NON_DETERMINATE';
+    log('   ' + v.cls.padEnd(9) + ' ' + v.path.padEnd(52) + ' sweeps=' + tags +
+      ' expected=' + v.expected + (v.expectedTo ? ' -> ' + v.expectedTo : '') +
       ' -> ' + tag +
-      (v.verdict === 'FAIL' ? ' (last ' + statusLabel({ status: v.lastStatus, error: v.lastError }) +
-        (v.assertion === 'A2' ? ', ct=' + (v.lastContentType || '(none)') : '') + ')' : ''));
+      (v.verdict === 'FAIL'
+        ? ' (last ' + statusLabel({ status: v.lastStatus, error: v.lastError }) +
+          (v.lastLocation ? ', loc=' + v.lastLocation : '') + ')'
+        : ''));
   }
 
-  // ---- amendment C: green-on-stale is FLAP, not a fix -------------------
-  // If A4 is unmet and any of A1/A2 reads green, that green is a serving flap on
-  // an unchanged artifact => UNSATISFIED, never DONE/PASS.
-  const greenOnStale = [];
-  if (!a4Ok) {
-    for (const v of [a1v, a2v]) {
-      if (v.verdict === 'PASS') {
-        greenOnStale.push(v.path);
-        v.verdict = 'FLAP'; // reclassify: unchanged artifact => serving flap
-        v.deterministic = false;
-        v.staleFlap = true;
-      }
+  const anyFlap = verdicts.some((v) => v.verdict === 'FLAP');
+  const anyRed = verdicts.some((v) => v.verdict === 'FAIL');
+
+  // ---- identity verdict ---------------------------------------------------
+  const identityLast = IDENTITY_ENTRY
+    ? sweeps[sweeps.length - 1].results.get(IDENTITY_ENTRY.path)
+    : null;
+  const productionSha =
+    identityLast && identityLast.json && typeof identityLast.json.commit === 'string'
+      ? identityLast.json.commit
+      : null;
+  const productionRunId =
+    identityLast && identityLast.json && typeof identityLast.json.runId === 'string'
+      ? identityLast.json.runId
+      : null;
+  const productionDeployedAt =
+    identityLast && identityLast.json && typeof identityLast.json.deployedAt === 'string'
+      ? identityLast.json.deployedAt
+      : null;
+
+  const allObservedCommits = new Set();
+  for (const s of sweeps) {
+    if (!IDENTITY_ENTRY) break;
+    const r = s.results.get(IDENTITY_ENTRY.path);
+    if (r) {
+      allObservedCommits.add(
+        r.json && typeof r.json.commit === 'string' ? r.json.commit : '<unreadable>',
+      );
     }
   }
+  for (const c of identityObservations) allObservedCommits.add(c);
 
-  // ---- overall verdict --------------------------------------------------
-  let overall;
-  let exitCode;
-  if (anyFlap) {
-    overall = 'NON_DETERMINATE';
-    exitCode = EXIT_NON_DETERMINATE;
-  } else if (!a4Ok) {
-    // NO DEPLOY => NO FIX: A4 BLOCKED always wins over a green probe subset.
-    overall = 'BLOCKED';
-    exitCode = EXIT_BLOCKED;
-  } else if (a1Ok && a2Ok && a3Ok && a4Ok) {
-    overall = 'PASS';
-    exitCode = EXIT_PASS;
+  let identityStatus; // ok | local | unknown | drift | flap
+  let identityReason;
+  if (LOCAL_MODE) {
+    identityStatus = 'local';
+    identityReason = 'local mode: identity not asserted';
+  } else if (anyFlap || allObservedCommits.size > 1) {
+    identityStatus = 'flap';
+    identityReason =
+      'production identity changed between observations: ' + [...allObservedCommits].join(', ');
+  } else if (!EXPECTED_SHA) {
+    identityStatus = 'unknown';
+    identityReason = 'no EXPECTED_SHA provided — intended production identity unknown';
+  } else if (productionSha === EXPECTED_SHA) {
+    identityStatus = 'ok';
+    identityReason = 'production /api/health commit matches the intended deploy';
   } else {
-    overall = 'FAIL';
-    exitCode = EXIT_FAIL;
+    identityStatus = 'drift';
+    identityReason =
+      'production commit ' + (productionSha || '(unreadable)') + ' != intended ' + EXPECTED_SHA;
   }
 
-  // Note: when a4Ok is false but A1/A2/A3 are also red (the frozen baseline),
-  // the gate is BLOCKED (exit 3) - the distinct A4 code - while still printing
-  // the per-assertion FAIL/BLOCKED verdicts below.
+  // ---- overall verdict ----------------------------------------------------
+  let overall;
+  let exitCode;
+  if (anyFlap || identityStatus === 'flap') {
+    overall = 'NON_DETERMINATE';
+    exitCode = EXIT_NON_DETERMINATE;
+  } else if (anyRed) {
+    overall = 'FAILED';
+    exitCode = EXIT_FAILED;
+  } else if (identityStatus === 'drift') {
+    overall = 'PRODUCTION_DRIFT';
+    exitCode = EXIT_DRIFT;
+  } else if (identityStatus === 'unknown') {
+    overall = 'UNKNOWN';
+    exitCode = EXIT_DRIFT;
+  } else {
+    overall = 'VERIFIED';
+    exitCode = EXIT_VERIFIED;
+  }
 
-  const a3Failed = a3vs.filter((v) => v.verdict !== 'PASS').map((v) => v.path);
+  const failing = verdicts.filter((v) => v.verdict !== 'PASS').map((v) => v.cls + ':' + v.path);
 
   log('');
   log('=====================================================================');
   log(' RESULT');
   log('---------------------------------------------------------------------');
-  log(' A1 NEGATIVE    : ' + (a1v.verdict === 'PASS' ? 'PASS' : a1v.verdict) +
-    '  (' + NEGATIVE_PATH + ' = ' +
-    statusLabel({ status: a1v.lastStatus, error: a1v.lastError }) + ', required EXACTLY 404)');
-  log(' A2 SITEMAP     : ' + (a2v.verdict === 'PASS' ? 'PASS' : a2v.verdict) +
-    '  (' + SITEMAP_PATH + ' = ' +
-    statusLabel({ status: a2v.lastStatus, error: a2v.lastError }) +
-    ', ct=' + (a2v.lastContentType || '(none)') + ', required 200 + application/xml|text/xml)');
-  log(' A3 REQUIRED-200: ' + (a3Ok ? 'PASS' : 'FAIL') +
-    (a3Ok ? '  (all ten exactly 200)' : '  failing {' + a3Failed.join(', ') + '}'));
-  log(' A4 PROVENANCE  : ' + (a4Ok ? 'PASS' : 'BLOCKED') +
-    '  (floor ' + PROVENANCE_FLOOR + ', latest success ' + (a4.created_at || 'n/a') +
-    (a4.runId ? ', run ' + a4.runId : '') + ')');
-  if (greenOnStale.length) {
-    log(' FLAP NOTE      : green-on-stale reclassified as FLAP -> ' + greenOnStale.join(', ') +
-      ' (unchanged artifact => serving flap, NOT a fix)');
-  }
+  log(' production SHA   : ' + (productionSha || '(unreadable)'));
+  log(' expected SHA     : ' + (EXPECTED_SHA || '(none)'));
+  log(' identity         : ' + identityStatus.toUpperCase() + ' — ' + identityReason);
+  log(' failing entries  : ' + (failing.length ? failing.join(', ') : '(none)'));
   log('---------------------------------------------------------------------');
-  log(' OVERALL STATUS : ' + overall + (overall === 'PASS' ? ' (DONE)' : ' (NOT DONE)'));
-  log(' EXIT CODE      : ' + exitCode);
-  if (exitCode !== 0) {
-    log(' -> gate FAILS: the outage is NOT accepted as fixed. NO DEPLOY => NO FIX.');
-  }
+  log(' OVERALL STATUS   : ' + overall);
+  log(' EXIT CODE        : ' + exitCode);
   log('=====================================================================');
 
-  // ---- acceptance record (citable provenance) ---------------------------
-  const acceptedProbeSweepTimestamps = sweepTimestamps;
+  // ---- acceptance record (citable provenance) -----------------------------
   const record = {
     gate: 'post-deploy-check',
     revision: GATE_REVISION,
-    spec: 'issue #30 §3 (ADOPTED A1-A4) + #31 amendments; supersedes #12 survivor list',
-    baseUrl,
-    // (a) accepted deploy run id + SHA
-    deployRunId: a4.runId || null,
-    deploySha: deploySha,
+    contract: { file: 'routes/contract.json', schemaVersion: contract.schemaVersion },
+    baseUrl: BASE_URL,
+    localMode: LOCAL_MODE,
+    // (a) intended deploy
+    expectedSha: EXPECTED_SHA || null,
+    expectedRunId: EXPECTED_RUN_ID,
     githubSha: process.env.GITHUB_SHA || null,
     githubRunId: process.env.GITHUB_RUN_ID || null,
-    // (b) the run created_at timestamp this acceptance was verified against
-    verifiedAgainstRunCreatedAt: a4.created_at || null,
-    verifiedFloor: PROVENANCE_FLOOR,
-    artifactFresh: a4.fresh === true,
-    // (c) the probe sweep timestamps
-    probeSweepTimestamps: acceptedProbeSweepTimestamps,
-    sweepCount: sweeps.length,
+    // (b) observed production identity
+    productionSha,
+    productionRunId,
+    productionDeployedAt,
+    // (c) observations
     runStartedAt,
     runFinishedAt: nowIso(),
-    sweepElapsedMs: elapsedMs,
+    sweepTimestamps: sweeps.map((s) => s.at),
+    sweepCount: sweeps.length,
+    sweepElapsedMs,
+    identity: { status: identityStatus, reason: identityReason },
     overallStatus: overall,
     exitCode,
-    assertions: {
-      A1: {
-        pass: a1v.verdict === 'PASS',
-        verdict: a1v.verdict,
-        path: NEGATIVE_PATH,
-        required: 404,
-        perSweepStatuses: a1v.perSweep,
-        lastStatus: a1v.lastStatus,
-      },
-      A2: {
-        pass: a2v.verdict === 'PASS',
-        verdict: a2v.verdict,
-        path: SITEMAP_PATH,
-        required: 200,
-        requiredContentType: XML_CONTENT_TYPES,
-        perSweepStatuses: a2v.perSweep,
-        lastStatus: a2v.lastStatus,
-        lastContentType: a2v.lastContentType,
-      },
-      A3: {
-        pass: a3Ok,
-        required: 200,
-        failing: a3Failed,
-        perPath: a3vs.map((v) => ({
-          path: v.path,
-          verdict: v.verdict,
-          perSweepStatuses: v.perSweep,
-          lastStatus: v.lastStatus,
-        })),
-      },
-      A4: {
-        pass: a4Ok,
-        status: a4.status,
-        reason: a4.reason,
-        latestSuccessRunAt: a4.created_at,
-        runId: a4.runId,
-        deploySha: a4.deploySha,
-        floor: PROVENANCE_FLOOR,
-        fresh: a4.fresh,
-        error: a4.error || null,
-      },
-    },
-    flapRule: {
-      consecutiveThreshold: FLAP_CONSECUTIVE_N,
-      anyFlap,
-      greenOnStaleReclassified: greenOnStale,
-      routes: routeVerdicts.map((v) => ({
-        assertion: v.assertion,
-        path: v.path,
-        verdict: v.verdict,
-        deterministic: v.deterministic,
-        perSweepStatuses: v.perSweep,
-      })),
-    },
-    perRoute: Object.fromEntries(
-      routeVerdicts.map((v) => [
-        v.path,
-        {
-          assertion: v.assertion,
-          expected: v.expected,
-          verdict: v.verdict,
-          observations: v.perSweep,
-          lastStatus: v.lastStatus,
-          lastContentType: v.lastContentType,
-          lastBytes: v.lastBytes,
-          lastError: v.lastError,
-        },
-      ])
-    ),
+    // (d) per-entry results
+    entries: verdicts.map((v) => ({
+      cls: v.cls,
+      path: v.path,
+      method: v.method,
+      expected: v.expected,
+      expectedTo: v.expectedTo || null,
+      verdict: v.verdict,
+      perSweepStatuses: v.observations,
+      lastStatus: v.lastStatus,
+      lastContentType: v.lastContentType,
+      lastError: v.lastError,
+    })),
   };
 
   try {
@@ -628,5 +501,5 @@ async function main() {
 
 main().catch((err) => {
   console.error('FATAL: ' + ((err && err.stack) || err));
-  process.exit(EXIT_FAIL);
+  process.exit(EXIT_FAILED);
 });

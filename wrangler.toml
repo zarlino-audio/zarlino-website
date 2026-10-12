@@ -2,9 +2,27 @@ name = "zarlino-website"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 
+# READ BEFORE EDITING — this block is load-bearing for the 1101 fix.
+#
+# binding = "ASSETS"
+#   Without it, `env.ASSETS` is UNDEFINED inside the Worker. The Worker used to
+#   crash (TypeError -> Cloudflare 1101) on every path that is not a direct
+#   asset, including every unknown path. The binding is what makes
+#   `env.ASSETS.fetch()` (and the readiness probe) work.
+#
+# run_worker_first = ["/api/*"]
+#   Page requests are served by the platform asset router and NEVER reach the
+#   Worker — an unknown page therefore returns the custom 404 page (HTTP 404),
+#   structurally incapable of producing a 1101. The Worker only runs for
+#   /api/*, which is the entire dynamic surface (see routes/contract.json).
+#
+# not_found_handling = "404-page"
+#   Unknown page paths are answered with /404.html and an exact HTTP 404.
 [assets]
 directory = "./dist"
 not_found_handling = "404-page"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 [vars]
 # Token for the /admin dashboard (GET /api/admin/stats). Rotate to a
