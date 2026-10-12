@@ -38,6 +38,8 @@
  *         EXPECTED_RUN_ID          intended deploy run id (informational)
  *         SETTLE_MS                initial settle delay (default 0)
  *         IDENTITY_WAIT_MS         max wait for production SHA to match (default 60000)
+ *         GATE_WARMUP_MS           max wait for every contract entry to be seen
+ *                                  green once, before sweeps (default 60000; 0 = off)
  *         FLAP_CONSECUTIVE_N       sweeps required (default 3)
  *         SWEEP_DELAY_MS           delay between sweeps (default 5000)
  *         REQUEST_TIMEOUT_MS       per-request timeout (default 15000)
@@ -52,7 +54,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const GATE_REVISION = '4.0.0+contract';
+const GATE_REVISION = '4.1.0+contract';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONTRACT_FILE = join(HERE, '..', 'routes', 'contract.json');
@@ -71,6 +73,7 @@ const EXIT_NON_DETERMINATE = 4;
 const DEFAULT_BASE_URL = 'https://zarlinoaudio.com';
 const SETTLE_MS = Number(process.env.SETTLE_MS ?? 0);
 const IDENTITY_WAIT_MS = Number(process.env.IDENTITY_WAIT_MS ?? 60000);
+const WARMUP_MS = Number(process.env.GATE_WARMUP_MS ?? 60000);
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 15000);
 const FLAP_CONSECUTIVE_N = Number(process.env.FLAP_CONSECUTIVE_N ?? 3);
 const SWEEP_DELAY_MS = Number(process.env.SWEEP_DELAY_MS ?? 5000);
@@ -306,6 +309,42 @@ async function main() {
     log('-- identity checks skipped (local mode) --');
   }
 
+  // ---- route warm-up -----------------------------------------------------
+  //
+  // A deploy that adds or changes routes is not necessarily live at every edge
+  // the instant the deploy workflow reports success: the first probe after a
+  // routing change can still be answered by the previous worker/asset config,
+  // which would classify a healthy route as red and force a spurious
+  // FLAP/NON_DETERMINATE verdict (seen 2026-10-12 on the release aliases).
+  //
+  // Warm-up probes every entry until each has been observed GREEN once, bounded
+  // by GATE_WARMUP_MS. It asserts nothing and cannot turn a broken deploy into a
+  // pass: the 3-sweep flap rule below remains the verdict, and if an entry is
+  // still not green when the window expires the sweeps report it honestly.
+  if (WARMUP_MS > 0) {
+    log('');
+    log('-- route warm-up: waiting up to ' + WARMUP_MS +
+      'ms for every entry to be observed green once --');
+    const warmDeadline = Date.now() + WARMUP_MS;
+    const warmPending = new Set(ENTRIES.map((e) => e.path));
+    let warmPasses = 0;
+    while (warmPending.size > 0 && Date.now() < warmDeadline) {
+      for (const entry of ENTRIES) {
+        if (!warmPending.has(entry.path)) continue;
+        const r = await probe(entry.path, entry.method || 'GET');
+        if (classifyEntry(entry, r) === 'green') warmPending.delete(entry.path);
+      }
+      warmPasses++;
+      if (warmPending.size > 0 && Date.now() < warmDeadline) {
+        await sleep(Math.min(5000, Math.max(1000, warmDeadline - Date.now())));
+      }
+    }
+    log(warmPending.size === 0
+      ? '  [ok] all ' + ENTRIES.length + ' entries observed green after ' + warmPasses + ' warm-up pass(es)'
+      : '  [WARN] ' + warmPending.size + ' entry(ies) not green within the warm-up window: ' +
+        [...warmPending].join(', ') + ' (sweeps decide)');
+  }
+
   // ---- sweeps -------------------------------------------------------------
   log('');
   log('-- sweeping ' + ENTRIES.length + ' contract entries x ' + FLAP_CONSECUTIVE_N +
@@ -388,7 +427,11 @@ async function main() {
       );
     }
   }
-  for (const c of identityObservations) allObservedCommits.add(c);
+  // NOTE: commits seen during the identity SETTLE window are deliberately NOT
+  // part of this set. Settle exists to absorb deploy rollout: seeing the
+  // previous commit there is the deploy becoming live, not instability. Only
+  // the recorded sweeps may disagree with each other (that IS drift/flap).
+  // The settle history is kept in the acceptance record for provenance.
 
   let identityStatus; // ok | local | unknown | drift | flap
   let identityReason;
@@ -462,9 +505,12 @@ async function main() {
     productionSha,
     productionRunId,
     productionDeployedAt,
+    identitySettleObservations: identityObservations,
+    identitySweepObservations: [...allObservedCommits],
     // (c) observations
     runStartedAt,
     runFinishedAt: nowIso(),
+    warmupWindowMs: WARMUP_MS,
     sweepTimestamps: sweeps.map((s) => s.at),
     sweepCount: sweeps.length,
     sweepElapsedMs,

@@ -51,6 +51,10 @@ push to main
   `0 VERIFIED · 1 FAILED · 3 DRIFT/UNKNOWN · 4 NON_DETERMINATE`. Nightly at
   03:17 UTC it also runs as a drift/outage sweep with no deploy involved.
   The acceptance record is uploaded as the `post-deploy-acceptance` artifact.
+  Before the sweeps it warms up (bounded, `GATE_WARMUP_MS`, default 60s): it
+  waits until every entry has been seen green once, so a route that a fresh
+  deploy has not yet propagated to every edge cannot masquerade as a FLAP.
+  Warm-up asserts nothing — the 3-sweep rule still decides the verdict.
 - `routes/contract.json` is the ONE authoritative route contract. The gate, the
   Worker (`GET /api/contract`) and monitoring all consume it. Never maintain a
   second route list — when the site changes, change the contract.
