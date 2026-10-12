@@ -17,7 +17,7 @@ const plugins: {
     description:
       'Zero-latency automatic resonance suppressor — per-band dynamic reduction with FFT-based peak detection, selectivity gating, a draggable focus band, Delta audition, and Mid/Side processing.',
     price: 49,
-    image: '/images/ztame-ui-1.2.png',
+    image: '/releases/ztame/latest/screenshot.png',
     badge: 'Public Beta',
     priceLabel: 'FREE',
   },

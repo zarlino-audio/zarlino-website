@@ -96,4 +96,54 @@ entries green.
   required capabilities are missing.
 - `GET /api/contract` — the canonical route contract as JSON.
 
+## Plugin release assets (private R2, served by the Worker)
+
+Plugin downloads, the canonical screenshot and every demo/listening clip are
+**not** stored in this repo or in `public/`. They come from a verified release
+published to the private R2 bucket `zarlino-releases` by the plugin release
+gate (`zarlino-audio/Zarlino` → `.github/workflows/ztame-release-gate.yml` →
+`tools/release/publish-release.mjs`), which refuses to publish anything whose
+manifest status is not `verified` and re-downloads every object to compare
+SHA-256 hashes before it writes the pointer.
+
+Bucket layout:
+
+```
+releases/<product>/latest.json                                  ← publish pointer (the rollback handle)
+releases/<product>/<version>/<full-commit>/release-manifest.json
+releases/<product>/<version>/<full-commit>/<artifact files>     ← installer / VST3 / standalone / screenshot
+releases/<product>/<version>/<full-commit>/audio/*.wav          ← masters + level-matched comparisons
+releases/<product>/<version>/<full-commit>/audio/web/*.mp3      ← web listening previews
+```
+
+The Worker serves the pointer's file list only (`src/index.ts`):
+
+- `GET|HEAD /releases/<product>/latest/installer.exe|vst3.zip|standalone.zip|screenshot.png|manifest.json`
+  are stable aliases resolved through the manifest — pages never hardcode a
+  versioned filename, so a new verified release is picked up without a UI change.
+- `GET|HEAD /releases/<product>/latest/audio/web/<file>.mp3` streams demo audio.
+- A request is answered only when the resolved path appears in the published
+  file list; anything else is a controlled `404` (no bucket browsing, no
+  unlisted-key access, no path traversal). `405` for other methods, `503` when
+  no release has been published yet (with `storageBound` / `pointerFound`
+  diagnostics).
+- `GET /api/release/<product>` — the published manifest plus
+  `publish.publishedAt` / `publish.prefix`. The A/B player
+  (`src/components/ABPlayer.tsx`) fetches this and takes titles, origins and
+  level-match data from it; if it cannot load, the player says the demos are
+  unavailable instead of falling back to a stale file.
+- Version-pinned prefixes are stored but **not** routed publicly — the alias
+  namespace plus `latest/manifest.json` (which names the exact commit) is the
+  entire surface.
+
+Release rollback is a pointer move, not a redeploy: repoint
+`releases/<product>/latest.json` at a previously verified version/commit
+(`tools/release/rollback-release.mjs` in the plugin repo) and the site serves
+that release on the next request.
+
+Local development uses a **simulated** R2 bucket, so release routes answer `503`
+until you either seed the local bucket (`npx wrangler r2 object put
+zarlino-releases/<key> --local --file <file>`) or run
+`npx wrangler dev --remote` to reach the real bucket.
+
 

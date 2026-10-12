@@ -44,7 +44,11 @@ export interface ProductConfig {
   /** Fully-functional trial length in days (matches the plugin). */
   trialDays: number;
   image: string;
-  /** Primary download (installer) — full path under /downloads/. */
+  /**
+   * Primary download (installer). ZTame resolves through its verified release
+   * alias (/releases/ztame/latest/...); ZScorch still points at the legacy
+   * static artifact until a ZScorch release exists.
+   */
   downloadUrl: string;
   buyUrl: string;
   badge: string;
@@ -111,8 +115,8 @@ export const PRODUCTS: Record<string, ProductConfig> = {
     platform: 'Windows',
     format: 'VST3',
     trialDays: 14,
-    image: '/images/ztame-ui-1.2.png',
-    downloadUrl: '/downloads/ZTame-v1.2.0-Windows-Installer.exe',
+    image: '/releases/ztame/latest/screenshot.png',
+    downloadUrl: '/releases/ztame/latest/installer.exe',
     buyUrl: '/plugins/ztame#buy',
     badge: 'v1.2',
     heroKicker: 'FLAGSHIP PROCESSOR',

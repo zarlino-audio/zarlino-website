@@ -1,6 +1,6 @@
 # Temporary deploy config for the Vee Properties deploy.
-# Identical to wrangler.toml except the assets directory is a frozen build
-# (another process in this workspace keeps rebuilding ./dist, which would race).
+# Kept in sync with wrangler.toml (bindings included) - deploying with a config
+# that LACKS a binding removes it from the Worker, so bindings must match.
 # Deploy with:  npx -y wrangler@4 deploy --config wrangler.vee-deploy.toml
 name = "zarlino-website"
 main = "src/index.ts"
@@ -11,13 +11,18 @@ directory = "./dist-vee-deploy"
 not_found_handling = "404-page"
 
 [vars]
-ADMIN_TOKEN = "PGRUxCidKulFTgLsIE3jJhON079BwD8t"
+# ADMIN_TOKEN was retired (username/password admin auth, 2026-09-30). Never put
+# a token literal in this file again.
 PAYSTACK_PUBLIC_KEY = "pk_live_d2f7554900d64fa3ae9b334777c815e8b346f885"
 PAYSTACK_CURRENCY = "GHS"
 
 [[kv_namespaces]]
 binding = "ZARLINO_KV"
 id = "66bc47e33fe145f697cf1f80912f269e"
+
+[[r2_buckets]]
+binding = "RELEASES"
+bucket_name = "zarlino-releases"
 
 [observability]
 enabled = true

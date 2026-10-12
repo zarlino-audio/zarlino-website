@@ -46,6 +46,12 @@ export interface Env {
   DEPLOY_COMMIT?: string;
   DEPLOY_RUN_ID?: string;
   DEPLOYED_AT?: string;
+  /**
+   * Verified release storage (private R2 bucket `zarlino-releases`). Release
+   * assets are published by the plugin release gate and served exclusively
+   * through this Worker at /releases/<product>/latest/... (no public bucket).
+   */
+  RELEASES?: R2Bucket;
 }
 
 /** Keep in sync with package.json version. Informational — the git commit is the identity. */
@@ -563,6 +569,158 @@ function logUnhandled(url: URL, request: Request, err: unknown): string {
   return ref;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Verified release assets (private R2 bucket `zarlino-releases`)             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Website product assets are consumed ONLY from the verified release published
+ * by the plugin release gate (tools/release/publish-release.mjs). The manifest
+ * pointer `releases/<product>/latest.json` lists every published object; a
+ * request is served only when its resolved path appears in that list, so
+ * unpublished keys can never be fetched. Stable alias URLs (installer.exe,
+ * vst3.zip, standalone.zip, screenshot.png, manifest.json) and direct file
+ * names both resolve through the pointer - which is also the rollback handle
+ * (repoint the pointer to restore a previous verified release).
+ */
+const RELEASE_PRODUCTS = new Set(['ztame']);
+const RELEASE_CACHE_MS = 60 * 1000;
+
+interface ReleaseFile { path: string; sha256: string; bytes: number; }
+interface ReleasePointer {
+  product: string; version: string; commit: string; publishedAt: string;
+  prefix: string; manifest: string; files: ReleaseFile[];
+}
+interface ReleaseExample {
+  render?: Record<string, { file?: string } | undefined>;
+  web?: Record<string, { file?: string } | undefined>;
+}
+interface ReleaseManifest {
+  version?: string; commit?: string;
+  artifacts?: Record<string, { file?: string } | undefined>;
+  media?: { heroScreenshot?: { file?: string } };
+  audioExamples?: ReleaseExample[];
+}
+const releaseCache = new Map<string, { at: number; pointer: ReleasePointer; manifest: ReleaseManifest }>();
+
+function releaseAlias(manifest: ReleaseManifest, name: string): string | null {
+  const a = manifest.artifacts ?? {};
+  switch (name) {
+    case 'installer.exe':
+      return a.installer?.file ?? null;
+    case 'vst3.zip':
+      return a.vst3?.file ?? null;
+    case 'standalone.zip':
+      return a.standalone?.file ?? null;
+    case 'screenshot.png':
+      return manifest.media?.heroScreenshot?.file ?? null;
+    case 'manifest.json':
+      return 'release-manifest.json';
+    default:
+      return null;
+  }
+}
+
+function releaseContentType(name: string): string {
+  const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+  const map: Record<string, string> = {
+    exe: 'application/octet-stream', zip: 'application/zip', png: 'image/png',
+    wav: 'audio/wav', mp3: 'audio/mpeg', json: 'application/json',
+  };
+  return map[ext] ?? 'application/octet-stream';
+}
+
+async function loadReleaseLatest(env: Env, product: string) {
+  if (!env.RELEASES) return null;
+  const cacheKey = product + ':latest';
+  const hit = releaseCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < RELEASE_CACHE_MS) return hit;
+  const pObj = await env.RELEASES.get(`releases/${product}/latest.json`);
+  if (!pObj) return null;
+  const pointer = await pObj.json<ReleasePointer>();
+  if (!pointer?.prefix || !Array.isArray(pointer.files)) return null;
+  const mObj = await env.RELEASES.get(`${pointer.prefix}/${pointer.manifest || 'release-manifest.json'}`);
+  if (!mObj) return null;
+  const manifest = await mObj.json<ReleaseManifest>();
+  const entry = { at: Date.now(), pointer, manifest };
+  releaseCache.set(cacheKey, entry);
+  return entry;
+}
+
+async function handleReleaseApi(env: Env, product: string): Promise<Response> {
+  if (!RELEASE_PRODUCTS.has(product)) return json({ error: 'Not found' }, 404);
+  if (!env.RELEASES) {
+    return json({ error: 'Release storage not bound', product, storageBound: false }, 503);
+  }
+  const latest = await loadReleaseLatest(env, product);
+  if (!latest) {
+    const probe = await env.RELEASES.head(`releases/${product}/latest.json`);
+    return json(
+      { error: 'No verified release published', product, storageBound: true, pointerFound: !!probe },
+      503,
+    );
+  }
+  return json({
+    ...latest.manifest,
+    publish: { publishedAt: latest.pointer.publishedAt, prefix: latest.pointer.prefix },
+  });
+}
+
+async function handleReleaseRequest(request: Request, env: Env, url: URL): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method not allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
+  }
+  if (!env.RELEASES) {
+    return new Response('Release storage not bound', { status: 503, headers: { 'cache-control': 'no-store' } });
+  }
+  const m = url.pathname.match(/^\/releases\/([a-z0-9-]+)\/(.+)$/);
+  if (!m) return new Response('Not found', { status: 404 });
+  const product = m[1]!;
+  if (!RELEASE_PRODUCTS.has(product)) return new Response('Not found', { status: 404 });
+
+  let rel: string;
+  try {
+    rel = decodeURIComponent(m[2]!);
+  } catch {
+    return new Response('Not found', { status: 404 });
+  }
+  if (!rel.startsWith('latest/')) return new Response('Not found', { status: 404 });
+  rel = rel.slice('latest/'.length);
+  if (!rel || rel.includes('..') || rel.startsWith('/')) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  const latest = await loadReleaseLatest(env, product);
+  if (!latest) {
+    return new Response('No published release', { status: 503, headers: { 'cache-control': 'no-store' } });
+  }
+
+  const target = releaseAlias(latest.manifest, rel) ?? rel;
+  if (!latest.pointer.files.some((f) => f.path === target)) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  const key = `${latest.pointer.prefix}/${target}`;
+  const headers: Record<string, string> = {
+    'content-type': releaseContentType(target),
+    'cache-control': 'public, max-age=300, s-maxage=600',
+  };
+
+  if (request.method === 'HEAD') {
+    const head = await env.RELEASES.head(key);
+    if (!head) return new Response('Not found', { status: 404 });
+    headers['content-length'] = String(head.size);
+    headers.etag = head.httpEtag;
+    return new Response(null, { status: 200, headers });
+  }
+
+  const obj = await env.RELEASES.get(key);
+  if (!obj) return new Response('Not found', { status: 404 });
+  headers['content-length'] = String(obj.size);
+  headers.etag = obj.httpEtag;
+  return new Response(obj.body, { status: 200, headers });
+}
+
 async function handleRequest(request: Request, url: URL, env: Env): Promise<Response> {
   if (url.pathname === '/api/license') {
     return handleLicense(request, env);
@@ -582,6 +740,10 @@ async function handleRequest(request: Request, url: URL, env: Env): Promise<Resp
   if (url.pathname === '/api/contract') {
     return json(contract);
   }
+  const releaseApi = url.pathname.match(/^\/api\/release\/([a-z0-9-]+)$/);
+  if (releaseApi) {
+    return handleReleaseApi(env, releaseApi[1]!);
+  }
   if (url.pathname === '/api/admin/stats') {
     return handleAdminStats(request, env);
   }
@@ -600,6 +762,11 @@ async function handleRequest(request: Request, url: URL, env: Env): Promise<Resp
   const adminAuth = url.pathname.match(/^\/api\/admin\/(status|setup|login|logout|change-password)$/);
   if (adminAuth) {
     return handleAdminAuthRoute(adminAuth[1]!, request, env);
+  }
+  // Verified release assets: served ONLY from the published pointer's file
+  // list (see the release block above). Unknown keys are a controlled 404.
+  if (url.pathname.startsWith('/releases/')) {
+    return handleReleaseRequest(request, env, url);
   }
   // Unknown /api/* paths must be a JSON 404 — never fall through to the
   // static asset handler (POSTs there surfaced as 1101 worker exceptions).

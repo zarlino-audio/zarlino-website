@@ -1,9 +1,9 @@
 import ABPlayer from '../components/ABPlayer';
-import { ZTAME_PRESETS } from '../config/demos';
 
 /**
- * Homepage "Hear the Difference" — real A/B audio, up to 3 disclosed presets
- * (no hidden processing). Anchored from the hero CTA (#hear-the-difference).
+ * Homepage "Hear the Difference" — real A/B audio streamed from the verified
+ * release (nothing hardcoded, nothing hidden). Anchored from the hero CTA
+ * (#hear-the-difference).
  */
 const HearTheDifference = () => {
   return (
@@ -24,25 +24,25 @@ const HearTheDifference = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            Real audio. Three presets.
+            Real audio from the verified release.
             <br className="hidden md:block" /> No hidden processing.
           </h2>
           <p className="za-reveal mt-4 font-['Inter'] text-[16px] text-[#94A3B8] leading-[1.7] max-w-[620px] mx-auto">
-            A/B through ZTame&rsquo;s flagship presets on real recordings — then
-            hear ZScorch for controlled harmonic character.
+            Five loops and four one-shots, A/B&rsquo;d through ZTame. The untouched source and
+            ZTame&rsquo;s own output are level-matched, so you hear processing — not volume.
           </p>
         </div>
 
         <div className="za-reveal">
-          <ABPlayer plugin="ZTame" presets={ZTAME_PRESETS} />
+          <ABPlayer plugin="ZTame" />
         </div>
 
         <div className="za-reveal mt-6 text-center">
           <a
-            href="/plugins/zscorch#hear-the-difference"
+            href="/plugins/zscorch/"
             className="inline-flex items-center gap-2 font-['Inter'] font-medium text-[15px] text-[#00D4FF] hover:text-white transition-colors duration-300"
           >
-            Hear ZScorch too &rarr;
+            Explore ZScorch &rarr;
           </a>
         </div>
       </div>

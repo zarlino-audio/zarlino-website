@@ -144,13 +144,13 @@ import { Download } from 'lucide-react';
         <span class="font-['Inter'] text-[14px] text-[#94A3B8]">
           one-time purchase &middot; perpetual license &middot; 14-day free trial
         </span>
-        <AddToCartButton item={{ id: 'ztame', name: 'ZTame', price: 750, image: '/images/ztame-ui-1.2.png', category: 'Resonance Suppressor' }} label="Buy ZTame — $49" client:load />
+        <AddToCartButton item={{ id: 'ztame', name: 'ZTame', price: 750, image: '/releases/ztame/latest/screenshot.png', category: 'Resonance Suppressor' }} label="Buy ZTame — $49" client:load />
         <a href="#download" class="font-['Inter'] text-[14px] text-[#00D4FF] hover:underline">or download the trial first</a>
       </div>
 
-      <!-- Product Image -->
+      <!-- Product Image (canonical screenshot from the verified release) -->
       <div class="mt-12 rounded-xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
-        <img src="/images/ztame-ui-1.2.png" alt="ZTame resonance suppressor plugin user interface with spectrum display, draggable focus band and control panels" class="w-full h-auto object-cover" />
+        <img src="/releases/ztame/latest/screenshot.png" alt="ZTame resonance suppressor plugin user interface with spectrum display, draggable focus band and control panels" class="w-full h-auto object-cover" />
       </div>
 
       <!-- Download -->
@@ -158,12 +158,13 @@ import { Download } from 'lucide-react';
         <h2 class="font-['Space_Grotesk'] font-semibold text-[28px] text-white mb-2">Download ZTame 1.2.0</h2>
         <p class="font-['Inter'] text-[15px] text-[#94A3B8] leading-[1.7] mb-6 max-w-[650px]">
           Grab the installer for the full standalone app, or the VST3 for your DAW. This is a public beta build of
-          ZTame 1.2.0. All builds are Windows 10 22H2+ (64-bit).
+          ZTame 1.2.0. All builds are Windows 10 22H2+ (64-bit). Every file is served from the verified 1.2.0
+          release and its SHA-256 is checked at publish time.
         </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
-            href="/downloads/ZTame-v1.2.0-Windows-Installer.exe"
-            download
+            href="/releases/ztame/latest/installer.exe"
+            download="ZTame-v1.2.0-Windows-Installer.exe"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.04)] p-6 hover:bg-[rgba(0,212,255,0.08)] transition-colors duration-300"
           >
             <div>
@@ -171,13 +172,13 @@ import { Download } from 'lucide-react';
               <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Windows installer (.exe) — includes the app and VST3 plugin.</p>
             </div>
             <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
-              <Download size={15} /> Download .exe &middot; 4 MB
+              <Download size={15} /> Download .exe &middot; 2.9 MB
             </span>
           </a>
 
           <a
-            href="/downloads/ZTame-v1.2.0-Windows-VST3.zip"
-            download
+            href="/releases/ztame/latest/vst3.zip"
+            download="ZTame-v1.2.0-Windows-VST3.zip"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -185,13 +186,13 @@ import { Download } from 'lucide-react';
               <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">VST3 bundle (.zip) for FL Studio, Ableton Live, Cubase, Reaper, and more.</p>
             </div>
             <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
-              <Download size={15} /> Download VST3 &middot; 2 MB
+              <Download size={15} /> Download VST3 &middot; 2.9 MB
             </span>
           </a>
 
           <a
-            href="/downloads/ZTame-v1.2.0-Windows-Standalone.zip"
-            download
+            href="/releases/ztame/latest/standalone.zip"
+            download="ZTame-v1.2.0-Windows-Standalone.zip"
             class="group flex flex-col justify-between rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] p-6 hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-300"
           >
             <div>
@@ -199,7 +200,7 @@ import { Download } from 'lucide-react';
               <p class="mt-2 font-['Inter'] text-[13px] text-[#94A3B8] leading-[1.6]">Portable standalone build (.zip) — no installer required.</p>
             </div>
             <span class="mt-5 inline-flex items-center gap-2 font-['Inter'] font-medium text-[14px] text-[#00D4FF] group-hover:gap-3 transition-all">
-              <Download size={15} /> Download .zip &middot; 2 MB
+              <Download size={15} /> Download .zip &middot; 3.0 MB
             </span>
           </a>
         </div>

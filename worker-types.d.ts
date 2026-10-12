@@ -36,3 +36,28 @@ declare class KVNamespace {
 declare class Fetcher {
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
 }
+
+/* --- R2 (verified release storage) --------------------------------------- */
+
+interface R2Object {
+  key: string;
+  size: number;
+  etag: string;
+  httpEtag: string;
+  uploaded: Date;
+}
+
+interface R2ObjectBody extends R2Object {
+  body: ReadableStream;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  text(): Promise<string>;
+  json<T = unknown>(): Promise<T>;
+}
+
+declare class R2Bucket {
+  head(key: string): Promise<R2Object | null>;
+  get(key: string): Promise<R2ObjectBody | null>;
+  put(key: string, value: string | ArrayBuffer | ArrayBufferView | ReadableStream | null, options?: unknown): Promise<R2Object>;
+  delete(key: string): Promise<void>;
+  list(options?: unknown): Promise<unknown>;
+}

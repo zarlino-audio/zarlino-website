@@ -44,13 +44,17 @@
     { "path": "/api/health", "status": 200, "contentTypePrefix": ["application/json"], "identity": true },
     { "path": "/api/ready", "status": 200, "contentTypePrefix": ["application/json"] },
     { "path": "/api/contract", "status": 200, "contentTypePrefix": ["application/json"] },
+    { "path": "/api/release/ztame", "status": 200, "contentTypePrefix": ["application/json"] },
     { "path": "/api/license", "method": "GET", "status": 405, "contentTypePrefix": ["application/json"] },
     { "path": "/api/unknown-probe", "status": 404, "contentTypePrefix": ["application/json"] }
   ],
   "artifacts": [
-    { "path": "/downloads/ZTame-v1.2.0-Windows-Installer.exe", "method": "HEAD", "status": 200 },
-    { "path": "/downloads/ZTame-v1.2.0-Windows-VST3.zip", "method": "HEAD", "status": 200 },
-    { "path": "/downloads/ZTame-v1.2.0-Windows-Standalone.zip", "method": "HEAD", "status": 200 },
+    { "path": "/releases/ztame/latest/installer.exe", "method": "HEAD", "status": 200 },
+    { "path": "/releases/ztame/latest/vst3.zip", "method": "HEAD", "status": 200 },
+    { "path": "/releases/ztame/latest/standalone.zip", "method": "HEAD", "status": 200 },
+    { "path": "/releases/ztame/latest/screenshot.png", "method": "HEAD", "status": 200 },
+    { "path": "/releases/ztame/latest/audio/web/loop-disguise-A.mp3", "method": "HEAD", "status": 200 },
+    { "path": "/releases/ztame/latest/manifest.json", "method": "HEAD", "status": 200 },
     { "path": "/downloads/ZScorch-v1.0.0-Windows-Installer.exe", "method": "HEAD", "status": 200 },
     { "path": "/downloads/ZScorch-v1.0.0-Windows-VST3.zip", "method": "HEAD", "status": 200 },
     { "path": "/downloads/ZScorch-v1.0.0-Windows-Standalone.zip", "method": "HEAD", "status": 200 }

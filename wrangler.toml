@@ -10,11 +10,12 @@ compatibility_date = "2024-11-01"
 #   asset, including every unknown path. The binding is what makes
 #   `env.ASSETS.fetch()` (and the readiness probe) work.
 #
-# run_worker_first = ["/api/*"]
+# run_worker_first = ["/api/*", "/releases/*"]
 #   Page requests are served by the platform asset router and NEVER reach the
 #   Worker — an unknown page therefore returns the custom 404 page (HTTP 404),
-#   structurally incapable of producing a 1101. The Worker only runs for
-#   /api/*, which is the entire dynamic surface (see routes/contract.json).
+#   structurally incapable of producing a 1101. The Worker runs for /api/*
+#   (the dynamic surface) and /releases/* (verified release assets streamed
+#   from the private R2 bucket — see routes/contract.json).
 #
 # not_found_handling = "404-page"
 #   Unknown page paths are answered with /404.html and an exact HTTP 404.
@@ -22,7 +23,7 @@ compatibility_date = "2024-11-01"
 directory = "./dist"
 not_found_handling = "404-page"
 binding = "ASSETS"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/releases/*"]
 
 [vars]
 # Token for the /admin dashboard (GET /api/admin/stats). Rotate to a
@@ -45,6 +46,14 @@ PAYSTACK_CURRENCY = "GHS"
 [[kv_namespaces]]
 binding = "ZARLINO_KV"
 id = "66bc47e33fe145f697cf1f80912f269e"
+
+# Verified release storage (R2, private bucket; founder decision 2026-10-12).
+# Release assets (binaries, canonical screenshot, canonical audio, manifest)
+# are published by the plugin release gate and served EXCLUSIVELY through this
+# Worker at /releases/<product>/latest/... - the bucket has no public access.
+[[r2_buckets]]
+binding = "RELEASES"
+bucket_name = "zarlino-releases"
 
 [observability]
 enabled = true
