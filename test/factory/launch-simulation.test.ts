@@ -18,6 +18,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { handleFactoryApi } from "../../src/factory/http";
 import { buildDeps, type FactoryHttpEnv } from "../../src/factory/http";
+import { metricsView } from "../../src/factory/service";
 import type { AiGateway, GatewayResponse, InterpretRequestPayload } from "../../src/factory/ai";
 import type { BuildService, DispatchBuildInput, RemoteBuild } from "../../src/factory/builds";
 import { makeNamespace } from "./harness";
@@ -352,6 +353,50 @@ describe("launch simulation", () => {
   beforeEach(() => {
     model = new ScriptedModel([specReply(compressorSpec())]);
     builds = new SimulatedBuildService();
+  });
+
+  it("refines a design conversationally, creating a new revision and building the new one", async () => {
+    const refined = compressorSpec();
+    refined.graph = {
+      modules: [{ instanceId: "comp", moduleId: "zarlino.dynamics.compressor", moduleVersion: "1.0.0", parameters: { threshold: -14, ratio: 2 } }],
+    };
+    refined.parameters = [
+      { id: "compression", name: "Compression", target: "comp.threshold", range: { min: -40, max: 0, default: -14 }, unit: "dB", group: "Dynamics" },
+      { id: "mix", name: "Mix", target: "$factory.dryWet", range: { min: 0, max: 1, default: 1 }, group: "Output" },
+    ];
+    refined.macros = [];
+    refined.ui = { ...(refined.ui as Record<string, unknown>), parameterOrder: ["compression", "mix"], tags: ["compressor"] };
+
+    const model = new ScriptedModel([specReply(compressorSpec()), specReply(refined)]);
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("alice@example.com");
+    const projectId = (await alice.createProject("Iterate")).body.project.id as string;
+
+    const first = await alice.interpret(projectId, "a compressor with a little saturation");
+    expect(first.body.interpretation.plan.chain).toHaveLength(2);
+    expect(first.body.interpretation.revision).toBe(1);
+
+    const second = await alice.interpret(projectId, "make the compression gentler and remove the saturation");
+    expect(second.status).toBe(200);
+    expect(second.body.interpretation.revision).toBe(2);
+    expect(second.body.interpretation.plan.chain).toHaveLength(1);
+    expect(second.body.interpretation.plan.macros).toHaveLength(0);
+
+    // The refinement asked the model to edit the existing document, not replace it blindly.
+    expect(model.calls[1]!.mode).toBe("refine");
+    expect(model.calls[1]!.currentSpec).toBeTruthy();
+
+    // Building now uses the refined spec, and its identity differs from the first.
+    const built = await alice.build(projectId, "minimal");
+    expect(built.status).toBe(202);
+    expect(builds.dispatched).toHaveLength(1);
+    expect(JSON.parse(JSON.stringify(builds.dispatched[0]!.spec)).graph.modules).toHaveLength(1);
+
+    // The conversation is kept, newest last.
+    const project = await alice.request("GET", `/api/factory/projects/${projectId}`);
+    const roles = (project.body.messages as Array<{ role: string }>).map((message) => message.role);
+    expect(roles).toEqual(["user", "assistant", "user", "assistant"]);
   });
 
   it("1. a free user signs up, describes a processor, builds it and downloads a QA-passed VST3", async () => {
@@ -829,6 +874,41 @@ describe("launch security", () => {
     expect(response.status).toBe(404);
     const traversal = await world.client().request("GET", "/api/factory/projects/../../etc/passwd");
     expect(traversal.status).toBe(404);
+  });
+
+  it("reports the funnel, build durations and unit costs to the founder", async () => {
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("alice@example.com");
+    const projectId = (await alice.createProject("Metrics")).body.project.id as string;
+    await alice.interpret(projectId, "a compressor with saturation");
+    const built = await alice.build(projectId, "standard");
+    await alice.download(built.body.build.buildId);
+
+    const metrics = (await metricsView(world.deps, 30)) as {
+      funnel: Record<string, number>;
+      rates: Record<string, number>;
+      costs: { medianBuildSeconds: number; meanVariableCostPerBuildUsd: number; meanAiCostPerSpecUsd: number; modelled: { contributionMarginUsd: number } };
+      moduleUsage: Record<string, number>;
+    };
+
+    expect(metrics.funnel.signup).toBe(1);
+    expect(metrics.funnel.firstPrompt).toBe(1);
+    expect(metrics.funnel.validSpec).toBe(1);
+    expect(metrics.funnel.buildRequested).toBe(1);
+    expect(metrics.funnel.buildPassed).toBe(1);
+    expect(metrics.funnel.download).toBe(1);
+    expect(metrics.rates.buildSuccessRate).toBe(1);
+
+    // Duration and cost come from what the build actually reported.
+    expect(metrics.costs.medianBuildSeconds).toBeCloseTo(398.1, 1);
+    expect(metrics.costs.meanVariableCostPerBuildUsd).toBeGreaterThan(0);
+    expect(metrics.costs.meanAiCostPerSpecUsd).toBeGreaterThan(0);
+    expect(metrics.costs.modelled.contributionMarginUsd).toBeGreaterThan(0);
+
+    // Which modules customers actually choose.
+    expect(metrics.moduleUsage["zarlino.dynamics.compressor"]).toBe(1);
+    expect(metrics.moduleUsage["zarlino.saturation"]).toBe(1);
   });
 
   it("refuses the founder metrics endpoint without an admin session", async () => {

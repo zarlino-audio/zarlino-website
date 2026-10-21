@@ -334,6 +334,8 @@ export async function interpret(
     parameterCount: outcome.spec.parameters.length,
     macroCount: outcome.spec.macros.length,
     attempts: outcome.attempts,
+    aiCostUsd: usage.costUsd,
+    aiTokens: usage.promptTokens + usage.completionTokens,
   });
 
   return {
@@ -961,6 +963,36 @@ export async function metricsView(deps: FactoryDeps, sinceDays = 30): Promise<Re
   const downloads = byName.download ?? 0;
   const paid = byName.paid_conversion ?? 0;
 
+  const durations = ((analytics.builds as Array<{ seconds: number | null }>) ?? [])
+    .map((row) => Number(row.seconds ?? 0))
+    .filter((seconds) => seconds > 0)
+    .sort((a, b) => a - b);
+  const buildCosts = ((analytics.builds as Array<{ cost: number | null }>) ?? [])
+    .map((row) => Number(row.cost ?? 0))
+    .filter((cost) => cost > 0);
+  const specCosts = ((analytics.specs as Array<{ cost: number | null }>) ?? [])
+    .map((row) => Number(row.cost ?? 0))
+    .filter((cost) => cost >= 0);
+
+  const mean = (values: number[]) => (values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0);
+  const median = (values: number[]) => {
+    if (values.length === 0) return 0;
+    const middle = Math.floor(values.length / 2);
+    return values.length % 2 === 0 ? (values[middle - 1]! + values[middle]!) / 2 : values[middle]!;
+  };
+
+  // Unit economics. The measured half comes from the events above; the modelled
+  // half uses the ONE pricing configuration and a stated monthly utilisation, so
+  // a pricing decision is never made on invented data.
+  const proPrice = PLANS.pro.price;
+  const usdPerGhs = 15.5;
+  const revenueUsd = proPrice ? (proPrice.amountMinor / 100) / usdPerGhs : 0;
+  const meanBuildCost = mean(buildCosts);
+  const meanSpecCost = mean(specCosts);
+  const modelledBuildsPerMonth = 3;
+  const modelledSpecsPerMonth = 12;
+  const modelledVariableCost = modelledBuildsPerMonth * meanBuildCost + modelledSpecsPerMonth * meanSpecCost;
+
   return {
     window: { since, days: sinceDays },
     funnel: {
@@ -980,6 +1012,21 @@ export async function metricsView(deps: FactoryDeps, sinceDays = 30): Promise<Re
       freeToPaid: signups > 0 ? Number((paid / signups).toFixed(4)) : 0,
       unsupportedRequests: byName.request_unsupported ?? 0,
       invalidSpecs: byName.spec_invalid ?? 0,
+    },
+    costs: {
+      samples: { builds: buildCosts.length, specs: specCosts.length },
+      medianBuildSeconds: Number(median(durations).toFixed(1)),
+      meanBuildSeconds: Number(mean(durations).toFixed(1)),
+      meanVariableCostPerBuildUsd: Number(meanBuildCost.toFixed(4)),
+      meanAiCostPerSpecUsd: Number(meanSpecCost.toFixed(4)),
+      modelled: {
+        proRevenueUsd: Number(revenueUsd.toFixed(2)),
+        buildsPerMonth: modelledBuildsPerMonth,
+        specsPerMonth: modelledSpecsPerMonth,
+        variableCostUsd: Number(modelledVariableCost.toFixed(2)),
+        contributionMarginUsd: Number((revenueUsd - modelledVariableCost).toFixed(2)),
+        note: "Modelled from the measured per-unit costs above and a stated monthly utilisation; not a per-customer invoice.",
+      },
     },
     moduleUsage,
     users: analytics.users ?? 0,

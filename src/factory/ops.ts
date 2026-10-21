@@ -142,7 +142,21 @@ export async function identityOp(ctx: OpContext, op: string, args: Record<string
         "SELECT json_extract(props_json, '$.modules') AS modules FROM analytics_events WHERE name = 'spec_valid' AND created_at >= ?",
         since,
       );
-      return { ok: true, counts: analyticsCounts(ctx.sql, since), modules, users: countUsers(ctx.sql) };
+      // Unit economics inputs: what a build actually took, and what a design
+      // actually cost to interpret.
+      const builds = ctx.sql.all<{ seconds: number | null; cost: number | null }>(
+        `SELECT json_extract(props_json, '$.compileSeconds') AS seconds,
+                json_extract(props_json, '$.costUsd') AS cost
+         FROM analytics_events WHERE name = 'build_passed' AND created_at >= ?`,
+        since,
+      );
+      const specs = ctx.sql.all<{ cost: number | null; tokens: number | null }>(
+        `SELECT json_extract(props_json, '$.aiCostUsd') AS cost,
+                json_extract(props_json, '$.aiTokens') AS tokens
+         FROM analytics_events WHERE name = 'spec_valid' AND created_at >= ?`,
+        since,
+      );
+      return { ok: true, counts: analyticsCounts(ctx.sql, since), modules, builds, specs, users: countUsers(ctx.sql) };
     }
 
     case "indexBuild": {
