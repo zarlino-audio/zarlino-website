@@ -84,7 +84,7 @@ export const MODULE_CATALOG: readonly CatalogModule[] = [
       p("release", "Release", "ms", 10, 2000, 150, "Timing", true),
       p("knee", "Knee", "dB", 0, 24, 6, "Dynamics"),
       p("makeup", "Makeup", "dB", 0, 24, 0, "Output"),
-      p("detection", "Detection", "", 0, 1, 0, "Detector", false, 2),
+      p("detection", "Detection", "", 0, 1, 0, "Detector"),
     ],
   },
   {
