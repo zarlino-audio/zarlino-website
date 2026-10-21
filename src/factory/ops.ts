@@ -383,8 +383,49 @@ export async function workspaceOp(ctx: OpContext, op: string, args: Record<strin
       if (!getProject(ctx.sql, userId, projectId)) return { ok: false, code: "NOT_FOUND" };
       const record = args.build as BuildRecord;
       if (!record || record.user_id !== userId) return { ok: false, code: "INVALID" };
+
+      // Allowance is enforced HERE, inside the single-writer object, not in the
+      // service: two concurrent requests cannot both pass a check that reads and
+      // writes in one operation. A reused build (reused_from set) costs nothing.
+      const plan = String(args.plan ?? "free");
+      if (!record.reused_from) {
+        const limits = entitlementsFor(plan);
+        const monthStart = monthStartIso(now(ctx)());
+        if (countBuildsSince(ctx.sql, userId, monthStart) >= limits.buildsPerMonth) {
+          return { ok: false, code: "BUILD_ALLOWANCE", limit: limits.buildsPerMonth };
+        }
+        if (countActiveBuilds(ctx.sql, userId) >= limits.concurrentBuilds) {
+          return { ok: false, code: "CONCURRENT_BUILDS", limit: limits.concurrentBuilds };
+        }
+      }
+
       insertBuild(ctx.sql, { ...record, project_id: projectId, user_id: userId });
       return { ok: true, build: getBuild(ctx.sql, userId, record.id) };
+    }
+
+    /**
+     * Reserve one assistant request against the monthly allowance.
+     * The counter moves BEFORE the model is called, so a burst of concurrent
+     * requests cannot each observe "one left" and spend it.
+     */
+    case "reserveAiRequest": {
+      const plan = String(args.plan ?? "free");
+      const limits = entitlementsFor(plan);
+      const monthStart = monthStartIso(now(ctx)());
+      const used = sumUsage(ctx.sql, userId, "ai.request", monthStart).quantity;
+      if (used >= limits.aiRequestsPerMonth) {
+        return { ok: false, code: "AI_ALLOWANCE", limit: limits.aiRequestsPerMonth };
+      }
+      insertUsage(ctx.sql, {
+        user_id: userId,
+        kind: "ai.request",
+        quantity: 1,
+        unit: "request",
+        cost_usd: 0,
+        project_id: args.projectId === undefined ? null : String(args.projectId),
+        created_at: at().toISOString(),
+      });
+      return { ok: true, used: used + 1, limit: limits.aiRequestsPerMonth };
     }
 
     case "updateBuild": {

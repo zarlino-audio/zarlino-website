@@ -277,6 +277,7 @@ const ROUTES: Route[] = [
   {
     method: "GET",
     pattern: /^\/api\/factory\/builds\/([A-Za-z0-9][A-Za-z0-9._-]{5,63})$/,
+    limit: "status",
     handle: async ({ deps, actor, params }) => {
       const refreshed = await refreshBuild(deps, actor!, params[0]!);
       const project = await deps.workspace(actor!.userId)("getBuild", { buildId: params[0]! });

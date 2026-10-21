@@ -333,6 +333,9 @@ export const RATE_LIMITS = {
   login: { limit: 10, windowSeconds: 15 * 60 },
   interpret: { limit: 20, windowSeconds: 10 * 60 },
   build: { limit: 10, windowSeconds: 10 * 60 },
+  /** Polling a build calls the orchestrator, which spends the shared GitHub API
+      quota; one poll every ~2 s per account is plenty for a 5-minute build. */
+  status: { limit: 300, windowSeconds: 10 * 60 },
   download: { limit: 60, windowSeconds: 10 * 60 },
   billing: { limit: 20, windowSeconds: 10 * 60 },
   webhook: { limit: 120, windowSeconds: 60 },

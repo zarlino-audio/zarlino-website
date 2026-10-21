@@ -244,7 +244,17 @@ export async function interpret(
   const mode: "initial" | "refine" = existing ? "refine" : input.mode === "refine" ? "refine" : "initial";
   if (mode === "refine" && !existing) fail(409, "NO_SPEC_YET", "Describe the processor first.");
 
+  // Cheap pre-check for a friendly message, then the authoritative reservation
+  // inside the store (which also moves the counter, so concurrency cannot race).
   await authorise(deps, actor, { kind: "ai", estimatedTokens: 3000 });
+  const reservation = await deps.workspace(actor.userId)("reserveAiRequest", { plan: actor.plan, projectId });
+  if (!reservation.ok) {
+    fail(402, String(reservation.code ?? "AI_ALLOWANCE"), "Your monthly assistant allowance is used up.", {
+      plan: actor.plan,
+      limit: reservation.limit,
+      upgrade: actor.plan === "free",
+    });
+  }
 
   await deps.workspace(actor.userId)("addMessage", { id: id(deps, "msg"), projectId, role: "user", content: text });
   await track(deps, "ai_prompt", actor.userId, { projectId, mode, firstPrompt: !existing });
@@ -256,11 +266,11 @@ export async function interpret(
   });
 
   // Meter whatever the assistant actually spent, whatever the outcome.
+  // (`ai.request` was already reserved before the call; tokens and cost land now.)
   const usage: AiUsage = outcome.totals ?? emptyUsage();
   if (usage.promptTokens + usage.completionTokens > 0) {
     await deps.workspace(actor.userId)("recordUsage", {
       events: [
-        { kind: "ai.request", quantity: 1, unit: "request", cost_usd: usage.costUsd, project_id: projectId, created_at: at(deps) },
         { kind: "ai.tokens", quantity: usage.promptTokens + usage.completionTokens, unit: "token", cost_usd: 0, project_id: projectId, created_at: at(deps) },
         { kind: "ai.cost_usd", quantity: usage.costUsd, unit: "usd", cost_usd: usage.costUsd, project_id: projectId, created_at: at(deps) },
       ],
@@ -470,6 +480,7 @@ export async function requestBuild(
     const buildId = id(deps, "fb");
     const created = await deps.workspace(actor.userId)("createBuild", {
       projectId,
+      plan: actor.plan,
       build: {
         ...original,
         id: buildId,
@@ -524,8 +535,23 @@ export async function requestBuild(
     completed_at: null,
   };
 
-  const created = await deps.workspace(actor.userId)("createBuild", { projectId, build: draft });
-  if (!created.ok) fail(500, "STORE_ERROR", "Could not record the build.");
+  const created = await deps.workspace(actor.userId)("createBuild", { projectId, build: draft, plan: actor.plan });
+  if (!created.ok) {
+    const code = String(created.code ?? "STORE_ERROR");
+    if (code === "BUILD_ALLOWANCE") {
+      fail(402, code, `Your plan includes ${created.limit} builds per month and you have used them all.`, {
+        upgrade: actor.plan === "free",
+        limit: created.limit,
+      });
+    }
+    if (code === "CONCURRENT_BUILDS") {
+      fail(402, code, `You already have ${created.limit} build running. Wait for it to finish before starting another.`, {
+        upgrade: actor.plan === "free",
+        limit: created.limit,
+      });
+    }
+    fail(500, "STORE_ERROR", "Could not record the build.");
+  }
 
   await deps.workspace(actor.userId)("recordUsage", {
     events: [
@@ -757,7 +783,10 @@ export async function authoriseDownload(
   if (!decision.allowed) fail(402, decision.reason, decision.message, { upgrade: decision.upgrade });
 
   const record = artifact.artifact as { object_key: string; name: string; bytes: number; sha256: string };
-  if (!record.object_key.startsWith("factory-builds/") || record.object_key.includes("..")) {
+  // The stored key must address THIS build and nothing else: a prefix-only check
+  // would let a tampered record serve another build's bytes.
+  const expectedPrefix = `factory-builds/${build.id}/`;
+  if (!record.object_key.startsWith(expectedPrefix) || record.object_key.includes("..") || record.object_key.includes("\\")) {
     fail(500, "ARTIFACT_INVALID", "The stored artifact reference is invalid.");
   }
 

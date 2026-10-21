@@ -836,6 +836,69 @@ describe("launch security", () => {
     const response = await world.client().request("GET", "/api/factory/admin/metrics");
     expect(response.status).toBe(401);
   });
+
+  it("cannot spend the last build allowance twice when two builds race", async () => {
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("alice@example.com");
+    const projectId = (await alice.createProject("Race")).body.project.id as string;
+    await alice.interpret(projectId, "a compressor");
+
+    // Free includes two builds: spend one, then race for the last one.
+    expect((await alice.build(projectId, "minimal")).status).toBe(202);
+    const [first, second] = await Promise.all([alice.build(projectId, "standard"), alice.build(projectId, "advanced")]);
+    const statuses = [first.status, second.status].sort((a, b) => a - b);
+    expect(statuses).toEqual([202, 402]);
+    // Only the winner reached the orchestrator.
+    expect(builds.dispatched).toHaveLength(2);
+  });
+
+  it("refuses a stored artifact key that points at another build", async () => {
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("alice@example.com");
+    const projectId = (await alice.createProject("Tamper")).body.project.id as string;
+    await alice.interpret(projectId, "a compressor");
+    const buildId = (await alice.build(projectId, "standard")).body.build.buildId as string;
+
+    const me = await alice.request("GET", "/api/factory/me");
+    const userId = me.body.account.id as string;
+    const call = world.deps.workspace(userId);
+    await call("saveArtifact", {
+      artifact: {
+        build_id: buildId,
+        user_id: userId,
+        project_id: projectId,
+        object_key: "factory-builds/fb-someone-else-000000/artifact/x.vst3.zip",
+        name: "x.vst3.zip",
+        bytes: 10,
+        sha256: "f".repeat(64),
+        qa_passed: 1,
+        created_at: new Date().toISOString(),
+      },
+    });
+
+    const download = await alice.download(buildId);
+    expect(download.status).toBe(500);
+    expect(download.body.error).toBe("ARTIFACT_INVALID");
+  });
+
+  it("reserves assistant requests atomically, so a burst cannot exceed the allowance", async () => {
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("alice@example.com");
+    const me = await alice.request("GET", "/api/factory/me");
+    const userId = me.body.account.id as string;
+    const call = world.deps.workspace(userId);
+
+    const results: Array<Record<string, unknown>> = [];
+    for (let attempt = 0; attempt < 41; attempt += 1) {
+      results.push(await call("reserveAiRequest", { plan: "free", projectId: null }));
+    }
+    expect(results.filter((result) => result.ok === true)).toHaveLength(40);
+    expect(results[40]!.ok).toBe(false);
+    expect(results[40]!.code).toBe("AI_ALLOWANCE");
+  });
 });
 
 // ---------------------------------------------------------------------------
