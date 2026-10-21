@@ -700,9 +700,13 @@ describe("launch simulation", () => {
     const second = await alice.build(projectId, "standard");
     expect(second.status).toBe(202);
     expect(second.body.reused).toBe(true);
-    expect(second.body.build.buildId).not.toBe(first.body.build.buildId);
-    expect(second.body.build.reusedFrom).toBe(first.body.build.buildId);
+    // The same immutable build is handed back — not a copy with its own artifact.
+    expect(second.body.build.buildId).toBe(first.body.build.buildId);
     expect(builds.dispatched).toHaveLength(1);
+
+    // It is still downloadable, because it is the real build.
+    const download = await alice.download(second.body.build.buildId);
+    expect(download.status).toBe(200);
 
     // A reused build does not consume a build allowance unit.
     const me = await alice.request("GET", "/api/factory/me");

@@ -475,30 +475,15 @@ export async function requestBuild(
   const snapshot = await authorise(deps, actor, { kind: "build" });
   const sha = spec.sha256;
 
-  // Exactly the same immutable build already exists: reuse it, charge nothing.
+  // Exactly the same immutable build already exists: hand that build back
+  // instead of spending another one. No second row and no second artifact are
+  // created — the original build id, artifact key and QA evidence are the truth.
   const reusable = await deps.workspace(actor.userId)("findReusableBuild", { sha256: sha, uiTemplate: template });
   if (reusable.ok) {
     const original = reusable.build as BuildRecord;
-    const buildId = id(deps, "fb");
-    const created = await deps.workspace(actor.userId)("createBuild", {
-      projectId,
-      plan: actor.plan,
-      build: {
-        ...original,
-        id: buildId,
-        project_id: projectId,
-        user_id: actor.userId,
-        spec_id: spec.id,
-        reused_from: original.id,
-        created_at: at(deps),
-        updated_at: at(deps),
-        completed_at: original.completed_at ?? at(deps),
-      },
-    });
-    if (!created.ok) fail(500, "STORE_ERROR", "Could not record the build.");
-    await track(deps, "build_reused", actor.userId, { projectId, buildId, reusedFrom: original.id });
+    await track(deps, "build_reused", actor.userId, { projectId, buildId: original.id });
     return {
-      build: buildView(deps, created.build as BuildRecord),
+      build: { ...buildView(deps, original), reusedFrom: original.id },
       reused: true,
       entitlementRemaining: {
         builds: Math.max(0, entitlementsFor(actor.plan).buildsPerMonth - snapshot.buildsThisMonth),
