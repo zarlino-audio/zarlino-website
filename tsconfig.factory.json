@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node", "@cloudflare/workers-types"]
+  },
+  "include": ["src/factory/**/*.ts", "test/factory/**/*.ts", "vitest.config.ts"]
+}

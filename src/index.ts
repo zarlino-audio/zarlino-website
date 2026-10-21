@@ -31,8 +31,12 @@
 
 import { adminAuthorized, adminChangePassword, adminLogin, adminSetup, adminStatus } from './auth';
 import contractJson from '../routes/contract.json';
+import { handleFactoryApi, type FactoryHttpEnv } from './factory/http';
+import { FactoryIdentity, FactoryWorkspace } from './factory/durable';
 
-export interface Env {
+export { FactoryIdentity, FactoryWorkspace };
+
+export interface Env extends FactoryHttpEnv {
   ASSETS?: Fetcher;
   ZARLINO_LICENSE_PRIVATE_KEY?: string;
   GITHUB_TOKEN?: string;
@@ -722,6 +726,12 @@ async function handleReleaseRequest(request: Request, env: Env, url: URL): Promi
 }
 
 async function handleRequest(request: Request, url: URL, env: Env): Promise<Response> {
+  // Plugin Factory customer API. It has its own authentication (customer
+  // accounts), its own stores (Durable Objects) and its own rate limits; it
+  // never consults the admin/founder credential above.
+  if (url.pathname.startsWith('/api/factory/')) {
+    return handleFactoryApi(request, env, url);
+  }
   if (url.pathname === '/api/license') {
     return handleLicense(request, env);
   }

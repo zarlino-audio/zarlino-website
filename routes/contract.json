@@ -18,6 +18,9 @@
     { "path": "/legal/refunds/", "status": 200, "contentTypePrefix": ["text/html"] },
     { "path": "/legal/terms/", "status": 200, "contentTypePrefix": ["text/html"] },
     { "path": "/real-estate/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/factory/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/factory/project/", "status": 200, "contentTypePrefix": ["text/html"] },
+    { "path": "/factory/billing/return/", "status": 200, "contentTypePrefix": ["text/html"] },
     { "path": "/instance/", "status": 200, "contentTypePrefix": ["text/html"] },
     { "path": "/robots.txt", "status": 200 },
     { "path": "/sitemap-index.xml", "status": 200, "contentTypePrefix": ["application/xml", "text/xml"] },
@@ -45,6 +48,8 @@
     { "path": "/api/ready", "status": 200, "contentTypePrefix": ["application/json"] },
     { "path": "/api/contract", "status": 200, "contentTypePrefix": ["application/json"] },
     { "path": "/api/release/ztame", "status": 200, "contentTypePrefix": ["application/json"] },
+    { "path": "/api/factory/plans", "status": 200, "contentTypePrefix": ["application/json"] },
+    { "path": "/api/factory/me", "status": 401, "contentTypePrefix": ["application/json"] },
     { "path": "/api/license", "method": "GET", "status": 405, "contentTypePrefix": ["application/json"] },
     { "path": "/api/unknown-probe", "status": 404, "contentTypePrefix": ["application/json"] }
   ],

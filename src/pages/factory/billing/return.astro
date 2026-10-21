@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import FactoryReturn from '../../../components/factory/FactoryReturn';
+---
+
+<BaseLayout
+  title="Payment — Zarlino Plugin Factory"
+  description="Confirming your Zarlino Plugin Factory subscription."
+  canonicalURL="https://zarlinoaudio.com/factory/billing/return/"
+  noindex
+>
+  <main class="relative z-[1] bg-[#050505] min-h-screen pt-24 pb-24 px-6 md:px-10">
+    <div class="max-w-[720px] mx-auto">
+      <nav class="mb-8 font-['Inter'] text-[13px] text-[#64748B]">
+        <a href="/factory/" class="hover:text-white transition-colors">Plugin Factory</a>
+        <span class="mx-2">/</span>
+        <span class="text-[#94A3B8]">Payment</span>
+      </nav>
+      <FactoryReturn client:only="react" />
+    </div>
+  </main>
+</BaseLayout>

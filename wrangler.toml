@@ -25,7 +25,33 @@ not_found_handling = "404-page"
 binding = "ASSETS"
 run_worker_first = ["/api/*", "/releases/*"]
 
+# ---------------------------------------------------------------------------
+# Plugin Factory customer stores (Durable Object + embedded SQLite).
+#
+#   FACTORY_IDENTITY   one instance ("global"): accounts, sessions, plans,
+#                      payment events, rate limits, funnel analytics.
+#   FACTORY_WORKSPACE  one instance PER CUSTOMER, addressed as "user:<id>" from
+#                      the authenticated session. Cross-customer access is
+#                      structurally impossible: no request can address another
+#                      customer's object.
+#
+# The migration tag records the class registration; `new_sqlite_classes` gives
+# each object its own storage with SQL, run through src/factory/do-sql.ts.
+[durable_objects]
+bindings = [
+  { name = "FACTORY_IDENTITY", class_name = "FactoryIdentity" },
+  { name = "FACTORY_WORKSPACE", class_name = "FactoryWorkspace" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FactoryIdentity", "FactoryWorkspace"]
+
 [vars]
+# Base URL of the build orchestrator (Executive OS). The factory gateway secret
+# is a Worker SECRET: wrangler secret put FACTORY_GATEWAY_SECRET.
+FACTORY_OS_URL = "https://os.zarlinoaudio.com"
+FACTORY_PUBLIC_URL = "https://zarlinoaudio.com"
 # Token for the /admin dashboard (GET /api/admin/stats). Rotate to a
 # different value and set as a Worker secret if you want it out of git.
 # ADMIN_TOKEN is a Worker SECRET now (wrangler secret put ADMIN_TOKEN).
@@ -54,6 +80,17 @@ id = "66bc47e33fe145f697cf1f80912f269e"
 [[r2_buckets]]
 binding = "RELEASES"
 bucket_name = "zarlino-releases"
+
+# ---------------------------------------------------------------------------
+# Plugin Factory build artifacts (private bucket `zarlino-artifacts`).
+# The factory build workflow uploads qa-report.json, build-record.json and the
+# packaged VST3 under `factory-builds/<buildId>/`. This Worker reads them back
+# ONLY after the customer-side download gate passes (owner + READY + QA pass +
+# retention), and only for keys under `factory-builds/`.
+# ---------------------------------------------------------------------------
+[[r2_buckets]]
+binding = "FACTORY_ARTIFACTS"
+bucket_name = "zarlino-artifacts"
 
 [observability]
 enabled = true
