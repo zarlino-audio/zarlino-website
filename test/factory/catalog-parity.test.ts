@@ -12,10 +12,25 @@
  * committed artefact and the TypeScript catalogue agree, field by field. CI
  * additionally regenerates the artefact from a fresh build and diffs it, which
  * proves the committed artefact still matches the C++.
+ *
+ * The website is its own repository, so the kernel artefact is not always on
+ * disk. The lookup order is:
+ *
+ *   1. `FACTORY_KERNEL_CATALOG` - an explicit path (used when the two trees are
+ *      checked out somewhere unusual),
+ *   2. the sibling checkout `../factory/catalog/modules.json` - the authority,
+ *      used whenever both repositories are present (local development),
+ *   3. the vendored copy `src/factory/kernel-catalog.json`, which is byte-copied
+ *      from the artefact and lets this gate run in CI where only this repository
+ *      exists.
+ *
+ * The vendored copy is refreshed with the artefact in the same change that
+ * touches a module manifest; the kernel-side gate fails on a stale artefact, and
+ * this one fails on a stale copy, so drift in either direction is caught.
  */
 
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MODULE_CATALOG } from "../../src/factory/catalog";
 
@@ -43,12 +58,28 @@ interface KernelModule {
   parameters: KernelParameter[];
 }
 
+function kernelCatalogPath(): string {
+  const override = process.env.FACTORY_KERNEL_CATALOG;
+  if (override) return resolve(override);
+
+  const sibling = resolve(__dirname, "../../../factory/catalog/modules.json");
+  if (existsSync(sibling)) return sibling;
+
+  return resolve(__dirname, "../../src/factory/kernel-catalog.json");
+}
+
 function kernelCatalog(): KernelModule[] {
-  const path = resolve(__dirname, "../../../factory/catalog/modules.json");
-  return JSON.parse(readFileSync(path, "utf8")) as KernelModule[];
+  return JSON.parse(readFileSync(kernelCatalogPath(), "utf8")) as KernelModule[];
 }
 
 describe("catalogue parity with the factory kernel", () => {
+  it("compares against a real catalogue file, whichever copy is available", () => {
+    // A parity test that silently compares nothing is worse than no test: it
+    // reports green while a customer-visible mismatch ships.
+    expect(existsSync(kernelCatalogPath())).toBe(true);
+    expect(kernelCatalog().length).toBeGreaterThan(0);
+  });
+
   it("ships exactly the same module ids, versions and channels", () => {
     const kernel = kernelCatalog();
     const kernelById = new Map(kernel.map((module) => [module.id, module]));
