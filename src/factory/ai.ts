@@ -17,6 +17,13 @@ import { describeSpecError, parsePluginSpec, type PluginSpec, type SpecError } f
 
 export const MAX_ATTEMPTS = 3;
 export const BUILD_CONSTRAINTS = { maxModules: 5, maxParameters: 8, maxMacros: 2 } as const;
+
+/**
+ * Gateway failures that say nothing about the customer's request, so the same
+ * call is worth repeating: the model's reply was not JSON, the reply frame was
+ * unreadable, or the gateway itself was briefly unreachable.
+ */
+const TRANSIENT_GATEWAY_CODES = new Set(["UNPARSEABLE", "PROVIDER_ERROR", "GATEWAY_UNREACHABLE", "GATEWAY_BAD_RESPONSE"]);
 /** Hard cap on a customer description, so one prompt cannot become a large bill. */
 export const MAX_DESCRIPTION_CHARS = 2000;
 
@@ -237,6 +244,10 @@ export async function interpretToSpec(gateway: AiGateway, input: InterpretInput)
     totals = addUsage(totals, response.usage);
 
     if (!response.ok) {
+      // A no-JSON or provider blip from the model is worth one more try: it is
+      // not a statement about the customer's request. Repeating an unusable
+      // answer three times, however, is just spend, so this is capped.
+      if (TRANSIENT_GATEWAY_CODES.has(response.code) && attempts < MAX_ATTEMPTS) continue;
       return {
         ok: false,
         code: "ASSISTANT_ERROR",

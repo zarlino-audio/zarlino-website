@@ -1,5 +1,7 @@
 ﻿import { describe, expect, it } from "vitest";
 import {
+  MAX_PBKDF2_ITERATIONS,
+  PASSWORD_ITERATIONS,
   SESSION_COOKIE,
   hashPassword,
   isValidEmail,
@@ -19,6 +21,14 @@ import { findUserById, setUserPlan, countUsers } from "../../src/factory/store";
 import { makeIdentity } from "./harness";
 
 describe("credential handling", () => {
+  it("keeps the KDF cost inside what the Workers runtime accepts", () => {
+    // `crypto.subtle.deriveBits` throws for PBKDF2 above this ceiling. Local
+    // workerd does not enforce it, so only a test or a production request finds
+    // this - and a production request means every signup fails.
+    expect(PASSWORD_ITERATIONS).toBeLessThanOrEqual(MAX_PBKDF2_ITERATIONS);
+    expect(PASSWORD_ITERATIONS).toBeGreaterThanOrEqual(100_000);
+  });
+
   it("normalises and validates emails", () => {
     expect(normaliseEmail("  Person@Example.COM ")).toBe("person@example.com");
     expect(isValidEmail("a@b.co")).toBe(true);

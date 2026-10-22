@@ -137,6 +137,13 @@ export async function verifyTransaction(config: BillingConfig, reference: string
       }
     | null;
 
+  // A 404 from Paystack means "no such transaction", which is an honest
+  // "not paid" answer rather than an outage: a return page carrying a made-up
+  // reference should say so instead of blaming the provider.
+  if (response.status === 404) {
+    return { ok: true, paid: false, amountMinor: 0, currency: config.currency, reference, userId: null, plan: null, email: null, status: "not_found" };
+  }
+
   if (!response.ok || !body?.status || !body.data) {
     return { ok: false, code: "PROVIDER_ERROR", message: "The payment provider could not verify that transaction." };
   }

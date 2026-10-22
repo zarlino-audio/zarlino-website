@@ -20,6 +20,7 @@ import { handleFactoryApi } from "../../src/factory/http";
 import { buildDeps, type FactoryHttpEnv } from "../../src/factory/http";
 import { metricsView } from "../../src/factory/service";
 import type { AiGateway, GatewayResponse, InterpretRequestPayload } from "../../src/factory/ai";
+import { MAX_ATTEMPTS } from "../../src/factory/ai";
 import type { BuildService, DispatchBuildInput, RemoteBuild } from "../../src/factory/builds";
 import { makeNamespace } from "./harness";
 import { MAX_DESCRIPTION_CHARS } from "../../src/factory/ai";
@@ -791,6 +792,21 @@ describe("launch security", () => {
     expect((await client.request("GET", "/api/factory/me")).body.account.plan).toBe("free");
   });
 
+  it("treats an unknown payment reference as unpaid, not as a provider outage", async () => {
+    const world = makeWorld(model, builds);
+    const paystack = fakePaystack({ reference: "zf_missing", amountMinor: 19900, userId: "REPLACED" });
+    paystack.setVerifyFailure(); // Paystack answers 404 for a reference it never issued
+    const deps = { ...world.deps, billing: { secretKey: PAYSTACK_SECRET, currency: "GHS", callbackBase: ORIGIN, fetchImpl: paystack.fetchImpl } };
+    const client = new Client(world.env, deps);
+    await client.signup("typo@example.com");
+
+    const verify = await client.request("GET", "/api/factory/billing/verify?reference=zf_missing");
+    expect(verify.status).toBe(200);
+    expect(verify.body.paid).toBe(false);
+    expect(verify.body.message).toBe("That payment has not completed.");
+    expect((await client.request("GET", "/api/factory/me")).body.account.plan).toBe("free");
+  });
+
   it("verifies webhook signatures, ignores replays and never trusts the body", async () => {
     const world = makeWorld(model, builds);
     const paystack = fakePaystack({ reference: "zf_hook", amountMinor: 19900, userId: "REPLACED" });
@@ -834,7 +850,13 @@ describe("launch security", () => {
       deps,
     );
     expect(unverified.status).toBe(200);
-    expect((await unverified.json()) as Record<string, unknown>).toMatchObject({ ok: true, deferred: true });
+    // A transaction the provider does not know is "not paid", never a grant. The
+    // body says so plainly instead of pretending the webhook was deferred.
+    expect((await unverified.json()) as Record<string, unknown>).toMatchObject({
+      ok: true,
+      granted: false,
+      reason: "PAYMENT_NOT_SUCCESSFUL",
+    });
   });
 
   it("never exposes a stored secret through the customer API", async () => {
@@ -965,6 +987,32 @@ describe("launch security", () => {
     const download = await alice.download(buildId);
     expect(download.status).toBe(500);
     expect(download.body.error).toBe("ARTIFACT_INVALID");
+  });
+
+  it("retries a transient assistant failure but stops paying for a repeat offender", async () => {
+    const transient: () => GatewayResponse = () => ({ ok: false, code: "UNPARSEABLE", message: "The assistant returned an unusable answer.", usage: { provider: "deepseek", model: "deepseek-chat", promptTokens: 900, completionTokens: 40, costUsd: 0.0002, latencyMs: 400 } });
+
+    // One bad reply, then a good one: the customer never sees the blip.
+    const recovered = new ScriptedModel([transient, specReply(compressorSpec())]);
+    const recoveryWorld = makeWorld(recovered, builds);
+    const recoveryClient = recoveryWorld.client();
+    await recoveryClient.signup("recover@example.com");
+    const project = await recoveryClient.request("POST", "/api/factory/projects", { name: "Glue", description: "a warm punchy compressor with a little saturation" });
+    const result = await recoveryClient.request("POST", `/api/factory/projects/${project.body.project.id as string}/interpret`, { description: "a warm punchy compressor with a little saturation" });
+    expect(result.status).toBe(200);
+    expect(result.body.ok).toBe(true);
+    expect(recovered.calls).toHaveLength(2);
+
+    // A model that never returns JSON is tried MAX_ATTEMPTS times and no more.
+    const broken = new ScriptedModel([transient]);
+    const brokenWorld = makeWorld(broken, new SimulatedBuildService());
+    const brokenClient = brokenWorld.client();
+    await brokenClient.signup("broken@example.com");
+    const project2 = await brokenClient.request("POST", "/api/factory/projects", { name: "Glue", description: "a warm punchy compressor" });
+    const failed = await brokenClient.request("POST", `/api/factory/projects/${project2.body.project.id as string}/interpret`, { description: "a warm punchy compressor" });
+    expect(failed.status).toBe(400);
+    expect(failed.body.error.code).toBe("ASSISTANT_ERROR");
+    expect(broken.calls).toHaveLength(MAX_ATTEMPTS);
   });
 
   it("reserves assistant requests atomically, so a burst cannot exceed the allowance", async () => {

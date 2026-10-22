@@ -47,6 +47,7 @@ export function createDoSql(storage: DoSqlStorage): Sql {
 
 async function handleEnvelope(
   request: Request,
+  kind: "identity" | "workspace",
   run: (op: string, args: Record<string, unknown>) => Promise<OpResult>,
 ): Promise<Response> {
   if (request.method !== "POST") {
@@ -72,7 +73,16 @@ async function handleEnvelope(
   try {
     const result = await run(op, args);
     return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
-  } catch {
+  } catch (error) {
+    // Observability: the store is the one place a SQL/runtime fault can hide
+    // behind a generic response. Log the operation and the error message (never
+    // the arguments: they can carry a password hash or a design).
+    console.error(
+      "[factory-store] operation failed",
+      kind,
+      op,
+      error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 400) : typeof error,
+    );
     return new Response(JSON.stringify({ ok: false, code: "STORE_ERROR" }), {
       status: 500,
       headers: { "content-type": "application/json" },
@@ -83,7 +93,7 @@ async function handleEnvelope(
 /** POST `{op, args}` -> operation result. Shared by the DO classes and tests. */
 export function createStoreFetch(sql: Sql, kind: "identity" | "workspace"): (request: Request) => Promise<Response> {
   return (request) =>
-    handleEnvelope(request, (op, args) => (kind === "identity" ? identityOp({ sql }, op, args) : workspaceOp({ sql }, op, args)));
+    handleEnvelope(request, kind, (op, args) => (kind === "identity" ? identityOp({ sql }, op, args) : workspaceOp({ sql }, op, args)));
 }
 
 export class FactoryIdentity {

@@ -33,7 +33,21 @@ import {
 
 export const SESSION_COOKIE = "zf_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
-export const PASSWORD_ITERATIONS = 210_000;
+/**
+ * PBKDF2-HMAC-SHA-256 iteration count.
+ *
+ * This is the MAXIMUM the Workers runtime accepts: `crypto.subtle.deriveBits`
+ * throws `NotSupportedError: Pbkdf2 failed: iteration counts above 100000 are
+ * not supported`. It was found the hard way - 210,000 passed in local workerd
+ * (which does not enforce the cap) and failed in production, so there is a test
+ * asserting the constant stays within the platform limit.
+ *
+ * The per-user iteration count is stored with the hash, so raising this later
+ * (if the platform allows) does not invalidate existing accounts, and users
+ * hashed at a lower count can be re-hashed on their next successful login.
+ */
+export const PASSWORD_ITERATIONS = 100_000;
+export const MAX_PBKDF2_ITERATIONS = 100_000;
 const PASSWORD_MIN_LENGTH = 10;
 const PASSWORD_MAX_LENGTH = 200;
 

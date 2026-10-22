@@ -92,7 +92,6 @@ function doCall(namespace: DurableNamespace | undefined, name: string): ClientCa
     return body ?? { ok: false, code: "STORE_ERROR" };
   };
 }
-
 export function buildDeps(env: FactoryHttpEnv, publicBaseUrl: string): FactoryDeps {
   const osUrl = (env.FACTORY_OS_URL ?? "").replace(/\/$/, "");
   const secret = env.FACTORY_GATEWAY_SECRET ?? "";

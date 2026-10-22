@@ -1,0 +1,77 @@
+name: Plugin Factory Gate
+
+# The Plugin Factory customer application lives here, so its gate lives here.
+#
+# It proves the four things a customer depends on, in order of blast radius:
+#   1. the deterministic PluginSpec engine typechecks (strict) - a spec that
+#      validates in the browser but not on the build machine would charge a
+#      customer for a build that cannot succeed,
+#   2. the engine's tests pass (validation, plan/UI compilation, entitlements,
+#      data isolation, the launch simulation and the security cases),
+#   3. the site still builds, and
+#   4. the Worker bundle still resolves its bindings and registers its Durable
+#      Object classes.
+#
+# The kernel-side half of the factory (module catalogue, C++ kernel, example
+# specs) is gated in the Zarlino repository by `factory-gate.yml`.
+
+on:
+  pull_request:
+    paths:
+      - 'src/factory/**'
+      - 'src/components/factory/**'
+      - 'src/pages/factory/**'
+      - 'test/factory/**'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.factory.json'
+      - 'vitest.config.ts'
+      - '.github/workflows/factory-gate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/factory/**'
+      - 'src/components/factory/**'
+      - 'src/pages/factory/**'
+      - 'test/factory/**'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.factory.json'
+      - 'vitest.config.ts'
+      - '.github/workflows/factory-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  factory-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck the factory application (strict)
+        run: npx tsc --noEmit -p tsconfig.factory.json
+
+      # Every suite under test/factory, including the launch simulation that
+      # replays the ten launch checks against the real HTTP surface.
+      - name: Factory tests (unit, isolation, launch simulation, security)
+        run: npx vitest run test/factory --reporter=verbose
+
+      - name: Production site build
+        run: npm run build
+
+      - name: Worker bundle check (bindings resolve, DO classes register)
+        run: npx wrangler deploy --dry-run --outdir .wrangler/ci-dist
