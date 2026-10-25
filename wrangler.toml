@@ -77,20 +77,38 @@ id = "66bc47e33fe145f697cf1f80912f269e"
 # Release assets (binaries, canonical screenshot, canonical audio, manifest)
 # are published by the plugin release gate and served EXCLUSIVELY through this
 # Worker at /releases/<product>/latest/... - the bucket has no public access.
-[[r2_buckets]]
-binding = "RELEASES"
-bucket_name = "zarlino-releases"
+#
+# DISABLED 2026-10-25: the account's R2 subscription lapsed. A worker that binds
+# an R2 bucket can no longer be deployed at all (`10136 Please enable R2`), which
+# would freeze the entire customer site, so the binding is removed here. The
+# /releases/* handlers already answer 503 "Release storage not bound" when the
+# binding is absent, so existing release downloads are unavailable but nothing
+# crashes. Restore this block - and only this block - once R2 is enabled again.
+#
+# [[r2_buckets]]
+# binding = "RELEASES"
+# bucket_name = "zarlino-releases"
 
 # ---------------------------------------------------------------------------
-# Plugin Factory build artifacts (private bucket `zarlino-artifacts`).
-# The factory build workflow uploads qa-report.json, build-record.json and the
-# packaged VST3 under `factory-builds/<buildId>/`. This Worker reads them back
-# ONLY after the customer-side download gate passes (owner + READY + QA pass +
-# retention), and only for keys under `factory-builds/`.
-# ---------------------------------------------------------------------------
-[[r2_buckets]]
+# Plugin Factory build artifacts.
+#
+# KV rather than R2: KV is usable on the free plan, and the factory must remain
+# deployable when R2 is not. The build workflow publishes under
+# `factory-builds/<buildId>/` (artifact, qa-report.json, build-record.json,
+# provenance, ui-plan, spec) with `factory/tools/kv-upload.mjs`, which reads every
+# value back and compares its sha256 before the build may be reported READY.
+#
+# This Worker reads them back ONLY after the customer-side download gate passes
+# (owner + READY + QA pass + retention), and only for keys under the build's own
+# `factory-builds/<buildId>/` prefix.
+#
+# The record is the trust anchor: `build-record.json` exists only if the publish
+# job ran, and it is only published after the quality gate passed on the BUILT
+# bundle. KV's per-value ceiling is 25 MiB; a packaged VST3 is about 3.5 MB, and
+# the uploader refuses anything larger instead of truncating it.
+[[kv_namespaces]]
 binding = "FACTORY_ARTIFACTS"
-bucket_name = "zarlino-artifacts"
+id = "3f463262f7aa4b64a13f4b15c870b83f"
 
 [observability]
 enabled = true

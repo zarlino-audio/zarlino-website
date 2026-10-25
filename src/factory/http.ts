@@ -35,6 +35,7 @@ import {
   startCheckout,
   verifyReturn,
   type Actor,
+  type ArtifactStore,
   type ClientCall,
   type FactoryDeps,
 } from "./service";
@@ -45,22 +46,38 @@ export interface DurableNamespace {
   get(id: unknown): { fetch(request: Request): Promise<Response> };
 }
 
-export interface ArtifactBinding {
-  get(key: string): Promise<
-    | {
-        body: ReadableStream | null;
-        size?: number;
-        httpEtag?: string;
-        writeHttpMetadata?(headers: Headers): void;
-      }
-    | null
-  >;
+/**
+ * The slice of Cloudflare KV the factory reads.
+ *
+ * Declared structurally (rather than as `KVNamespace`) so the tests can pass a
+ * plain object, and so the `stream` overload is the only shape relied on.
+ */
+export interface KvLikeNamespace {
+  get(key: string, type: "stream"): Promise<ReadableStream | null>;
+}
+
+/**
+ * Adapt KV to the artifact-store interface.
+ *
+ * KV has no `writeHttpMetadata` and no per-object size, so the caller supplies
+ * the length from the artifact record it already verified. `stream` is used
+ * rather than `arrayBuffer` so a multi-megabyte plugin is not buffered whole in
+ * the Worker's memory on the way out.
+ */
+export function kvArtifactStore(kv: KvLikeNamespace): ArtifactStore {
+  return {
+    async get(key) {
+      const body = await kv.get(key, "stream");
+      return body ? { body } : null;
+    },
+  };
 }
 
 export interface FactoryHttpEnv {
   FACTORY_IDENTITY?: DurableNamespace;
   FACTORY_WORKSPACE?: DurableNamespace;
-  FACTORY_ARTIFACTS?: ArtifactBinding;
+  /** KV namespace holding build artifacts and the published build record. */
+  FACTORY_ARTIFACTS?: KvLikeNamespace;
   FACTORY_GATEWAY_SECRET?: string;
   FACTORY_OS_URL?: string;
   PAYSTACK_SECRET_KEY?: string;
@@ -113,7 +130,7 @@ export function buildDeps(env: FactoryHttpEnv, publicBaseUrl: string): FactoryDe
     },
     ai: createAiGateway({ baseUrl: osUrl, secret }),
     builds: createOsBuildService({ baseUrl: osUrl, secret }),
-    artifacts: env.FACTORY_ARTIFACTS ?? null,
+    artifacts: env.FACTORY_ARTIFACTS ? kvArtifactStore(env.FACTORY_ARTIFACTS) : null,
     billing,
     publicBaseUrl,
   };
@@ -375,9 +392,22 @@ function safeFilename(name: string): string {
 
 async function downloadArtifact(deps: FactoryDeps, env: FactoryHttpEnv, actor: Actor, buildId: string): Promise<Response> {
   const artifact = await authoriseDownload(deps, actor, buildId);
-  if (!env.FACTORY_ARTIFACTS) return json({ error: "ARTIFACT_STORE_UNAVAILABLE", message: "The artifact store is not configured." }, 503);
+  if (!deps.artifacts) return json({ error: "ARTIFACT_STORE_UNAVAILABLE", message: "The artifact store is not configured." }, 503);
 
-  const object = await env.FACTORY_ARTIFACTS.get(artifact.key);
+  // A binding whose backend is unavailable throws rather than returning null.
+  // That is not the customer's fault and not a bug in their build: say the store
+  // is unavailable and that it is worth retrying, instead of a generic 500 that
+  // offers no next step.
+  let object: Awaited<ReturnType<ArtifactStore["get"]>>;
+  try {
+    object = await deps.artifacts.get(artifact.key);
+  } catch {
+    return json(
+      { error: "ARTIFACT_STORE_UNAVAILABLE", message: "The artifact store is temporarily unavailable. Try the download again in a moment.", retryable: true },
+      503,
+    );
+  }
+
   if (!object || !object.body) {
     return json({ error: "ARTIFACT_MISSING", message: "This artifact is no longer stored. Build the project again." }, 410);
   }
@@ -389,8 +419,10 @@ async function downloadArtifact(deps: FactoryDeps, env: FactoryHttpEnv, actor: A
     "x-content-type-options": "nosniff",
   });
   if (artifact.sha256) headers.set("x-artifact-sha256", artifact.sha256);
-  if (typeof object.size === "number") headers.set("content-length", String(object.size));
-  object.writeHttpMetadata?.(headers);
+  // KV reports no per-object size, so the length comes from the artifact record
+  // the gate already validated.
+  const length = typeof object.size === "number" ? object.size : artifact.bytes;
+  if (typeof length === "number" && length > 0) headers.set("content-length", String(length));
 
   return new Response(object.body, { status: 200, headers });
 }

@@ -53,12 +53,22 @@ export interface ClientCall {
   (op: string, args: Record<string, unknown>): Promise<Record<string, unknown>>;
 }
 
+/**
+ * What the download gate needs from the artifact store.
+ *
+ * Declared here (not in `http.ts`) because the service is what consumes it, and
+ * `http.ts` already imports the service - the reverse import would be a cycle.
+ */
+export interface ArtifactStore {
+  get(key: string): Promise<{ body: ReadableStream | null; size?: number } | null>;
+}
+
 export interface FactoryDeps {
   identity: ClientCall;
   workspace: (userId: string) => ClientCall;
   ai: AiGateway;
   builds: BuildService;
-  artifacts: { get(key: string): Promise<unknown> } | null;
+  artifacts: ArtifactStore | null;
   billing: BillingConfig;
   now?: () => Date;
   newId?: (prefix: string) => string;

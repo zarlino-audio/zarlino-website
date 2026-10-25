@@ -17,7 +17,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import { handleFactoryApi } from "../../src/factory/http";
-import { buildDeps, type FactoryHttpEnv } from "../../src/factory/http";
+import { buildDeps, kvArtifactStore, type FactoryHttpEnv, type KvLikeNamespace } from "../../src/factory/http";
 import { metricsView } from "../../src/factory/service";
 import type { AiGateway, GatewayResponse, InterpretRequestPayload } from "../../src/factory/ai";
 import { MAX_ATTEMPTS } from "../../src/factory/ai";
@@ -227,16 +227,20 @@ class SimulatedBuildService implements BuildService {
   }
 }
 
-function artefactBinding(bucket: Map<string, string>) {
+/**
+ * An in-memory KV namespace with the one method the factory uses.
+ *
+ * Tests pass a namespace, not an artifact-store adapter, so the adapter itself
+ * (`kvArtifactStore`) is exercised: a change to the storage shape has to be a
+ * change the production path also makes.
+ */
+function kvBinding(bucket: Map<string, string>): KvLikeNamespace {
   return {
-    async get(key: string) {
+    async get(key: string, type: "stream") {
+      if (type !== "stream") throw new Error("the factory only reads streams");
       const body = bucket.get(key);
       if (body === undefined) return null;
-      return {
-        body: new Blob([body]).stream(),
-        size: body.length,
-        writeHttpMetadata: () => undefined,
-      };
+      return new Blob([body]).stream();
     },
   };
 }
@@ -327,7 +331,7 @@ function makeWorld(model: ScriptedModel, builds: SimulatedBuildService, options:
   const env: FactoryHttpEnv = {
     FACTORY_IDENTITY: identity.namespace,
     FACTORY_WORKSPACE: workspace.namespace,
-    FACTORY_ARTIFACTS: artefactBinding(builds.bucket),
+    FACTORY_ARTIFACTS: kvBinding(builds.bucket),
     FACTORY_GATEWAY_SECRET: GATEWAY_SECRET,
     FACTORY_OS_URL: "https://os.zarlinoaudio.com",
     PAYSTACK_SECRET_KEY: PAYSTACK_SECRET,
@@ -1024,6 +1028,39 @@ describe("launch security", () => {
     const download = await alice.download(buildId);
     expect(download.status).toBe(500);
     expect(download.body.error).toBe("ARTIFACT_INVALID");
+  });
+
+  it("tells the customer the artifact store is unavailable instead of failing generically", async () => {
+    // Production hit this: the store's backend was gone, so `get()` threw and
+    // the download answered a bare 500 "Something went wrong on our side" with
+    // no hint that the build itself was fine and retrying was worthwhile.
+    const world = makeWorld(model, builds);
+    // Swap only the store, through the production adapter, so this exercises
+    // `kvArtifactStore` itself rather than a hand-written fake.
+    const brokenEnv: FactoryHttpEnv = {
+      ...world.env,
+      FACTORY_ARTIFACTS: {
+        async get(): Promise<never> {
+          throw new Error("KV read failed: the namespace is unavailable");
+        },
+      },
+    };
+    const storeDown = new Client(brokenEnv, {
+      ...world.deps,
+      artifacts: kvArtifactStore(brokenEnv.FACTORY_ARTIFACTS!),
+    });
+    await storeDown.signup("storefront@example.com");
+    const projectId = (await storeDown.createProject("Storefront")).body.project.id as string;
+    await storeDown.interpret(projectId, "a compressor");
+    const buildId = (await storeDown.build(projectId, "standard")).body.build.buildId as string;
+
+    const download = await storeDown.download(buildId);
+    expect(download.status).toBe(503);
+    expect(download.body.error).toBe("ARTIFACT_STORE_UNAVAILABLE");
+    expect(download.body.retryable).toBe(true);
+    // The internal message never reaches the customer.
+    expect(String(download.body.message)).not.toContain("R2");
+    expect(String(download.body.message)).not.toContain("Cloudflare");
   });
 
   it("retries a transient assistant failure but stops paying for a repeat offender", async () => {
