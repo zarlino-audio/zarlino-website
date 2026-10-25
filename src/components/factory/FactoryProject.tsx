@@ -22,6 +22,11 @@ import {
 } from "./api";
 import InterfacePreview from "./InterfacePreview";
 
+/** READY and FAILED are the only states that stop a build from changing. */
+function isTerminal(status: string): boolean {
+  return status === "READY" || status === "FAILED";
+}
+
 interface ProjectData {
   project: ProjectSummary;
   spec: { id: string; revision: number; sha256: string; source: string; createdAt: string } | null;
@@ -43,6 +48,9 @@ export default function FactoryProject({ projectId: providedId }: { projectId?: 
   const [activeBuild, setActiveBuild] = useState<BuildView | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
+  // The poll must not restart when unrelated state changes (picking an
+  // interface re-creates `load`), so it reaches the latest loader through a ref.
+  const loadRef = useRef<() => Promise<void>>(async () => {});
 
   const load = useCallback(async () => {
     try {
@@ -54,28 +62,55 @@ export default function FactoryProject({ projectId: providedId }: { projectId?: 
     }
   }, [projectId, template]);
 
+  loadRef.current = load;
+
   useEffect(() => {
     void load();
   }, [load]);
 
   // Poll while a build is in flight. The server decides when it is done.
+  //
+  // The build being watched is derived from the data, not only from the build
+  // this tab started: a customer who reloads, or opens the project on another
+  // device, must still see a live build. Keying the poll on local state alone
+  // froze the page on whatever state the reload rendered.
+  const inFlight = activeBuild && !isTerminal(activeBuild.status)
+    ? activeBuild
+    : (data?.builds ?? []).find((row) => !isTerminal(row.status)) ?? null;
+  const watchedId = inFlight?.buildId ?? null;
+
   useEffect(() => {
-    if (!activeBuild || activeBuild.status === "READY" || activeBuild.status === "FAILED") return;
-    const timer = window.setInterval(async () => {
+    if (!watchedId) return;
+    let stopped = false;
+    let timer: number | null = null;
+
+    const tick = async () => {
       try {
-        const next = await factoryApi.buildStatus(activeBuild.buildId);
+        const next = await factoryApi.buildStatus(watchedId);
+        if (stopped) return;
         setActiveBuild(next.build);
-        if (next.build.status === "READY" || next.build.status === "FAILED") {
-          window.clearInterval(timer);
-          await load();
+        if (isTerminal(next.build.status)) {
+          stopped = true;
+          if (timer !== null) window.clearInterval(timer);
+          await loadRef.current();
         }
       } catch {
         /* transient; the next tick retries */
       }
-    }, 4000);
+    };
+
+    timer = window.setInterval(tick, 4000);
     pollRef.current = timer;
-    return () => window.clearInterval(timer);
-  }, [activeBuild, load]);
+    // Ask once immediately: a reloaded page (or a second device) shows stale
+    // state until the first tick, and that is exactly the moment the customer
+    // is looking at it.
+    void tick();
+
+    return () => {
+      stopped = true;
+      if (timer !== null) window.clearInterval(timer);
+    };
+  }, [watchedId]);
 
   const interpret = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -136,7 +171,7 @@ export default function FactoryProject({ projectId: providedId }: { projectId?: 
   }
   if (!data) return <p className="font-['Inter'] text-[14px] text-[#94A3B8]">Loading…</p>;
 
-  const latest = activeBuild ?? data.builds[0] ?? null;
+  const latest = activeBuild ?? (data.builds ?? []).find((row) => !isTerminal(row.status)) ?? data.builds[0] ?? null;
   const canBuild = Boolean(data.plan) && Boolean(template);
   const buildsLeft = Math.max(0, data.entitlement.builds.limit - data.entitlement.builds.used);
 

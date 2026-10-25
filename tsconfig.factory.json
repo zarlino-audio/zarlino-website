@@ -6,5 +6,11 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["node", "@cloudflare/workers-types"]
   },
-  "include": ["src/factory/**/*.ts", "test/factory/**/*.ts", "vitest.config.ts"]
+  "include": [
+    "src/factory/**/*.ts",
+    "src/components/factory/**/*.ts",
+    "src/components/factory/**/*.tsx",
+    "test/factory/**/*.ts",
+    "vitest.config.ts"
+  ]
 }
