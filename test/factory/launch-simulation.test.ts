@@ -534,13 +534,28 @@ describe("launch simulation", () => {
     await alice.signup("alice@example.com");
     const projectId = (await alice.createProject("Space")).body.project.id as string;
 
-    const response = await alice.interpret(projectId, "a lush hall reverb with a long decay");
+    // Reverb is CERTIFIED now (the algorithmic room is a real primitive), so the
+    // refusal case has to be something the DSP genuinely cannot express.
+    const response = await alice.interpret(projectId, "a convolution reverb loaded with a cathedral impulse response");
     expect(response.status).toBe(422);
-    expect(response.body.unsupported.message).toContain("reverb");
+    expect(response.body.unsupported.message).toContain("convolution");
     expect(response.body.unsupported.alternative).toBeTruthy();
     // Refused before the model was asked, and certainly before a build.
     expect(model.calls).toHaveLength(0);
     expect(builds.dispatched).toHaveLength(0);
+  });
+
+  it("5b. a reverb request is now buildable rather than refused", async () => {
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("reverb@example.com");
+    const projectId = (await alice.createProject("Room")).body.project.id as string;
+
+    const response = await alice.interpret(projectId, "a lush hall reverb with a long decay");
+    // Not refused by the out-of-scope detector: the model is asked, and the
+    // deterministic validator decides.
+    expect(model.calls.length).toBe(1);
+    expect(response.status).toBe(200);
   });
 
   it("6. a malicious or malformed design cannot escape the PluginSpec constraints", async () => {

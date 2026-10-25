@@ -107,39 +107,38 @@ export function emptyUsage(): AiUsage {
  * approximate with the wrong module.
  */
 const UNSUPPORTED_FAMILIES: Array<{ pattern: RegExp; label: string; alternative: string }> = [
+  // Reverb, delay, chorus, flanger, phaser, tremolo, de-essing, clipping, mid/side
+  // and excitation are all CERTIFIED primitives now (see catalog.ts), so they are
+  // deliberately absent from this list: naming them here would refuse a request
+  // the factory can build.
   {
-    pattern: /\b(reverb|reverberation|hall|plate|spring\s+reverb|room\s+simulation|convolution)\b/i,
-    label: "reverb",
-    alternative: "a short gated saturation or a transient shaper to add space-like attack",
+    pattern: /\b(convolution|impulse\s+response|ir\s+loader|cabinet\s+impulse)\b/i,
+    label: "convolution processing",
+    alternative: "the algorithmic reverb, which builds a room from certified primitives without an impulse response",
   },
   {
-    pattern: /\b(delay|echo|ping[-\s]?pong|slapback)\b/i,
-    label: "delay",
-    alternative: "a stereo width stage plus a tilt EQ, which thickens a signal without adding echoes",
-  },
-  {
-    pattern: /\b(synthesizer|synth|oscillator|wavetable|sampler)\b/i,
+    pattern: /\b(synthesizer|synth|oscillator|wavetable|sampler|drum\s+machine)\b/i,
     label: "an instrument",
-    alternative: "a processing chain — Zarlino builds processors, not instruments",
+    alternative: "a processing chain - Zarlino builds processors, not instruments",
   },
   {
-    pattern: /\b(pitch\s*shift|harmoni[sz]er|octaver|auto[-\s]?tune|formant\s+shift)\b/i,
+    pattern: /\b(pitch\s*shift|harmoni[sz]er|octaver|auto[-\s]?tune|formant\s+shift|vocoder)\b/i,
     label: "pitch shifting",
-    alternative: "a stereo width or saturation stage for a similar sense of size",
+    alternative: "a chorus or a stereo width stage for a similar sense of size without transposing",
   },
   {
-    pattern: /\b(amp\s*sim|cabinet\s*impulse|guitar\s+amp|speaker\s+simulation|ir\s+loader)\b/i,
+    pattern: /\b(amp\s*sim|guitar\s+amp|speaker\s+simulation|power\s+amp)\b/i,
     label: "amp/cabinet simulation",
-    alternative: "a saturation plus a tilt EQ, which colours a DI signal without cabinet impulses",
+    alternative: "a saturation or clipper plus a tilt EQ, which colours a DI signal without cabinet impulses",
   },
   {
-    pattern: /\b(de[-\s]?esser|multiband|dynamic\s+eq|sidechain)\b/i,
-    label: "a dynamic/multiband processor",
-    alternative: "a compressor plus a parametric EQ, set on the same track",
+    pattern: /\b(multiband\s+compress\w*|multiband|dynamic\s+eq|sidechain|side[-\s]chain)\b/i,
+    label: "multiband or sidechain processing",
+    alternative: "a compressor plus a parametric EQ, or the de-esser for one band",
   },
   {
-    pattern: /\b(true[-\s]?peak|oversampl\w*|linear[-\s]?phase|lookahead\s+limiter\s+with\s+subsample)\b/i,
-    label: "a specialised metering/oversampled process",
+    pattern: /\b(true[-\s]?peak|linear[-\s]?phase|spectral\s+(?:repair|denois\w*)|declip\w*)\b/i,
+    label: "a specialised spectral/oversampled process",
     alternative: "the certified lookahead limiter, which already limits safely at its ceiling",
   },
 ];
