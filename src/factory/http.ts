@@ -512,8 +512,38 @@ export async function handleFactoryApi(
     // and never with request contents: a stack trace or a body could carry a
     // session token or a design the customer has not shared.
     console.error("[factory] unhandled route error", error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 300) : typeof error);
+
+    // Capacity is not a bug. A free-tier Durable Object can run out of its daily
+    // row budget, and the raw consequence used to reach the customer as
+    // "Something went wrong on our side" - indistinguishable from a real fault,
+    // with no hint that waiting fixes it. Say what it is.
+    if (isCapacityExhausted(error)) {
+      return json(
+        {
+          error: "CAPACITY",
+          message: "Zarlino is at capacity right now. Please try again in a little while - your work is saved.",
+          retryable: true,
+        },
+        503,
+        { "retry-after": "900" },
+      );
+    }
+
     return json({ error: "INTERNAL_ERROR", message: "Something went wrong on our side. Please try again." }, 500);
   }
+}
+
+/**
+ * True when the failure is the platform refusing more work, not a defect.
+ *
+ * Durable Object SQLite on the free plan has a daily row budget; exceeding it
+ * throws from inside the object and surfaces here as an opaque error. The
+ * customer should be told to retry later, and the operator should see a 503,
+ * not a 500 alert storm.
+ */
+export function isCapacityExhausted(error: unknown): boolean {
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  return /Exceeded allowed rows (read|written)|Durable Objects free tier|too many rows/i.test(message);
 }
 
 /** Small helper the pages use to decide whether to render the app shell. */

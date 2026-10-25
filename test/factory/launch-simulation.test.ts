@@ -17,7 +17,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import { handleFactoryApi } from "../../src/factory/http";
-import { buildDeps, kvArtifactStore, type FactoryHttpEnv, type KvLikeNamespace } from "../../src/factory/http";
+import { buildDeps, isCapacityExhausted, kvArtifactStore, type FactoryHttpEnv, type KvLikeNamespace } from "../../src/factory/http";
 import { metricsView } from "../../src/factory/service";
 import type { AiGateway, GatewayResponse, InterpretRequestPayload } from "../../src/factory/ai";
 import { MAX_ATTEMPTS } from "../../src/factory/ai";
@@ -1061,6 +1061,34 @@ describe("launch security", () => {
     // The internal message never reaches the customer.
     expect(String(download.body.message)).not.toContain("R2");
     expect(String(download.body.message)).not.toContain("Cloudflare");
+  });
+
+  it("reports capacity exhaustion as retryable, never as a generic fault", async () => {
+    // The free tier's daily Durable Object row budget can be spent. A customer
+    // who then signs in must be told to retry, not shown "something went wrong"
+    // - and the response must not be a 500 that pages an operator.
+    expect(
+      isCapacityExhausted(new Error("Exceeded allowed rows read in Durable Objects free tier.")),
+    ).toBe(true);
+    expect(isCapacityExhausted(new Error("Exceeded allowed rows written in Durable Objects free tier."))).toBe(true);
+    // A real defect is still a defect.
+    expect(isCapacityExhausted(new Error("Pbkdf2 failed"))).toBe(false);
+    expect(isCapacityExhausted("not an error")).toBe(false);
+
+    const world = makeWorld(model, builds);
+    const exhausted = new Client(world.env, {
+      ...world.deps,
+      // The deps carry the store calls, so exhaust the store there.
+      identity: async () => {
+        throw new Error("Exceeded allowed rows read in Durable Objects free tier.");
+      },
+    });
+    const response = await exhausted.signup("capacity@example.com");
+    expect(response.status).toBe(503);
+    expect(response.body.error).toBe("CAPACITY");
+    expect(response.body.retryable).toBe(true);
+    expect(response.headers.get("retry-after")).toBe("900");
+    expect(String(response.body.message)).not.toContain("Durable Objects");
   });
 
   it("retries a transient assistant failure but stops paying for a repeat offender", async () => {

@@ -954,23 +954,38 @@ export interface UsageReport {
   estimatedCostUsd: number;
 }
 
+/**
+ * The month's usage in ONE indexed pass.
+ *
+ * This used to be seven separate `SUM(...) WHERE kind = ?` queries. Each one is
+ * an index range over the same rows, but Durable Object SQLite bills rows *read*
+ * per statement, so the same rows were counted seven times on every
+ * `/me`, `/projects` and `/builds` call - the exact charge that drains a free
+ * tier's daily row budget. Grouping by kind reads each row once.
+ */
 export function usageReport(sql: Sql, userId: string, sinceIso: string): UsageReport {
-  const read = (kind: UsageKind) => sumUsage(sql, userId, kind, sinceIso);
-  const aiRequests = read("ai.request");
-  const aiTokens = read("ai.tokens");
+  const rows = sql.all<{ kind: string; q: number | null; c: number | null }>(
+    "SELECT kind, SUM(quantity) AS q, SUM(cost_usd) AS c FROM usage_events WHERE user_id = ? AND created_at >= ? GROUP BY kind",
+    userId,
+    sinceIso,
+  );
+
+  const totals = new Map<string, { quantity: number; cost: number }>();
+  for (const row of rows) {
+    totals.set(row.kind, { quantity: Number(row.q ?? 0), cost: Number(row.c ?? 0) });
+  }
+  const read = (kind: UsageKind) => totals.get(kind) ?? { quantity: 0, cost: 0 };
+
   const aiCost = read("ai.cost_usd");
-  const buildRequests = read("build.request");
-  const buildSeconds = read("build.seconds");
-  const artifactBytes = read("build.artifact_bytes");
   const buildCost = read("build.cost_usd");
   return {
     sinceIso,
-    aiRequests: aiRequests.quantity,
-    aiTokens: aiTokens.quantity,
+    aiRequests: read("ai.request").quantity,
+    aiTokens: read("ai.tokens").quantity,
     aiCostUsd: round6(aiCost.cost),
-    buildRequests: buildRequests.quantity,
-    buildSeconds: buildSeconds.quantity,
-    artifactBytes: artifactBytes.quantity,
+    buildRequests: read("build.request").quantity,
+    buildSeconds: read("build.seconds").quantity,
+    artifactBytes: read("build.artifact_bytes").quantity,
     estimatedCostUsd: round6(aiCost.cost + buildCost.cost),
   };
 }
