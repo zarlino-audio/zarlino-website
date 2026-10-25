@@ -107,10 +107,10 @@ export function emptyUsage(): AiUsage {
  * approximate with the wrong module.
  */
 const UNSUPPORTED_FAMILIES: Array<{ pattern: RegExp; label: string; alternative: string }> = [
-  // Reverb, delay, chorus, flanger, phaser, tremolo, de-essing, clipping, mid/side
-  // and excitation are all CERTIFIED primitives now (see catalog.ts), so they are
-  // deliberately absent from this list: naming them here would refuse a request
-  // the factory can build.
+  // Reverb, delay, chorus, flanger, phaser, tremolo, de-essing, clipping, mid/side,
+  // excitation and the tape/tube/transformer analogue colours are all CERTIFIED
+  // primitives now (see catalog.ts), so they are deliberately absent from this
+  // list: naming them here would refuse a request the factory can build.
   {
     pattern: /\b(convolution|impulse\s+response|ir\s+loader|cabinet\s+impulse)\b/i,
     label: "convolution processing",
@@ -127,9 +127,11 @@ const UNSUPPORTED_FAMILIES: Array<{ pattern: RegExp; label: string; alternative:
     alternative: "a chorus or a stereo width stage for a similar sense of size without transposing",
   },
   {
-    pattern: /\b(amp\s*sim|guitar\s+amp|speaker\s+simulation|power\s+amp)\b/i,
-    label: "amp/cabinet simulation",
-    alternative: "a saturation or clipper plus a tilt EQ, which colours a DI signal without cabinet impulses",
+    // Amplifier *colour* is buildable now (tube stage + parametric tone stack), so
+    // only the loudspeaker/cabinet part is refused - that genuinely needs impulses.
+    pattern: /\b(speaker\s+(?:sim\w*|emulat\w*|impulse)|cabinet\s+(?:sim\w*|emulat\w*))\b/i,
+    label: "loudspeaker/cabinet simulation",
+    alternative: "a tube or transformer stage into a parametric tone stack, which colours a DI signal without cabinet impulses",
   },
   {
     pattern: /\b(multiband\s+compress\w*|multiband|dynamic\s+eq|sidechain|side[-\s]chain)\b/i,

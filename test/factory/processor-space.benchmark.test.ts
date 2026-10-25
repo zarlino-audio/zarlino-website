@@ -239,6 +239,34 @@ const productCases: Array<{ category: string; request: string; refs: ModuleRef[]
     expect: ["zarlino.stereo.midside"],
   },
   {
+    category: "analogue",
+    request: "tape and tube colour across the drum bus",
+    refs: [
+      { instanceId: "tape", moduleId: "zarlino.saturation.tape", values: { driveDb: 4, bumpDb: 2.5, hfHz: 11000 } },
+      { instanceId: "tube", moduleId: "zarlino.saturation.tube", values: { driveDb: 6, bias: 0.4, sag: 0.35 } },
+      { instanceId: "iron", moduleId: "zarlino.saturation.transformer", values: { driveDb: 3, splitHz: 200 } },
+    ],
+    expect: ["zarlino.saturation.tape", "zarlino.saturation.tube", "zarlino.saturation.transformer"],
+  },
+  {
+    category: "analogue",
+    request: "console-style drive with an iron transformer at the output",
+    refs: [
+      { instanceId: "iron", moduleId: "zarlino.saturation.transformer" },
+      { instanceId: "trim", moduleId: "zarlino.gain" },
+    ],
+    expect: ["zarlino.saturation.transformer", "zarlino.gain"],
+  },
+  {
+    category: "guitar",
+    request: "a warm amp-style colour for a DI guitar with a tone control",
+    refs: [
+      { instanceId: "pre", moduleId: "zarlino.saturation.tube", values: { driveDb: 12, bias: 0.45 } },
+      { instanceId: "tone", moduleId: "zarlino.eq.parametric" },
+    ],
+    expect: ["zarlino.saturation.tube", "zarlino.eq.parametric"],
+  },
+  {
     category: "utility",
     request: "trim with polarity flip and a blend control",
     refs: [
@@ -265,7 +293,7 @@ const unsupportedCases: Array<{ request: string; family: string }> = [
   { request: "a convolution reverb with an impulse response of a real cathedral", family: "convolution" },
   { request: "a wavetable synth with three oscillators", family: "instrument" },
   { request: "an octaver that shifts me down a fifth", family: "pitch" },
-  { request: "a guitar amp simulator with a 4x12 cabinet impulse", family: "amp" },
+  { request: "a 4x12 speaker simulation with a cabinet impulse", family: "cabinet" },
   { request: "a multiband compressor with four bands and sidechain input", family: "multiband" },
   { request: "a linear-phase mastering EQ", family: "linear-phase" },
 ];
@@ -289,7 +317,7 @@ describe("processor space benchmark", () => {
     }
 
     expect(failures).toEqual([]);
-    expect(moduleCases.length).toBeGreaterThanOrEqual(21);
+    expect(moduleCases.length).toBeGreaterThanOrEqual(24);
 
     // Every family the catalogue claims must be reachable from a spec.
     for (const category of ["dynamics", "equalizer", "filter", "limiter", "mixing", "saturation", "shaping", "stereo", "utility"]) {
@@ -330,7 +358,7 @@ describe("processor space benchmark", () => {
 
     // One product per category the benchmark claims to cover.
     const categories = new Set(rows.map((row) => row.category));
-    for (const required of ["vocal", "drum", "bass", "guitar", "mix bus", "mastering", "spatial", "time", "modulation", "dynamics", "distortion", "stereo", "utility", "creative"]) {
+    for (const required of ["vocal", "drum", "bass", "guitar", "mix bus", "mastering", "spatial", "time", "modulation", "dynamics", "distortion", "stereo", "utility", "creative", "analogue"]) {
       expect(categories.has(required), `benchmark must cover '${required}'`).toBe(true);
     }
 
@@ -364,6 +392,11 @@ describe("processor space benchmark", () => {
       "a clipper to tame peaks",
       "an exciter for air on the vocal",
       "make the bass mono below 120 Hz but keep the top wide",
+      "a tape machine warming up the mix bus",
+      "a driven tube preamp for the vocal",
+      "iron transformer colour on the drum bus",
+      "an analogue console emulation for the whole mix",
+      "a warm guitar amp tone with a tone stack",
     ]) {
       expect(detectUnsupportedRequest(request), `'${request}' must be buildable now`).toBeNull();
     }

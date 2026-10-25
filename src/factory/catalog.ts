@@ -388,6 +388,52 @@ export const MODULE_CATALOG: readonly CatalogModule[] = [
       p("releaseMs", "Release", "ms", 20, 400, 90, "Reduction"),
     ],
   },
+  {
+    id: "zarlino.saturation.tape",
+    version: "1.0.0",
+    displayName: "Tape",
+    description: "Tape-machine character: head bump, biased asymmetry and high-frequency loss",
+    category: "saturation",
+    channels: ["mono", "stereo"],
+    referenceLatencySamples: 0,
+    parameters: [
+      p("driveDb", "Drive", "dB", 0, 18, 3, "Character"),
+      p("bias", "Bias", "", 0, 1, 0.25, "Character"),
+      p("bumpDb", "Head Bump", "dB", 0, 6, 2, "Tone"),
+      p("hfHz", "HF Loss", "Hz", 2000, 20000, 12000, "Tone", true),
+      p("mix", "Mix", "", 0, 1, 1, "Output"),
+    ],
+  },
+  {
+    id: "zarlino.saturation.tube",
+    version: "1.0.0",
+    displayName: "Tube",
+    description: "Driven tube stage with asymmetric bias and supply sag",
+    category: "saturation",
+    channels: ["mono", "stereo"],
+    referenceLatencySamples: 0,
+    parameters: [
+      p("driveDb", "Drive", "dB", 0, 24, 6, "Character"),
+      p("bias", "Bias", "", 0, 1, 0.35, "Character"),
+      p("sag", "Sag", "", 0, 1, 0.3, "Character"),
+      p("mix", "Mix", "", 0, 1, 1, "Output"),
+    ],
+  },
+  {
+    id: "zarlino.saturation.transformer",
+    version: "1.0.0",
+    displayName: "Transformer",
+    description: "Iron colour: low-band core saturation with a passive high-frequency roll-off",
+    category: "saturation",
+    channels: ["mono", "stereo"],
+    referenceLatencySamples: 0,
+    parameters: [
+      p("driveDb", "Drive", "dB", 0, 18, 4, "Character"),
+      p("splitHz", "Core Split", "Hz", 60, 600, 220, "Character", true),
+      p("hfHz", "HF Roll-off", "Hz", 3000, 20000, 14000, "Tone", true),
+      p("mix", "Mix", "", 0, 1, 1, "Output"),
+    ],
+  },
 ];
 
 /** The catalogue keyed by id, in the order the kernel's registry iterates. */
