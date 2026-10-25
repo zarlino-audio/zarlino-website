@@ -163,17 +163,71 @@ export async function createProject(deps: FactoryDeps, actor: Actor, input: { na
 export async function listProjects(deps: FactoryDeps, actor: Actor): Promise<Record<string, unknown>> {
   const result = await deps.workspace(actor.userId)("listProjects", {});
   const snapshot = await usageSnapshot(deps, actor);
+  const projects = (result.projects as ProjectSummaryRecord[]) ?? [];
   return {
-    projects: result.projects ?? [],
+    projects: await refreshProjectSummaries(deps, actor, projects),
     entitlement: entitlementSummary(actor.plan, snapshot),
   };
+}
+
+interface ProjectSummaryRecord {
+  id: string;
+  buildState: string | null;
+  latestBuildId: string | null;
+  latestReadyBuildId: string | null;
+  uiTemplate: string | null;
+  failureReason: string | null;
+  [key: string]: unknown;
+}
+
+/**
+ * The dashboard's build state is also a cache. Refresh the projects whose latest
+ * build is still running, so the list cannot claim "Compiling your plugin" for a
+ * build that finished ten minutes ago. Bounded, and a failure leaves the stored
+ * summary untouched.
+ */
+const SUMMARY_FOLD_LIMIT = 3;
+
+async function refreshProjectSummaries(
+  deps: FactoryDeps,
+  actor: Actor,
+  projects: ProjectSummaryRecord[],
+): Promise<ProjectSummaryRecord[]> {
+  const pending = projects
+    .filter((project) => project.latestBuildId && project.buildState && !isTerminalState(project.buildState))
+    .slice(0, SUMMARY_FOLD_LIMIT);
+  if (pending.length === 0) return projects;
+
+  const fresh = new Map<string, ProjectSummaryRecord>();
+  for (const project of pending) {
+    try {
+      const local = await deps.workspace(actor.userId)("getBuild", { buildId: project.latestBuildId });
+      if (!local.ok) continue;
+      const folded = await refreshBuild(deps, actor, project.latestBuildId!);
+      fresh.set(project.id, {
+        ...project,
+        buildState: folded.status,
+        uiTemplate: folded.uiTemplate,
+        failureReason: folded.failure?.message ?? null,
+        latestReadyBuildId: folded.status === "READY" ? folded.buildId : project.latestReadyBuildId,
+      });
+    } catch {
+      /* the stored summary is still better than an error page */
+    }
+  }
+  return projects.map((project) => fresh.get(project.id) ?? project);
+}
+
+function isTerminalState(status: string): boolean {
+  return status === "READY" || status === "FAILED";
 }
 
 export interface ProjectView {
   project: Record<string, unknown>;
   spec: { id: string; revision: number; spec: PluginSpec; sha256: string; source: string; createdAt: string } | null;
   plan: BuildPlan | null;
-  builds: BuildRecord[];
+  /** The same shape `/builds/:id` returns, so one view type serves every surface. */
+  builds: Array<BuildView & { failureExplanation: ExplainedFailure | null }>;
   messages: Array<{ role: string; content: string; at: string }>;
   templates: TemplatePreview[] | null;
   entitlement: ReturnType<typeof entitlementSummary>;
@@ -184,8 +238,15 @@ export async function getProject(deps: FactoryDeps, actor: Actor, projectId: str
   if (!result.ok) fail(404, "PROJECT_NOT_FOUND", "That project does not exist.");
 
   const spec = result.spec as ProjectView["spec"];
-  const builds = (result.builds as BuildRecord[]).map((build) => ({
-    ...build,
+  // The stored row is a cache of what the orchestrator knew at the last fold.
+  // Bring the newest in-flight builds up to date, so a page load does not show
+  // "compiling" for a build that finished while nobody was watching.
+  //
+  // Serialised through `buildView`, the same projection `/builds/:id` uses: the
+  // client reads `buildId`, `downloadUrl` and `artifact` from these rows, and a
+  // raw database row carries none of those.
+  const builds = (await refreshInFlight(deps, actor, (result.builds as BuildRecord[]) ?? [])).map((build) => ({
+    ...buildView(deps, build),
     failureExplanation: build.status === "FAILED" ? explainFailure(build.failure_state) : null,
   }));
 
@@ -736,10 +797,39 @@ export async function refreshBuild(deps: FactoryDeps, actor: Actor, buildId: str
   return buildView(deps, folded);
 }
 
+/**
+ * Fold the orchestrator's view into the newest non-terminal builds.
+ *
+ * A read that shows a build still compiling twenty minutes after it finished is
+ * a lie about backend truth, and it is the state a customer sits on when they
+ * reload a page. Bounded to the few newest in-flight builds: each fold is one
+ * orchestrator call, and older rows are already terminal by construction.
+ */
+const IN_FLIGHT_FOLD_LIMIT = 3;
+
+async function refreshInFlight(deps: FactoryDeps, actor: Actor, builds: BuildRecord[]): Promise<BuildRecord[]> {
+  const pending = builds.filter((build) => build.status !== "READY" && build.status !== "FAILED").slice(0, IN_FLIGHT_FOLD_LIMIT);
+  if (pending.length === 0) return builds;
+
+  const refreshed = new Map<string, BuildRecord>();
+  for (const build of pending) {
+    try {
+      const remote = await deps.builds.status(build.id);
+      if (!remote.ok) continue;
+      refreshed.set(build.id, await foldRemoteBuild(deps, actor, build, remote.build));
+    } catch {
+      // A read must still succeed when the orchestrator is unreachable; the
+      // stored row is returned and the page keeps polling.
+    }
+  }
+  return builds.map((build) => refreshed.get(build.id) ?? build);
+}
+
 export async function listBuilds(deps: FactoryDeps, actor: Actor, projectId?: string): Promise<{ builds: BuildView[] }> {
   const result = await deps.workspace(actor.userId)("listBuilds", { projectId, limit: 50 });
   if (!result.ok) return { builds: [] };
-  return { builds: (result.builds as BuildRecord[]).map((build) => buildView(deps, build)) };
+  const builds = await refreshInFlight(deps, actor, (result.builds as BuildRecord[]) ?? []);
+  return { builds: builds.map((build) => buildView(deps, build)) };
 }
 
 /**

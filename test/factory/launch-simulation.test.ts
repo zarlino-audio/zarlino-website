@@ -690,6 +690,43 @@ describe("launch simulation", () => {
     expect(done.body.build.artifact.name).toContain("Punch");
   });
 
+  it("reports a build that finished while the page was closed, without a status poll", async () => {
+    // The customer closed the tab mid-build and came back later. A page load
+    // must show backend truth, not the last state this browser happened to see.
+    const world = makeWorld(model, builds);
+    const alice = world.client();
+    await alice.signup("alice@example.com");
+    const projectId = (await alice.createProject("Later")).body.project.id as string;
+    await alice.interpret(projectId, "a compressor");
+
+    builds.holdBuilds = true;
+    const started = await alice.build(projectId, "standard");
+    const buildId = started.body.build.buildId as string;
+    expect(started.body.build.status).toBe("BUILDING");
+
+    builds.complete(buildId);
+
+    // A different session (a reload, a phone) with no local build state at all.
+    const returning = world.client();
+    const signIn = await returning.request("POST", "/api/factory/auth/login", { email: "alice@example.com", password: "a-long-password-1" });
+    expect(signIn.status).toBe(200);
+
+    const project = await returning.request("GET", `/api/factory/projects/${projectId}`);
+    const listed = (project.body.builds as Array<{ buildId: string; status: string; downloadUrl: string | null }>).find((row) => row.buildId === buildId)!;
+    expect(listed.status).toBe("READY");
+    expect(listed.downloadUrl).toContain(buildId);
+
+    const history = await returning.request("GET", "/api/factory/builds");
+    const fromHistory = (history.body.builds as Array<{ buildId: string; status: string }>).find((row) => row.buildId === buildId)!;
+    expect(fromHistory.status).toBe("READY");
+
+    // The dashboard must not keep advertising a stale "compiling" either.
+    const dashboard = await returning.request("GET", "/api/factory/projects");
+    const summary = (dashboard.body.projects as Array<{ id: string; buildState: string | null; latestReadyBuildId: string | null }>).find((row) => row.id === projectId)!;
+    expect(summary.buildState).toBe("READY");
+    expect(summary.latestReadyBuildId).toBe(buildId);
+  });
+
   it("reuses an identical immutable build instead of paying for it twice", async () => {
     const world = makeWorld(model, builds);
     const alice = world.client();
