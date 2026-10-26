@@ -55,6 +55,7 @@ interface KernelModule {
   certification: string;
   channels: string[];
   referenceLatencySamples: number;
+  isSource?: boolean;
   parameters: KernelParameter[];
 }
 
