@@ -73,21 +73,25 @@ PAYSTACK_CURRENCY = "GHS"
 binding = "ZARLINO_KV"
 id = "66bc47e33fe145f697cf1f80912f269e"
 
-# Verified release storage (R2, private bucket; founder decision 2026-10-12).
+# Verified release storage (KV; founder decision 2026-10-26).
 # Release assets (binaries, canonical screenshot, canonical audio, manifest)
 # are published by the plugin release gate and served EXCLUSIVELY through this
-# Worker at /releases/<product>/latest/... - the bucket has no public access.
+# Worker at /releases/<product>/latest/... - the namespace has no public access.
 #
-# DISABLED 2026-10-25: the account's R2 subscription lapsed. A worker that binds
-# an R2 bucket can no longer be deployed at all (`10136 Please enable R2`), which
-# would freeze the entire customer site, so the binding is removed here. The
-# /releases/* handlers already answer 503 "Release storage not bound" when the
-# binding is absent, so existing release downloads are unavailable but nothing
-# crashes. Restore this block - and only this block - once R2 is enabled again.
+# WHY KV AND NOT R2: the account's R2 subscription lapsed on 2026-10-25 and a
+# worker that binds an R2 bucket can no longer be deployed at all
+# (`10136 Please enable R2`), which froze every paid download behind a 503.
+# KV is usable on the free plan and needs no subscription, so it is the binding
+# of record. The Worker speaks to whichever backend is bound (see `releaseStore`
+# in src/index.ts), so restoring R2 later is a config change plus this block,
+# not a code change.
 #
-# [[r2_buckets]]
-# binding = "RELEASES"
-# bucket_name = "zarlino-releases"
+# KV's per-value ceiling is 25 MiB. Every release asset is a few MiB; the
+# publisher verifies each object's sha256 after upload and refuses anything
+# that would not fit rather than truncating it.
+[[kv_namespaces]]
+binding = "RELEASES"
+id = "5e1fae9cc62645f082afbef58174695f"
 
 # ---------------------------------------------------------------------------
 # Plugin Factory build artifacts.

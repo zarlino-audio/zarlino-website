@@ -51,11 +51,15 @@ export interface Env extends FactoryHttpEnv {
   DEPLOY_RUN_ID?: string;
   DEPLOYED_AT?: string;
   /**
-   * Verified release storage (private R2 bucket `zarlino-releases`). Release
-   * assets are published by the plugin release gate and served exclusively
-   * through this Worker at /releases/<product>/latest/... (no public bucket).
+   * Verified release storage. Release assets are published by the plugin
+   * release gate and served exclusively through this Worker at
+   * /releases/<product>/latest/... — the store has no public access.
+   *
+   * KV is the binding of record because R2 needs a paid subscription that
+   * lapsed on 2026-10-25, and a worker that binds an R2 bucket cannot be
+   * deployed at all in that state. The handlers below speak to either backend.
    */
-  RELEASES?: R2Bucket;
+  RELEASES?: KVNamespace | R2Bucket;
 }
 
 /** Keep in sync with package.json version. Informational — the git commit is the identity. */
@@ -607,6 +611,66 @@ interface ReleaseManifest {
 }
 const releaseCache = new Map<string, { at: number; pointer: ReleasePointer; manifest: ReleaseManifest }>();
 
+/**
+ * Release storage is whichever backend wrangler binds as `RELEASES`. KV is the
+ * binding of record (see wrangler.toml); the R2 branch is kept so restoring the
+ * bucket stays a config change rather than a rewrite. R2 and KV disagree about
+ * how an object is read and how its size and etag are obtained, so every caller
+ * goes through this adapter instead of talking to the binding directly.
+ */
+interface ReleaseObject {
+  bytes: ArrayBuffer;
+  etag: string;
+}
+
+interface ReleaseStore {
+  readJson<T>(key: string): Promise<T | null>;
+  readBytes(key: string): Promise<ReleaseObject | null>;
+  exists(key: string): Promise<boolean>;
+}
+
+function isKvNamespace(store: unknown): store is KVNamespace {
+  return typeof (store as KVNamespace | undefined)?.getWithMetadata === 'function';
+}
+
+async function sha256Etag(bytes: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const hex = Array.from(new Uint8Array(digest).slice(0, 16), (b) => b.toString(16).padStart(2, '0'));
+  return `"${hex.join('')}"`;
+}
+
+function releaseStore(store: KVNamespace | R2Bucket): ReleaseStore {
+  if (isKvNamespace(store)) {
+    return {
+      readJson: <T,>(key: string) => store.get<T>(key, 'json'),
+      async readBytes(key) {
+        // KV has no head-with-size: the value is read once so the response can
+        // carry an exact content-length and a real etag. Release assets are a
+        // few MiB, well under KV's 25 MiB ceiling.
+        const bytes = await store.get(key, 'arrayBuffer');
+        return bytes ? { bytes, etag: await sha256Etag(bytes) } : null;
+      },
+      async exists(key) {
+        return (await store.get(key, 'text')) !== null;
+      },
+    };
+  }
+
+  return {
+    async readJson<T>(key: string) {
+      const obj = await store.get(key);
+      return obj ? await obj.json<T>() : null;
+    },
+    async readBytes(key) {
+      const obj = await store.get(key);
+      return obj ? { bytes: await obj.arrayBuffer(), etag: obj.httpEtag } : null;
+    },
+    async exists(key) {
+      return (await store.head(key)) !== null;
+    },
+  };
+}
+
 function releaseAlias(manifest: ReleaseManifest, name: string): string | null {
   const a = manifest.artifacts ?? {};
   switch (name) {
@@ -636,16 +700,16 @@ function releaseContentType(name: string): string {
 
 async function loadReleaseLatest(env: Env, product: string) {
   if (!env.RELEASES) return null;
+  const store = releaseStore(env.RELEASES);
   const cacheKey = product + ':latest';
   const hit = releaseCache.get(cacheKey);
   if (hit && Date.now() - hit.at < RELEASE_CACHE_MS) return hit;
-  const pObj = await env.RELEASES.get(`releases/${product}/latest.json`);
-  if (!pObj) return null;
-  const pointer = await pObj.json<ReleasePointer>();
+  const pointer = await store.readJson<ReleasePointer>(`releases/${product}/latest.json`);
   if (!pointer?.prefix || !Array.isArray(pointer.files)) return null;
-  const mObj = await env.RELEASES.get(`${pointer.prefix}/${pointer.manifest || 'release-manifest.json'}`);
-  if (!mObj) return null;
-  const manifest = await mObj.json<ReleaseManifest>();
+  const manifest = await store.readJson<ReleaseManifest>(
+    `${pointer.prefix}/${pointer.manifest || 'release-manifest.json'}`,
+  );
+  if (!manifest) return null;
   const entry = { at: Date.now(), pointer, manifest };
   releaseCache.set(cacheKey, entry);
   return entry;
@@ -658,9 +722,9 @@ async function handleReleaseApi(env: Env, product: string): Promise<Response> {
   }
   const latest = await loadReleaseLatest(env, product);
   if (!latest) {
-    const probe = await env.RELEASES.head(`releases/${product}/latest.json`);
+    const probe = await releaseStore(env.RELEASES).exists(`releases/${product}/latest.json`);
     return json(
-      { error: 'No verified release published', product, storageBound: true, pointerFound: !!probe },
+      { error: 'No verified release published', product, storageBound: true, pointerFound: probe },
       503,
     );
   }
@@ -705,24 +769,25 @@ async function handleReleaseRequest(request: Request, env: Env, url: URL): Promi
   }
 
   const key = `${latest.pointer.prefix}/${target}`;
+  const store = releaseStore(env.RELEASES);
   const headers: Record<string, string> = {
     'content-type': releaseContentType(target),
     'cache-control': 'public, max-age=300, s-maxage=600',
   };
 
   if (request.method === 'HEAD') {
-    const head = await env.RELEASES.head(key);
+    const head = await store.readBytes(key);
     if (!head) return new Response('Not found', { status: 404 });
-    headers['content-length'] = String(head.size);
-    headers.etag = head.httpEtag;
+    headers['content-length'] = String(head.bytes.byteLength);
+    headers.etag = head.etag;
     return new Response(null, { status: 200, headers });
   }
 
-  const obj = await env.RELEASES.get(key);
+  const obj = await store.readBytes(key);
   if (!obj) return new Response('Not found', { status: 404 });
-  headers['content-length'] = String(obj.size);
-  headers.etag = obj.httpEtag;
-  return new Response(obj.body, { status: 200, headers });
+  headers['content-length'] = String(obj.bytes.byteLength);
+  headers.etag = obj.etag;
+  return new Response(obj.bytes, { status: 200, headers });
 }
 
 async function handleRequest(request: Request, url: URL, env: Env): Promise<Response> {
