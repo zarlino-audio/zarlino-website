@@ -107,8 +107,10 @@ describe("PluginSpec validation: acceptance", () => {
 
   it("accepts every certified module in a single graph", () => {
     const spec = baseSpec();
+    // The source module is the one exception: it generates audio, so it belongs
+    // in an instrument graph and is covered by the next case.
     spec.graph = {
-      modules: MODULE_CATALOG.map((module, index) => ({
+      modules: MODULE_CATALOG.filter((module) => module.isSource !== true).map((module, index) => ({
         instanceId: `m${index}`,
         moduleId: module.id,
         moduleVersion: module.version,
@@ -120,6 +122,52 @@ describe("PluginSpec validation: acceptance", () => {
     spec.dryWet = { enabled: false, defaultMix: 1 };
     spec.ui = { ...(spec.ui as Record<string, unknown>), parameterOrder: [], tags: [] };
     expect(parsePluginSpec(spec).ok).toBe(true);
+  });
+
+  it("accepts the source module only in an instrument graph", () => {
+    const source = MODULE_CATALOG.find((module) => module.isSource === true);
+    expect(source, "the catalogue must contain a source module").toBeTruthy();
+    if (!source) return;
+
+    const instrument = baseSpec();
+    instrument.plugin = { ...(instrument.plugin as Record<string, unknown>), effectType: "instrument" };
+    instrument.graph = {
+      modules: [{ instanceId: "voice", moduleId: source.id, moduleVersion: source.version, parameters: {} }],
+    };
+    instrument.parameters = [];
+    instrument.macros = [];
+    instrument.dryWet = { enabled: false, defaultMix: 1 };
+    instrument.ui = { ...(instrument.ui as Record<string, unknown>), parameterOrder: [], tags: [] };
+    expect(parsePluginSpec(instrument).ok).toBe(true);
+
+    // The same chain declared as a processor would silently discard its input.
+    const asProcessor = baseSpec();
+    asProcessor.plugin = { ...(asProcessor.plugin as Record<string, unknown>), effectType: "utility" };
+    asProcessor.graph = {
+      modules: [{ instanceId: "voice", moduleId: source.id, moduleVersion: source.version, parameters: {} }],
+    };
+    asProcessor.parameters = [];
+    asProcessor.macros = [];
+    asProcessor.dryWet = { enabled: false, defaultMix: 1 };
+    asProcessor.ui = { ...(asProcessor.ui as Record<string, unknown>), parameterOrder: [], tags: [] };
+    expect(parsePluginSpec(asProcessor).ok).toBe(false);
+
+    // An instrument with no source would build and stay silent.
+    const withoutSource = baseSpec();
+    withoutSource.plugin = { ...(withoutSource.plugin as Record<string, unknown>), effectType: "instrument" };
+    withoutSource.parameters = [];
+    withoutSource.macros = [];
+    withoutSource.dryWet = { enabled: false, defaultMix: 1 };
+    withoutSource.ui = { ...(withoutSource.ui as Record<string, unknown>), parameterOrder: [], tags: [] };
+    expect(parsePluginSpec(withoutSource).ok).toBe(false);
+
+    // An instrument has no input signal, so a mix control would be dead.
+    const withMix = baseSpec();
+    withMix.plugin = { ...(withMix.plugin as Record<string, unknown>), effectType: "instrument" };
+    withMix.graph = {
+      modules: [{ instanceId: "voice", moduleId: source.id, moduleVersion: source.version, parameters: {} }],
+    };
+    expect(parsePluginSpec(withMix).ok).toBe(false);
   });
 
   it("accepts a mono spec when no stereo-only module is present", () => {

@@ -117,9 +117,12 @@ const UNSUPPORTED_FAMILIES: Array<{ pattern: RegExp; label: string; alternative:
     alternative: "the algorithmic reverb, which builds a room from certified primitives without an impulse response",
   },
   {
-    pattern: /\b(synthesizer|synth|oscillator|wavetable|sampler|drum\s+machine)\b/i,
-    label: "an instrument",
-    alternative: "a processing chain - Zarlino builds processors, not instruments",
+    // Instruments are buildable now (the certified source oscillator plus the
+    // whole effect chain), so only the families that genuinely need sample
+    // playback are refused: no certified module reads audio files.
+    pattern: /\b(sampler|sample\s+player|sample\s+playback|wavetable|drum\s+machine|rompler|multisample)\b/i,
+    label: "sample playback",
+    alternative: "the Zarlino instrument, which synthesises its notes instead of reading samples",
   },
   {
     pattern: /\b(pitch\s*shift|harmoni[sz]er|octaver|auto[-\s]?tune|formant\s+shift|vocoder)\b/i,

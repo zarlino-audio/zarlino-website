@@ -95,6 +95,7 @@ describe("catalogue parity with the factory kernel", () => {
       expect(site.category, `${id} category`).toBe(fromKernel.category);
       expect([...site.channels].sort(), `${id} channels`).toEqual([...fromKernel.channels].sort());
       expect(site.referenceLatencySamples, `${id} latency`).toBe(fromKernel.referenceLatencySamples);
+      expect(Boolean(site.isSource), `${id} isSource`).toBe(fromKernel.isSource === true);
       expect(fromKernel.certification).toBe("CERTIFIED");
     }
   });
@@ -137,6 +138,7 @@ describe("catalogue parity with the factory kernel", () => {
         "description",
         "category",
         "certification",
+        "isSource",
         "channels",
         "referenceLatencySamples",
         "parameters",

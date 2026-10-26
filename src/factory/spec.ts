@@ -41,6 +41,7 @@ export const EFFECT_TYPES = [
   "stereo-utility",
   "channel-strip",
   "vocal-processor",
+  "instrument",
 ] as const;
 export type EffectType = (typeof EFFECT_TYPES)[number];
 
@@ -534,6 +535,16 @@ function parseDocument(root: unknown): PluginSpec {
     defaultMix: requireNumber(dryWetObject, "$/dryWet", "defaultMix"),
   };
 
+  // An instrument generates its own signal, so a Mix control would be a knob
+  // that does nothing. Refused here rather than shown to a customer.
+  if (effectType === "instrument" && dryWet.enabled) {
+    fail(
+      ErrorCodes.UnsupportedValue,
+      "$/dryWet/enabled",
+      "an 'instrument' plugin has no input signal, so dryWet.enabled must be false",
+    );
+  }
+
   const bypassObject = requireObject(root, "$", "bypass");
   checkKeys(bypassObject, "$/bypass", BYPASS_KEYS);
   const bypass = {
@@ -617,6 +628,8 @@ function validateSchema(spec: PluginSpec): SpecError | null {
   }
 
   const instanceIds = new Set<string>();
+  const isInstrument = spec.plugin.effectType === "instrument";
+  let sourceCount = 0;
   for (let i = 0; i < spec.graph.modules.length; i += 1) {
     const module = spec.graph.modules[i]!;
     const path = indexPath("$/graph/modules", i);
@@ -633,6 +646,37 @@ function validateSchema(spec: PluginSpec): SpecError | null {
     if (!parseSemVer(module.moduleVersion)) {
       return err(ErrorCodes.TypeMismatch, childPath(path, "moduleVersion"), "module version is not MAJOR.MINOR.PATCH");
     }
+
+    // A source module replaces its input instead of processing it, so the effect
+    // type and the graph have to agree. Getting this wrong is not a cosmetic
+    // error: an "instrument" with no source builds and then makes no sound, and a
+    // processor containing a source silently throws the host's audio away.
+    if (findModule(module.moduleId)?.isSource === true) {
+      if (!isInstrument) {
+        return err(
+          ErrorCodes.UnsupportedValue,
+          childPath(path, "moduleId"),
+          `'${module.moduleId}' generates audio, so it cannot appear in an '${spec.plugin.effectType}' plugin (effectType must be 'instrument')`,
+        );
+      }
+      sourceCount += 1;
+    }
+  }
+
+  if (isInstrument && sourceCount === 0) {
+    return err(
+      ErrorCodes.UnsupportedValue,
+      "$/plugin/effectType",
+      "an 'instrument' plugin must contain a source module (the certified synth), otherwise it would build and stay silent",
+    );
+  }
+
+  if (isInstrument && sourceCount > 1) {
+    return err(
+      ErrorCodes.UnsupportedValue,
+      "$/graph/modules",
+      `an 'instrument' plugin must contain exactly one source module, found ${sourceCount}`,
+    );
   }
 
   if (spec.parameters.length > MAX_EXPOSED_PARAMETERS) {

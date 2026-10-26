@@ -114,12 +114,15 @@ function validate(refs: ModuleRef[], options?: Parameters<typeof buildSpec>[1]) 
 /** One case per certified module: the vocabulary itself. */
 const moduleCases = MODULE_CATALOG.map((module) => ({
   category: module.category,
-  request: `a ${module.displayName.toLowerCase()} processor`,
+  request: `a ${module.displayName.toLowerCase()} ${module.isSource ? "instrument" : "processor"}`,
+  // A source module only makes sense in an instrument graph, so the generated
+  // case declares the effect type the kernel requires for it.
+  effectType: module.isSource === true ? "instrument" : "utility",
   refs: [{ instanceId: "unit", moduleId: module.id }] as ModuleRef[],
 }));
 
 /** Whole products across the categories a customer actually asks for. */
-const productCases: Array<{ category: string; request: string; refs: ModuleRef[]; expect: string[] }> = [
+const productCases: Array<{ category: string; request: string; refs: ModuleRef[]; expect: string[]; effectType?: string }> = [
   {
     category: "vocal",
     request: "warm vocal compressor with a tilt EQ, a little saturation and a blend control",
@@ -276,6 +279,25 @@ const productCases: Array<{ category: string; request: string; refs: ModuleRef[]
     expect: ["zarlino.gain", "zarlino.mix.drywet"],
   },
   {
+    category: "instrument",
+    request: "a warm analogue-style polysynth pad with a filter, ensemble and room",
+    refs: [
+      { instanceId: "voice", moduleId: "zarlino.source.synth", values: { attackMs: 900, releaseMs: 1800, sustain: 0.8 } },
+      { instanceId: "tone", moduleId: "zarlino.filter.multimode", values: { frequency: 2600 } },
+      { instanceId: "ensemble", moduleId: "zarlino.modulation.chorus" },
+      { instanceId: "room", moduleId: "zarlino.reverb.algorithmic" },
+      { instanceId: "safe", moduleId: "zarlino.limiter" },
+    ],
+    expect: [
+      "zarlino.source.synth",
+      "zarlino.filter.multimode",
+      "zarlino.modulation.chorus",
+      "zarlino.reverb.algorithmic",
+      "zarlino.limiter",
+    ],
+    effectType: "instrument",
+  },
+  {
     category: "creative",
     request: "creative multi-stage: filter into chorus into reverb into a limiter",
     refs: [
@@ -308,7 +330,7 @@ describe("processor space benchmark", () => {
     const coverage: Record<string, number> = {};
 
     for (const testCase of moduleCases) {
-      const result = validate(testCase.refs);
+      const result = validate(testCase.refs, { effectType: testCase.effectType });
       if (!result.ok) {
         failures.push(`${testCase.refs[0]!.moduleId}: ${result.error.code} ${result.error.path}`);
         continue;
@@ -317,10 +339,10 @@ describe("processor space benchmark", () => {
     }
 
     expect(failures).toEqual([]);
-    expect(moduleCases.length).toBeGreaterThanOrEqual(24);
+    expect(moduleCases.length).toBeGreaterThanOrEqual(25);
 
     // Every family the catalogue claims must be reachable from a spec.
-    for (const category of ["dynamics", "equalizer", "filter", "limiter", "mixing", "saturation", "shaping", "stereo", "utility"]) {
+    for (const category of ["dynamics", "equalizer", "filter", "limiter", "mixing", "saturation", "shaping", "source", "stereo", "utility"]) {
       expect(coverage[category] ?? 0, `catalogue category '${category}' must be expressible`).toBeGreaterThan(0);
     }
   });
@@ -330,7 +352,7 @@ describe("processor space benchmark", () => {
     const failures: string[] = [];
 
     for (const testCase of productCases) {
-      const parsed = validate(testCase.refs, { name: testCase.category });
+      const parsed = validate(testCase.refs, { name: testCase.category, effectType: testCase.effectType });
       if (!parsed.ok) {
         failures.push(`${testCase.request}: ${parsed.error.code} ${parsed.error.path}`);
         continue;
@@ -358,7 +380,7 @@ describe("processor space benchmark", () => {
 
     // One product per category the benchmark claims to cover.
     const categories = new Set(rows.map((row) => row.category));
-    for (const required of ["vocal", "drum", "bass", "guitar", "mix bus", "mastering", "spatial", "time", "modulation", "dynamics", "distortion", "stereo", "utility", "creative", "analogue"]) {
+    for (const required of ["vocal", "drum", "bass", "guitar", "mix bus", "mastering", "spatial", "time", "modulation", "dynamics", "distortion", "stereo", "utility", "creative", "analogue", "instrument"]) {
       expect(categories.has(required), `benchmark must cover '${required}'`).toBe(true);
     }
 
@@ -397,6 +419,9 @@ describe("processor space benchmark", () => {
       "iron transformer colour on the drum bus",
       "an analogue console emulation for the whole mix",
       "a warm guitar amp tone with a tone stack",
+      "a warm analogue polysynth pad instrument",
+      "a soft keys sound with chorus and reverb",
+      "a synth bass with a filter and a little drive",
     ]) {
       expect(detectUnsupportedRequest(request), `'${request}' must be buildable now`).toBeNull();
     }

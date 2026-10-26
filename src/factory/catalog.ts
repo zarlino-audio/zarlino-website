@@ -25,7 +25,8 @@ export type ModuleCategory =
   | "limiter"
   | "shaping"
   | "stereo"
-  | "mixing";
+  | "mixing"
+  | "source";
 
 export type ChannelMode = "mono" | "stereo";
 
@@ -51,6 +52,13 @@ export interface CatalogModule {
   channels: ChannelMode[];
   /** Latency at 48 kHz, in samples. */
   referenceLatencySamples: number;
+  /**
+   * True for the modules that GENERATE the signal instead of processing it.
+   * An instrument spec must contain exactly this kind of module and a processor
+   * spec must contain none, because a source replaces its input: a chain that
+   * mixed the two would silently discard the host's audio.
+   */
+  isSource?: boolean;
   parameters: CatalogParameter[];
 }
 
@@ -432,6 +440,27 @@ export const MODULE_CATALOG: readonly CatalogModule[] = [
       p("splitHz", "Core Split", "Hz", 60, 600, 220, "Character", true),
       p("hfHz", "HF Roll-off", "Hz", 3000, 20000, 14000, "Tone", true),
       p("mix", "Mix", "", 0, 1, 1, "Output"),
+    ],
+  },
+  {
+    id: "zarlino.source.synth",
+    version: "1.0.0",
+    displayName: "Synth",
+    description: "Eight-voice polyphonic oscillator with an amplitude envelope",
+    category: "source",
+    channels: ["mono", "stereo"],
+    referenceLatencySamples: 0,
+    isSource: true,
+    parameters: [
+      p("wave", "Waveform", "", 0, 3, 0, "Voice", false, 4),
+      p("octave", "Octave", "", -2, 2, 0, "Voice", false, 5),
+      p("fineCents", "Fine", "", -100, 100, 0, "Voice"),
+      p("pulseWidth", "Width", "", 0.05, 0.95, 0.5, "Voice"),
+      p("attackMs", "Attack", "ms", 0.5, 4000, 5, "Envelope", true),
+      p("decayMs", "Decay", "ms", 5, 4000, 250, "Envelope", true),
+      p("sustain", "Sustain", "", 0, 1, 0.75, "Envelope"),
+      p("releaseMs", "Release", "ms", 5, 8000, 220, "Envelope", true),
+      p("levelDb", "Level", "dB", -48, 6, -6, "Output"),
     ],
   },
 ];
