@@ -36,3 +36,8 @@ probe*.txt
 *.bak
 _qa/
 .repro/
+
+# local wrangler tail/dev capture logs
+/devout.txt
+/tail*.txt
+/tail*.jsonl

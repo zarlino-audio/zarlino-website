@@ -62,6 +62,10 @@ export function makeWorkspace(): TestStore {
  */
 export function makeNamespace(kind: "identity" | "workspace", onInstance?: (name: string, sql: Sql) => void) {
   const instances = new Map<string, TestStore>();
+  // One handler per instance, created when the instance is created: a real
+  // Durable Object builds its handler in the constructor and keeps it for the
+  // life of the instance, so in-memory state (rate-limit windows) must too.
+  const handles = new Map<string, (request: Request) => Promise<Response>>();
   return {
     instances,
     namespace: {
@@ -77,8 +81,13 @@ export function makeNamespace(kind: "identity" | "workspace", onInstance?: (name
           instances.set(key, store);
           onInstance?.(name, store.sql);
         }
-        const handle = createStoreFetch(store.sql, kind);
-        return { fetch: (request: Request) => handle(request) };
+        let handle = handles.get(key);
+        if (!handle) {
+          handle = createStoreFetch(store.sql, kind);
+          handles.set(key, handle);
+        }
+        const fn = handle;
+        return { fetch: (request: Request) => fn(request) };
       },
     },
   };

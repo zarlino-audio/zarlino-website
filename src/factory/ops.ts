@@ -53,6 +53,7 @@ import {
   type UserRecord,
 } from "./store";
 import { login, logout, resolveSession, signup } from "./auth";
+import { RATE_LIMITS, rateLimitKey, rateLimitWindow, type RateLimitName } from "./auth";
 import { entitlementSummary, entitlementsFor } from "./pricing";
 
 export type OpResult = Record<string, unknown>;
@@ -60,10 +61,70 @@ export type OpResult = Record<string, unknown>;
 export interface OpContext {
   sql: Sql;
   now?: () => Date;
+  /**
+   * Fixed-window rate-limit counters, held in the object's memory instead of
+   * SQL. See `bumpMemoryRateLimit` for why this is not a weakening.
+   */
+  rateLimits?: RateLimitCounters;
+}
+
+export type RateLimitCounters = Map<string, { windowStart: number; count: number }>;
+
+/**
+ * In-memory fixed-window counter.
+ *
+ * The counters used to be a SQL table, which cost one row read plus one row
+ * written on EVERY API request. On the free plan that budget is 100,000 rows
+ * written per day for the whole account, so ordinary build-status polling could
+ * exhaust it and take every factory endpoint down with
+ * "Exceeded allowed rows read in Durable Objects free tier" - a 503 for every
+ * customer, including sign-in. The counters carry no durable value: a window is
+ * seconds long, and an object is only evicted from memory after it goes idle,
+ * which is exactly when nobody is flooding it. Counting in memory enforces the
+ * same limits under the only conditions they matter, at zero SQL cost.
+ */
+function bumpMemoryRateLimit(counters: RateLimitCounters, bucket: string, windowStart: number): number {
+  const existing = counters.get(bucket);
+  if (!existing || existing.windowStart !== windowStart) {
+    // Bound the map: a flood of distinct IPs must not become a memory leak.
+    if (counters.size > 20_000) {
+      for (const [key, value] of counters) {
+        if (value.windowStart !== windowStart) counters.delete(key);
+      }
+      if (counters.size > 20_000) counters.clear();
+    }
+    counters.set(bucket, { windowStart, count: 1 });
+    return 1;
+  }
+  existing.count += 1;
+  return existing.count;
 }
 
 function now(ctx: OpContext): () => Date {
   return ctx.now ?? (() => new Date());
+}
+
+/**
+ * Apply a route's fixed window inside the same call that resolves the session.
+ * Returns `{}` when the caller did not ask for a limit, so the extra fields
+ * appear only on the routes that have one.
+ */
+function bumpRouteLimit(
+  ctx: OpContext,
+  args: Record<string, unknown>,
+  actorKey: string | null,
+  at: Date,
+): Record<string, unknown> {
+  const name = typeof args.limitName === "string" ? (args.limitName as RateLimitName) : null;
+  if (!name || !(name in RATE_LIMITS)) return {};
+  const limit = RATE_LIMITS[name].limit;
+  const perActor = args.limitScope !== "ip" && actorKey !== null;
+  const bucket = rateLimitKey(name, perActor ? (actorKey as string) : `ip:${String(args.ip ?? "unknown")}`);
+  const windowStart = rateLimitWindow(name, at);
+  const count = ctx.rateLimits
+    ? bumpMemoryRateLimit(ctx.rateLimits, bucket, windowStart)
+    : bumpRateLimit(ctx.sql, bucket, windowStart, at.toISOString());
+  return { count, limited: count > limit };
 }
 
 export function publicIdentity(user: UserRecord, plan: string): Record<string, unknown> {
@@ -109,8 +170,18 @@ export async function identityOp(ctx: OpContext, op: string, args: Record<string
 
     case "session": {
       const resolved = await resolveSession(ctx.sql, args.token === undefined || args.token === null ? null : String(args.token), now(ctx));
-      if (!resolved) return { ok: true, authenticated: false };
-      return { ok: true, authenticated: true, user: publicIdentity(resolved.user, resolved.user.plan), tokenHash: resolved.tokenHash };
+      // The rate limit rides along with the session lookup so one API request
+      // costs one store call, not two: the free plan's request budget is small
+      // and a single build-status poll happens every few seconds.
+      const limited = bumpRouteLimit(ctx, args, resolved ? `u:${resolved.user.id}` : null, now(ctx)());
+      if (!resolved) return { ok: true, authenticated: false, ...limited };
+      return {
+        ok: true,
+        authenticated: true,
+        user: publicIdentity(resolved.user, resolved.user.plan),
+        tokenHash: resolved.tokenHash,
+        ...limited,
+      };
     }
 
     case "plan": {
@@ -121,7 +192,9 @@ export async function identityOp(ctx: OpContext, op: string, args: Record<string
 
     case "rateLimit": {
       const windowStart = Number(args.windowStart ?? 0);
-      const count = bumpRateLimit(ctx.sql, String(args.bucket ?? ""), windowStart, at().toISOString());
+      const bucket = String(args.bucket ?? "");
+      if (ctx.rateLimits) return { ok: true, count: bumpMemoryRateLimit(ctx.rateLimits, bucket, windowStart) };
+      const count = bumpRateLimit(ctx.sql, bucket, windowStart, at().toISOString());
       return { ok: true, count };
     }
 

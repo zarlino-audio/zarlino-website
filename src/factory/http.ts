@@ -11,7 +11,7 @@
  */
 
 import { adminAuthorized } from "../auth";
-import { clientIdentity, clearedSessionCookie, parseCookies, rateLimitKey, rateLimitWindow, RATE_LIMITS, isSameOriginRequest, resolveSession, sessionCookie, sessionTokenFrom, type RateLimitName } from "./auth";
+import { clientIdentity, clearedSessionCookie, parseCookies, RATE_LIMITS, isSameOriginRequest, resolveSession, sessionCookie, sessionTokenFrom, type RateLimitName } from "./auth";
 import { createAiGateway } from "./ai";
 import { createOsBuildService } from "./builds";
 import type { BillingConfig } from "./billing";
@@ -78,6 +78,7 @@ export interface FactoryHttpEnv {
   FACTORY_WORKSPACE?: DurableNamespace;
   /** KV namespace holding build artifacts and the published build record. */
   FACTORY_ARTIFACTS?: KvLikeNamespace;
+  ZARLINO_KV?: { put(key: string, value: string): Promise<void> };
   FACTORY_GATEWAY_SECRET?: string;
   FACTORY_OS_URL?: string;
   PAYSTACK_SECRET_KEY?: string;
@@ -477,27 +478,34 @@ export async function handleFactoryApi(
     const token = sessionTokenFrom(request);
     let actor: Actor | null = null;
 
-    if (!route.public) {
-      const session = await deps.identity("session", { token });
-      if (session.authenticated !== true) return json({ error: "UNAUTHORIZED", message: "Sign in to continue." }, 401);
-      const account = session.user as { id: string; email: string; plan: string };
-      actor = { userId: account.id, email: account.email, plan: account.plan };
+    // One store call covers both the session and the route's rate limit. The
+    // bucket is composed inside the store from the resolved actor, so the caller
+    // cannot pass a different identity than the one it authenticated. Public
+    // routes are limited per source address even when a cookie is present: a
+    // sign-up or sign-in throttle that followed the cookie could be reset by
+    // simply dropping it.
+    const limitArgs = route.limit
+      ? { limitName: route.limit, ip: clientIdentity(request), limitScope: route.public ? "ip" : "actor" }
+      : null;
+    let rateLimited = false;
+
+    if (!route.public || limitArgs) {
+      const session = await deps.identity("session", { token, ...(limitArgs ?? {}) });
+      if (!route.public) {
+        if (session.authenticated !== true) return json({ error: "UNAUTHORIZED", message: "Sign in to continue." }, 401);
+        const account = session.user as { id: string; email: string; plan: string };
+        actor = { userId: account.id, email: account.email, plan: account.plan };
+      }
+      rateLimited = session.limited === true;
     }
 
-    if (route.limit) {
+    if (rateLimited && route.limit) {
       const config = RATE_LIMITS[route.limit];
-      const identity = actor ? `u:${actor.userId}` : `ip:${clientIdentity(request)}`;
-      const now = new Date();
-      const bucket = rateLimitKey(route.limit, identity);
-      const result = await deps.identity("rateLimit", { bucket, windowStart: rateLimitWindow(route.limit, now) });
-      const count = Number(result.count ?? 0);
-      if (count > config.limit) {
-        return json(
-          { error: "RATE_LIMITED", message: "Too many requests. Please wait a moment and try again.", retryAfterSeconds: config.windowSeconds },
-          429,
-          { "retry-after": String(Math.min(config.windowSeconds, 900)) },
-        );
-      }
+      return json(
+        { error: "RATE_LIMITED", message: "Too many requests. Please wait a moment and try again.", retryAfterSeconds: config.windowSeconds },
+        429,
+        { "retry-after": String(Math.min(config.windowSeconds, 900)) },
+      );
     }
 
     const result = await route.handle({ request, url, env, deps, params, actor, token });
@@ -518,6 +526,7 @@ export async function handleFactoryApi(
     // "Something went wrong on our side" - indistinguishable from a real fault,
     // with no hint that waiting fixes it. Say what it is.
     if (isCapacityExhausted(error)) {
+      await recordCapacityEvent(env, error);
       return json(
         {
           error: "CAPACITY",
@@ -544,6 +553,33 @@ export async function handleFactoryApi(
 export function isCapacityExhausted(error: unknown): boolean {
   const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
   return /Exceeded allowed rows (read|written)|Durable Objects free tier|too many rows/i.test(message);
+}
+
+/**
+ * Leave the last capacity fault where an operator can read it.
+ *
+ * Workers Logs (`wrangler tail`) are not reliably available on the downgraded
+ * plan, and a 503 whose cause lives only in a log nobody can open is not
+ * operable. The message is the only thing stored - never request contents - and
+ * only when it changes, so a storm cannot burn the KV write budget.
+ */
+let lastCapacitySignature = "";
+
+async function recordCapacityEvent(env: FactoryHttpEnv, error: unknown): Promise<void> {
+  const kv = env.ZARLINO_KV;
+  if (!kv) return;
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  const signature = message.slice(0, 200);
+  if (signature === lastCapacitySignature) return;
+  lastCapacitySignature = signature;
+  try {
+    await kv.put(
+      "factory:capacity:last",
+      JSON.stringify({ at: new Date().toISOString(), message: message.slice(0, 600) }),
+    );
+  } catch {
+    // Diagnostics must never replace the real failure.
+  }
 }
 
 /** Small helper the pages use to decide whether to render the app shell. */

@@ -92,8 +92,14 @@ async function handleEnvelope(
 
 /** POST `{op, args}` -> operation result. Shared by the DO classes and tests. */
 export function createStoreFetch(sql: Sql, kind: "identity" | "workspace"): (request: Request) => Promise<Response> {
+  // One counter map per store instance: the lifetime of this closure is the
+  // lifetime of the Durable Object, which is exactly the lifetime a fixed-window
+  // rate limit needs (see `bumpMemoryRateLimit`).
+  const rateLimits = new Map<string, { windowStart: number; count: number }>();
   return (request) =>
-    handleEnvelope(request, kind, (op, args) => (kind === "identity" ? identityOp({ sql }, op, args) : workspaceOp({ sql }, op, args)));
+    handleEnvelope(request, kind, (op, args) =>
+      kind === "identity" ? identityOp({ sql, rateLimits }, op, args) : workspaceOp({ sql }, op, args),
+    );
 }
 
 export class FactoryIdentity {

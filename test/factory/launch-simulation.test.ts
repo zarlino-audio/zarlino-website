@@ -821,6 +821,32 @@ describe("launch security", () => {
     expect(statuses.filter((status) => status === 429).length).toBe(3);
   });
 
+  it("counts rate limits in memory, not in SQL, so polling cannot exhaust the store budget", async () => {
+    // Prod regression: the fixed-window table wrote a row on every API request.
+    // The free plan allows 100,000 rows written per day for the whole account,
+    // and a single open build-status tab polling every second exhausted it -
+    // after which the identity object answered "Exceeded allowed rows read in
+    // Durable Objects free tier" and every factory endpoint 503'd.
+    const world = makeWorld(model, builds);
+    const client = world.client();
+    const signup = await client.signup("budget@example.com");
+    expect(signup.status).toBe(200);
+
+    for (let poll = 0; poll < 30; poll += 1) {
+      expect((await client.status("bld_does_not_exist")).status).toBeGreaterThan(0);
+    }
+
+    const identitySql = world.identity.instances.get("global")!.sql;
+    // Nothing was written to the counter table...
+    expect(identitySql.all<{ n: number }>("SELECT COUNT(*) AS n FROM rate_limits")[0]!.n).toBe(0);
+    // ...but the limits are still enforced.
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      statuses.push((await client.signup(`flood${attempt}@example.com`)).status);
+    }
+    expect(statuses.filter((status) => status === 429).length).toBeGreaterThan(0);
+  });
+
   it("refuses a payment reference that belongs to another account", async () => {
     const world = makeWorld(model, builds);
     const paystack = fakePaystack({ reference: "zf_other", amountMinor: 19900, userId: "usr_someone_else" });

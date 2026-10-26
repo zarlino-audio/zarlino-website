@@ -80,6 +80,9 @@ CREATE TABLE IF NOT EXISTS payment_events (
   payload_sha256 TEXT NOT NULL,
   received_at    TEXT NOT NULL
 );
+-- Webhook idempotency looks a payment up by reference; without this the check
+-- scans every event the account has ever received.
+CREATE INDEX IF NOT EXISTS payment_events_reference ON payment_events(reference, event_type);
 
 CREATE TABLE IF NOT EXISTS rate_limits (
   bucket        TEXT PRIMARY KEY,
@@ -97,6 +100,9 @@ CREATE TABLE IF NOT EXISTS analytics_events (
   created_at   TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS analytics_name_time ON analytics_events(name, created_at);
+-- Funnel reporting filters on time alone, which the (name, created_at) index
+-- cannot serve; without this every report scans the whole event log.
+CREATE INDEX IF NOT EXISTS analytics_time ON analytics_events(created_at);
 
 CREATE TABLE IF NOT EXISTS build_index (
   build_id    TEXT PRIMARY KEY,
